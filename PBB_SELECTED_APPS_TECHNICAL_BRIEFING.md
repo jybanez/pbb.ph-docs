@@ -8,6 +8,8 @@ Owner clarification added after the local code review: Hub HQ provides node iden
 
 Fresh-scan update source: local code under `C:\wamp64\www\pbb`, plus earlier `C:\wamp64\www\pbb\chat_log.md` context where relevant. The main changes since the original briefing are: Hotline now has SITREP Relay outbox/delivery code, Support Request persistence and relay lifecycle services, and a backend-token-protected SITREP media manifest/download API plus SDK; Relay now has a backend-only relationship resolver at `POST /api/v1/relationships/resolve`; Kit Setup now documents/enforces additive app database migration policy; Helper UI bundle updates reached `UI_BUNDLE_REV = "0.21.89"`; PBB Support System at `C:\wamp64\www\pbb\support` is now reviewed as a Laravel SITREP/support operations app; and PBB Landing at `C:\wamp64\www\pbb\landing` is now reviewed as a lightweight PHP local launcher/public hub metadata/gateway surface.
 
+Current-state alignment note, 2026-06-22: local code and DB-backed Chatviewer updates now confirm additional changes since the prior briefing. Kit Setup is at `0.1.163` and its bundled package manifest includes `pbb-landing`, `pbb-mapserver`, `pbb-maestro`, `pbb-realtime`, `pbb-relay`, `pbb-hotline`, and `pbb-support`, plus the Cebu MapServer boundary pack. The finalized Hotline/Relay/Support Data Prep model uses separate Support role identities: `sitrep.ingestor` for `sitrep.record` and `support.dispatch` for `support.request` / `support.request.cancelled`. Relay now implements operational `source.heartbeat.updated` webhooks through `relay_webhook_subscribers` and `relay_webhook_deliveries`; Kit seeds a Support Source Heartbeats subscriber, and Support receives it at `POST /api/relay/source-heartbeats`, validates a dedicated token, deduplicates by `event_id`, and publishes accepted snapshots to Realtime. Chatviewer now has a DB-backed agent chat API with token-authenticated posting/claiming and `GET /api/chat-entries.php` list queries defaulting newest-first while `order=asc` is available for chronological API reads.
+
 ---
 
 ## App: PBB Hotline
@@ -54,90 +56,90 @@ Hotline solves citizen emergency reporting, live call coordination, incident wor
 
 ### Citizen Emergency Call
 
-Purpose: Citizen starts call attempts, reconnects, views active/current incidents.  
-Main Code: `app\Http\Controllers\Api\Citizen\*`, `app\Support\Calls\CallRoutingService.php`, `resources/js` citizen files.  
-Database Tables: `incidents`, `call_attempts`, `call_attempt_operator_attempts`, `call_sessions`, `call_participants`, `incident_citizen_locations`.  
-APIs / Routes: `POST /api/citizen/call-attempts`, `POST /api/citizen/call-attempts/{attempt}/cancel`, `GET /api/citizen/incidents/current`, `POST /api/citizen/incidents/{incident}/reconnect`.  
-Offline Behavior: Citizen offline page exists and JS tests assert browser offline handling; no durable offline submission queue was confirmed.  
-Sync Behavior: Realtime admission and socket event flow. No browser-side durable citizen submission queue was confirmed; server-side SITREP/support Relay flows are documented separately below.  
-Related PBB Apps: PBB Realtime, PBB MapServer.  
+Purpose: Citizen starts call attempts, reconnects, views active/current incidents.
+Main Code: `app\Http\Controllers\Api\Citizen\*`, `app\Support\Calls\CallRoutingService.php`, `resources/js` citizen files.
+Database Tables: `incidents`, `call_attempts`, `call_attempt_operator_attempts`, `call_sessions`, `call_participants`, `incident_citizen_locations`.
+APIs / Routes: `POST /api/citizen/call-attempts`, `POST /api/citizen/call-attempts/{attempt}/cancel`, `GET /api/citizen/incidents/current`, `POST /api/citizen/incidents/{incident}/reconnect`.
+Offline Behavior: Citizen offline page exists and JS tests assert browser offline handling; no durable offline submission queue was confirmed.
+Sync Behavior: Realtime admission and socket event flow. No browser-side durable citizen submission queue was confirmed; server-side SITREP/support Relay flows are documented separately below.
+Related PBB Apps: PBB Realtime, PBB MapServer.
 Evidence: `routes\api\citizen.php`; `routes\web\citizen.php`; `tests\js\citizenSurfaceContracts.test.mjs`.
 
 ### Operator Incident Workbench
 
-Purpose: Operator triage, incident status, intake details, location, incident types, resources, transfers, and assignments.  
-Main Code: `app\Http\Controllers\Api\Operator\IncidentController.php`, `TeamAssignmentController.php`, `TransferController.php`; `app\Support\Incidents\*`; `app\Support\Teams\TeamAssignmentService.php`.  
-Database Tables: `incidents`, `incident_type_details`, `incident_resources_needed`, `incident_transfers`, `team_assignments`, `team_assignment_notes`.  
-APIs / Routes: `GET /api/operator/dashboard`, `GET /api/operator/incidents`, `POST /api/operator/incidents/{incident}/status`, `POST /api/operator/incidents/{incident}/team-assignments`, transfer endpoints.  
-Offline Behavior: LAN/local operation likely when server and database are local; no operator offline queue confirmed.  
-Sync Behavior: Local incident workbench changes are not confirmed as editable cross-node incident sync. Post-briefing updates confirm separate SITREP Relay and Support Request relay flows.  
-Related PBB Apps: PBB Realtime, PBB MapServer, Helper UI.  
+Purpose: Operator triage, incident status, intake details, location, incident types, resources, transfers, and assignments.
+Main Code: `app\Http\Controllers\Api\Operator\IncidentController.php`, `TeamAssignmentController.php`, `TransferController.php`; `app\Support\Incidents\*`; `app\Support\Teams\TeamAssignmentService.php`.
+Database Tables: `incidents`, `incident_type_details`, `incident_resources_needed`, `incident_transfers`, `team_assignments`, `team_assignment_notes`.
+APIs / Routes: `GET /api/operator/dashboard`, `GET /api/operator/incidents`, `POST /api/operator/incidents/{incident}/status`, `POST /api/operator/incidents/{incident}/team-assignments`, transfer endpoints.
+Offline Behavior: LAN/local operation likely when server and database are local; no operator offline queue confirmed.
+Sync Behavior: Local incident workbench changes are not confirmed as editable cross-node incident sync. Post-briefing updates confirm separate SITREP Relay and Support Request relay flows.
+Related PBB Apps: PBB Realtime, PBB MapServer, Helper UI.
 Evidence: `routes\api\operator.php`; `README.md`; migrations under `database\migrations`.
 
 ### Command / SITREP
 
-Purpose: Command-level alert, broadcast, and SITREP generation/download.  
-Main Code: `app\Http\Controllers\Api\Command\*`, `app\Support\Sitreps\SitrepGenerationService.php`, `bin\render-sitrep-pdf.mjs`.  
-Database Tables: `sitrep_reports`, `command_broadcasts`, `incidents`.  
-APIs / Routes: `POST /api/command/alert-level`, `POST /api/command/broadcasts`, `GET/POST/PATCH /api/command/sitreps`, `GET /command/sitreps/{sitrep}/download/{format}`.  
-Offline Behavior: Local generation can work if PHP/Node and local DB are available; public upstream publishing is not confirmed.  
-Sync Behavior: Post-briefing updates confirm latest-SITREP Relay handoff through `SitrepRelayOutboxService`, `SubmitSitrepRelayDelivery`, and `SubmitLatestSitrepToRelay`.  
-Related PBB Apps: PBB Realtime for broadcast status metadata.  
+Purpose: Command-level alert, broadcast, and SITREP generation/download.
+Main Code: `app\Http\Controllers\Api\Command\*`, `app\Support\Sitreps\SitrepGenerationService.php`, `bin\render-sitrep-pdf.mjs`.
+Database Tables: `sitrep_reports`, `command_broadcasts`, `incidents`.
+APIs / Routes: `POST /api/command/alert-level`, `POST /api/command/broadcasts`, `GET/POST/PATCH /api/command/sitreps`, `GET /command/sitreps/{sitrep}/download/{format}`.
+Offline Behavior: Local generation can work if PHP/Node and local DB are available; public upstream publishing is not confirmed.
+Sync Behavior: Post-briefing updates confirm latest-SITREP Relay handoff through `SitrepRelayOutboxService`, `SubmitSitrepRelayDelivery`, and `SubmitLatestSitrepToRelay`.
+Related PBB Apps: PBB Realtime for broadcast status metadata.
 Evidence: `routes\api\command.php`; `routes\web\command.php`; `database\migrations\2026_04_29_000001_create_sitrep_reports_table.php`.
 
 ### SITREP Relay Outbox
 
-Purpose: Persist and submit the latest Hotline SITREP upstream through Relay-facing delivery code.  
-Main Code: `app\Support\Sitreps\SitrepRelayOutboxService.php`, `app\Jobs\SubmitSitrepRelayDelivery.php`, `app\Console\Commands\SubmitLatestSitrepToRelay.php`.  
-Database Tables: `sitrep_relay_deliveries`, `sitrep_reports`.  
-APIs / Routes: CLI command `app:submit-latest-sitrep-to-relay`; queue job `SubmitSitrepRelayDelivery`.  
-Offline Behavior: Delivery records persist locally and can be retried by the existing Hotline queue/scheduler path.  
-Sync Behavior: Latest SITREP handoff is confirmed; full production SITREP envelope/consolidation policy still needs explicit documentation.  
-Related PBB Apps: PBB Relay, Hub/HQ, Kit Setup service registration.  
+Purpose: Persist and submit the latest Hotline SITREP upstream through Relay-facing delivery code.
+Main Code: `app\Support\Sitreps\SitrepRelayOutboxService.php`, `app\Jobs\SubmitSitrepRelayDelivery.php`, `app\Console\Commands\SubmitLatestSitrepToRelay.php`.
+Database Tables: `sitrep_relay_deliveries`, `sitrep_reports`.
+APIs / Routes: CLI command `app:submit-latest-sitrep-to-relay`; queue job `SubmitSitrepRelayDelivery`.
+Offline Behavior: Delivery records persist locally and can be retried by the existing Hotline queue/scheduler path.
+Sync Behavior: Latest SITREP handoff is confirmed; full production SITREP envelope/consolidation policy still needs explicit documentation.
+Related PBB Apps: PBB Relay, Hub/HQ, Kit Setup service registration.
 Evidence: `app\Support\Sitreps\SitrepRelayOutboxService.php`; `app\Jobs\SubmitSitrepRelayDelivery.php`; `app\Console\Commands\SubmitLatestSitrepToRelay.php`; `database\migrations`; `release.json`.
 
 ### Support Requests
 
-Purpose: Create support requests from Hotline/SITREP context, submit `support.request` envelopes, and receive lifecycle updates from downstream support operations.  
-Main Code: `app\Support\SupportRequests\SupportRequestCreationService.php`, `SupportRequestRelaySubmissionService.php`, `SupportRequestLifecycleUpdateService.php`.  
-Database Tables: `support_requests`, `support_request_histories`.  
-APIs / Routes: internal support-request update ingress; support-request relay contract docs.  
-Offline Behavior: Local support request/history persistence is confirmed; upstream relay depends on queue/connectivity.  
-Sync Behavior: Confirmed lifecycle events are `support.request`, `support.request.received`, `support.request.under_review`, `support.request.accepted`, `support.request.rejected`, `support.request.assigned`, `support.request.en_route`, `support.request.fulfilled`, and `support.request.closed`. `support.request.completed` should not be emitted.  
-Related PBB Apps: PBB Relay, PBB Support System.  
+Purpose: Create support requests from Hotline/SITREP context, submit `support.request` envelopes, and receive lifecycle updates from downstream support operations.
+Main Code: `app\Support\SupportRequests\SupportRequestCreationService.php`, `SupportRequestRelaySubmissionService.php`, `SupportRequestLifecycleUpdateService.php`.
+Database Tables: `support_requests`, `support_request_histories`.
+APIs / Routes: internal support-request update ingress; support-request relay contract docs.
+Offline Behavior: Local support request/history persistence is confirmed; upstream relay depends on queue/connectivity.
+Sync Behavior: Confirmed lifecycle events are `support.request`, `support.request.received`, `support.request.under_review`, `support.request.accepted`, `support.request.rejected`, `support.request.assigned`, `support.request.en_route`, `support.request.fulfilled`, and `support.request.closed`. `support.request.completed` should not be emitted.
+Related PBB Apps: PBB Relay, PBB Support System.
 Evidence: `docs\support-request-relay-contract-proposal.md`; `app\Support\SupportRequests`; `tests\Feature\Internal\SupportRequestUpdateIngressTest.php`.
 
 ### SITREP Media Access
 
-Purpose: Let authorized backend consumers request SITREP media manifests and downloads without exposing filesystem paths or public `/storage` URLs.  
-Main Code: `docs\sitrep-media-access-contract.md`, `packages\pbb-hotline-media-sdk`, internal SITREP media controllers/tests.  
-Database Tables: `media`, `message_attachments`, incident/SITREP tables as context.  
-APIs / Routes: `POST /api/internal/sitrep/media/manifest`, `GET /api/internal/sitrep/media/{kind}/{id}`.  
-Offline Behavior: Works on LAN/local Hotline when media files exist locally and backend token is configured.  
-Sync Behavior: Not a sync mechanism; supports optional evidence drill-down for downstream apps.  
-Related PBB Apps: PBB Support System, PBB Relay relationship resolver for backend credential context.  
+Purpose: Let authorized backend consumers request SITREP media manifests and downloads without exposing filesystem paths or public `/storage` URLs.
+Main Code: `docs\sitrep-media-access-contract.md`, `packages\pbb-hotline-media-sdk`, internal SITREP media controllers/tests.
+Database Tables: `media`, `message_attachments`, incident/SITREP tables as context.
+APIs / Routes: `POST /api/internal/sitrep/media/manifest`, `GET /api/internal/sitrep/media/{kind}/{id}`.
+Offline Behavior: Works on LAN/local Hotline when media files exist locally and backend token is configured.
+Sync Behavior: Not a sync mechanism; supports optional evidence drill-down for downstream apps.
+Related PBB Apps: PBB Support System, PBB Relay relationship resolver for backend credential context.
 Evidence: `docs\sitrep-media-access-contract.md`; `packages\pbb-hotline-media-sdk`; `tests\Feature\Internal\SitrepMediaAccessTest.php`; `tests\Unit\HotlineMediaSdkTest.php`.
 
 ### Realtime Admission and Media
 
-Purpose: Issue Realtime admission payloads and accept internal media chunks/product-query callbacks.  
-Main Code: `app\Support\Realtime\*`, `app\Http\Controllers\Api\Realtime\AdmissionController.php`, `app\Http\Controllers\Api\Internal\MediaChunkIngressController.php`.  
-Database Tables: `media`, `incident_messages`, `message_attachments`, `call_sessions`.  
-APIs / Routes: `POST /api/realtime/admission/{citizen|operator|command}`, `POST /api/internal/media/chunks`, `POST /api/internal/realtime/product-query`.  
-Offline Behavior: Requires local Realtime service for live socket features.  
-Sync Behavior: Internal callbacks from Realtime; no conflict handling found.  
-Related PBB Apps: PBB Realtime.  
+Purpose: Issue Realtime admission payloads and accept internal media chunks/product-query callbacks.
+Main Code: `app\Support\Realtime\*`, `app\Http\Controllers\Api\Realtime\AdmissionController.php`, `app\Http\Controllers\Api\Internal\MediaChunkIngressController.php`.
+Database Tables: `media`, `incident_messages`, `message_attachments`, `call_sessions`.
+APIs / Routes: `POST /api/realtime/admission/{citizen|operator|command}`, `POST /api/internal/media/chunks`, `POST /api/internal/realtime/product-query`.
+Offline Behavior: Requires local Realtime service for live socket features.
+Sync Behavior: Internal callbacks from Realtime; no conflict handling found.
+Related PBB Apps: PBB Realtime.
 Evidence: `routes\api\realtime.php`; `routes\api\internal.php`; `app\Support\Realtime\Sdk\src\RealtimeConfig.php`.
 
 ### Admin Reference Data
 
-Purpose: Manage users, incident categories/types/fields, resource types, teams, team inventory, settings.  
-Main Code: `app\Http\Controllers\Api\Admin\*`, `tools\populate-initial-data.php`.  
-Database Tables: `users`, `settings`, `incident_categories`, `incident_types`, `incident_type_fields`, `resource_types`, `teams`.  
-APIs / Routes: `/api/admin/*` routes in `routes\api\admin.php`.  
-Offline Behavior: Local-only admin works on LAN if app and DB are running.  
-Sync Behavior: Unknown / Not confirmed from code.  
-Related PBB Apps: Helper UI.  
+Purpose: Manage users, incident categories/types/fields, resource types, teams, team inventory, settings.
+Main Code: `app\Http\Controllers\Api\Admin\*`, `tools\populate-initial-data.php`.
+Database Tables: `users`, `settings`, `incident_categories`, `incident_types`, `incident_type_fields`, `resource_types`, `teams`.
+APIs / Routes: `/api/admin/*` routes in `routes\api\admin.php`.
+Offline Behavior: Local-only admin works on LAN if app and DB are running.
+Sync Behavior: Unknown / Not confirmed from code.
+Related PBB Apps: Helper UI.
 Evidence: `routes\api\admin.php`; `tools\populate-initial-data.php`.
 
 ### 6. Database Schema Summary
@@ -377,24 +379,24 @@ Helper solves reusable UI rendering for incident forms, teams, incident types, c
 
 ### Incident Components
 
-Purpose: Render incident base, teams assignments, incident types, details editors/viewers.  
-Main Code: `js\incident\*.js`, `css\incident\*.css`.  
-Database Tables: No database usage found.  
-APIs / Routes: Static demos only.  
-Offline Behavior: Static assets can run locally if served or opened where browser module rules permit.  
-Sync Behavior: None.  
-Related PBB Apps: Hotline, Hub, MapServer, Chatviewer vendored copies.  
+Purpose: Render incident base, teams assignments, incident types, details editors/viewers.
+Main Code: `js\incident\*.js`, `css\incident\*.css`.
+Database Tables: No database usage found.
+APIs / Routes: Static demos only.
+Offline Behavior: Static assets can run locally if served or opened where browser module rules permit.
+Sync Behavior: None.
+Related PBB Apps: Hotline, Hub, MapServer, Chatviewer vendored copies.
 Evidence: `README.md`; `js\incident`.
 
 ### General UI Components
 
-Purpose: Shared UI widgets for modals, forms, chat, media, grids, maps controls, audio, navigation.  
-Main Code: `js\ui\*.js`, `css\ui\*.css`.  
-Database Tables: None.  
-APIs / Routes: None.  
-Offline Behavior: Static.  
-Sync Behavior: None.  
-Related PBB Apps: Multiple PBB apps via vendored assets.  
+Purpose: Shared UI widgets for modals, forms, chat, media, grids, maps controls, audio, navigation.
+Main Code: `js\ui\*.js`, `css\ui\*.css`.
+Database Tables: None.
+APIs / Routes: None.
+Offline Behavior: Static.
+Sync Behavior: None.
+Related PBB Apps: Multiple PBB apps via vendored assets.
 Evidence: `README.md`; file inventory under `js\ui` and `css\ui`.
 
 Post-briefing component updates:
@@ -408,13 +410,13 @@ Evidence: `js\ui\ui.loader.js`; `js\ui`; chat-log update entries for Helper bund
 
 ### Bundle Builder
 
-Purpose: Produce minified helper UI bundle.  
-Main Code: `scripts\build.ui.bundle.mjs`.  
-Database Tables: None.  
-APIs / Routes: None.  
-Offline Behavior: Local build only.  
-Sync Behavior: None.  
-Related PBB Apps: Apps consume `dist\helpers.ui.bundle.min.js/css`.  
+Purpose: Produce minified helper UI bundle.
+Main Code: `scripts\build.ui.bundle.mjs`.
+Database Tables: None.
+APIs / Routes: None.
+Offline Behavior: Local build only.
+Sync Behavior: None.
+Related PBB Apps: Apps consume `dist\helpers.ui.bundle.min.js/css`.
 Evidence: `package.json`.
 
 ### 6. Database Schema Summary
@@ -541,7 +543,7 @@ Owner clarification: Relay nodes are intended to become cloud-visible through PB
 
 ### 3. App Purpose and PBB Role
 
-Relay solves store-and-forward synchronization between local applications and upstream/downstream hubs. It is infrastructure-level. Local apps submit envelopes through authenticated local client API; remote hubs send messages through hub-authenticated receive APIs. Post-briefing updates also confirm a backend-only relationship resolver for hub credential lookup. It depends on MySQL, Laravel queue workers, optional HQ API, and optional Maestro telemetry. If Relay is unavailable, queued sync, upstream/downstream delivery, inbox, handler dispatches, relationship resolution, and hub registry/heartbeat updates stop.
+Relay solves store-and-forward synchronization between local applications and upstream/downstream hubs. It is infrastructure-level. Local apps submit envelopes through authenticated local client API; remote hubs send messages through hub-authenticated receive APIs. Current code also confirms a backend-only relationship resolver for hub credential lookup and operational `source.heartbeat.updated` webhooks for apps such as Support that need near-real-time source heartbeat updates without polling. It depends on MySQL, Laravel queue workers, optional HQ API, and optional Maestro telemetry. If Relay is unavailable, queued sync, upstream/downstream delivery, inbox, handler dispatches, relationship resolution, webhook dispatches, and hub registry/heartbeat updates stop.
 
 ### 4. User Roles and Permissions
 
@@ -552,73 +554,85 @@ Relay solves store-and-forward synchronization between local applications and up
 | local relay client | Local app API identity | Submit messages, view inbox/deliveries, manage handlers/uploads | `routes\api.php`; `app\Http\Middleware\AuthenticateRelayClient.php` |
 | hub peer | Hub-to-hub identity | Receive batches/uploads | `routes\api.php`; `app\Http\Middleware\AuthenticateRelayHub.php`; `config\relay.php` |
 | backend relationship resolver client | Trusted backend app | Resolve source/target hub relationship credentials for a purpose | `routes\api.php`; `RelationshipController.php`; `RelayRelationshipResolver.php` |
+| webhook subscriber | Trusted local operational receiver | Receive Relay-owned operational events such as `source.heartbeat.updated` | `relay_webhook_subscribers`; `RelayWebhookDispatcher`; `tools\data-prep\apply-settings.php` |
 
 ### 5. Main Features and Modules
 
 ### Local Message Submission
 
-Purpose: Authenticated local apps submit messages for relay.  
-Main Code: `app\Http\Controllers\Api\Relay\Messages\MessageController.php`, `app\Relay\Outbound\RelaySubmissionService.php`.  
-Database Tables: `hub_relay_messages`, `hub_relay_deliveries`, `hub_relay_clients`.  
-APIs / Routes: `POST /api/v1/messages`, `GET /api/v1/messages`, `GET /api/v1/deliveries`.  
-Offline Behavior: Local submission stores messages in DB; upstream can be unavailable until worker retries.  
-Sync Behavior: Delivery rows per target/hop, retry policy.  
-Related PBB Apps: Candidate integration point for Hotline and other product apps.  
+Purpose: Authenticated local apps submit messages for relay.
+Main Code: `app\Http\Controllers\Api\Relay\Messages\MessageController.php`, `app\Relay\Outbound\RelaySubmissionService.php`.
+Database Tables: `hub_relay_messages`, `hub_relay_deliveries`, `hub_relay_clients`.
+APIs / Routes: `POST /api/v1/messages`, `GET /api/v1/messages`, `GET /api/v1/deliveries`.
+Offline Behavior: Local submission stores messages in DB; upstream can be unavailable until worker retries.
+Sync Behavior: Delivery rows per target/hop, retry policy.
+Related PBB Apps: Candidate integration point for Hotline and other product apps.
 Evidence: `routes\api.php`; `README.md`; migrations.
 
 ### Hub-to-Hub Receive
 
-Purpose: Receive messages from peer hubs with idempotent handling.  
-Main Code: `ReceiveController`, `RelayReceiveService`, `RelayIdempotencyService`.  
-Database Tables: `hub_relay_messages`, `hub_relay_receipts`, `hub_relay_handler_dispatches`.  
-APIs / Routes: `POST /api/v1/receive`, `POST /api/v1/receive-batch`.  
-Offline Behavior: Requires HTTP reachability from peer; once received, local dispatch can occur later.  
-Sync Behavior: Idempotency and receipts confirmed.  
-Related PBB Apps: Upstream/downstream Relay nodes, local handlers.  
+Purpose: Receive messages from peer hubs with idempotent handling.
+Main Code: `ReceiveController`, `RelayReceiveService`, `RelayIdempotencyService`.
+Database Tables: `hub_relay_messages`, `hub_relay_receipts`, `hub_relay_handler_dispatches`.
+APIs / Routes: `POST /api/v1/receive`, `POST /api/v1/receive-batch`.
+Offline Behavior: Requires HTTP reachability from peer; once received, local dispatch can occur later.
+
+### Source Heartbeat Operational Webhooks
+
+Purpose: Notify trusted local apps when Relay source heartbeat status changes, without routing heartbeat telemetry through normal app-to-app Relay messages.
+Main Code: `RelaySourceHeartbeatRecorder`, `RelayWebhookDispatcher`, `DispatchRelayWebhook`, Relay admin webhook screens.
+Database Tables: `relay_source_heartbeats`, `relay_source_heartbeat_rollups`, `relay_webhook_subscribers`, `relay_webhook_deliveries`.
+APIs / Routes: Data Prep accepts `relay.data_prep.apply_settings.webhooks[]`; admin UI manages webhooks; jobs dispatch to subscriber endpoint URLs.
+Offline Behavior: Heartbeat state and webhook deliveries are stored locally; delivery retries depend on queue worker and subscriber reachability.
+Sync Behavior: Operational webhook event `source.heartbeat.updated` is queued/tracked separately from `hub_relay_messages`.
+Related PBB Apps: Support System, Kit Setup.
+Evidence: `C:\wamp64\www\pbb\relay\docs\relay-source-heartbeat-webhooks-implementation-checklist.md`; `C:\wamp64\www\pbb\relay\tools\data-prep\apply-settings.php`; `C:\wamp64\www\pbb\relay\tests\Feature\Relay\RelayHeartbeatTest.php`.
+Sync Behavior: Idempotency and receipts confirmed.
+Related PBB Apps: Upstream/downstream Relay nodes, local handlers.
 Evidence: `routes\api.php`; `app\Relay\Inbound`.
 
 ### Attachments and Chunked Uploads
 
-Purpose: Attach large files to relay messages with upload sessions/chunks.  
-Main Code: `UploadController`, `AttachmentController`, `RelayUploadService`.  
-Database Tables: `hub_relay_attachments`, `hub_relay_upload_sessions`.  
-APIs / Routes: `/api/v1/messages/{message}/attachments/init`, `/api/v1/uploads/{session}/chunk`, hub upload routes.  
-Offline Behavior: Stored locally once uploaded; transport to remote follows delivery worker.  
-Sync Behavior: Tracks transfer status/progress.  
-Related PBB Apps: Any app sending attachments.  
+Purpose: Attach large files to relay messages with upload sessions/chunks.
+Main Code: `UploadController`, `AttachmentController`, `RelayUploadService`.
+Database Tables: `hub_relay_attachments`, `hub_relay_upload_sessions`.
+APIs / Routes: `/api/v1/messages/{message}/attachments/init`, `/api/v1/uploads/{session}/chunk`, hub upload routes.
+Offline Behavior: Stored locally once uploaded; transport to remote follows delivery worker.
+Sync Behavior: Tracks transfer status/progress.
+Related PBB Apps: Any app sending attachments.
 Evidence: `routes\api.php`; migrations.
 
 ### Local Handlers
 
-Purpose: Dispatch received messages to registered local webhooks/handlers.  
-Main Code: `HandlerController`, `HandlerDispatchController`, `LocalHandlerDispatchService`, `DispatchRelayToLocalHandler`.  
-Database Tables: `hub_relay_handlers`, `hub_relay_handler_dispatches`.  
-APIs / Routes: `/api/v1/handlers`, `/api/v1/handler-dispatches`, retry endpoint.  
-Offline Behavior: Failed handlers can retry by backoff.  
-Sync Behavior: Local delivery tracking and retry.  
-Related PBB Apps: Product apps with webhook endpoints.  
+Purpose: Dispatch received messages to registered local webhooks/handlers.
+Main Code: `HandlerController`, `HandlerDispatchController`, `LocalHandlerDispatchService`, `DispatchRelayToLocalHandler`.
+Database Tables: `hub_relay_handlers`, `hub_relay_handler_dispatches`.
+APIs / Routes: `/api/v1/handlers`, `/api/v1/handler-dispatches`, retry endpoint.
+Offline Behavior: Failed handlers can retry by backoff.
+Sync Behavior: Local delivery tracking and retry.
+Related PBB Apps: Product apps with webhook endpoints.
 Evidence: `routes\api.php`; `config\relay.php`.
 
 ### HQ Registry and Heartbeat
 
-Purpose: Sync hub topology/identity and send Relay install heartbeat to Hub HQ.  
-Main Code: `RelayHqSyncCommand`, `RelayHqHeartbeatCommand`, `HqHubRegistrySyncService`, `RelayHqHeartbeatService`.  
-Database Tables: `hub_registry_hubs`, `hub_registry_links`, `relay_node_settings`.  
-APIs / Routes: console commands; config-driven HQ URLs.  
-Offline Behavior: Requires HQ connectivity; local relay can still run manually configured.  
-Sync Behavior: Registry sync and heartbeat status persisted.  
-Related PBB Apps: PBB Hub/HQ.  
+Purpose: Sync hub topology/identity and send Relay install heartbeat to Hub HQ.
+Main Code: `RelayHqSyncCommand`, `RelayHqHeartbeatCommand`, `HqHubRegistrySyncService`, `RelayHqHeartbeatService`.
+Database Tables: `hub_registry_hubs`, `hub_registry_links`, `relay_node_settings`.
+APIs / Routes: console commands; config-driven HQ URLs.
+Offline Behavior: Requires HQ connectivity; local relay can still run manually configured.
+Sync Behavior: Registry sync and heartbeat status persisted.
+Related PBB Apps: PBB Hub/HQ.
 Evidence: `config\relay.php`; `app\Console\Commands`.
 
 ### Relationship Resolver
 
-Purpose: Resolve backend-only relationship credentials between source and target hubs for a named purpose such as Hotline media access.  
-Main Code: `app\Http\Controllers\Api\Relay\Credentials\RelationshipController.php`, `app\Relay\Credentials\RelayRelationshipResolver.php`, `app\Relay\Credentials\RelayHubCredentialStore.php`.  
-Database Tables: Reads a Relay-private credential snapshot rather than a normal application table.  
-APIs / Routes: `POST /api/v1/relationships/resolve`.  
-Offline Behavior: Can resolve from local Relay-private `storage/app/relay/hub-credentials.json` and public topology snapshot if present.  
-Sync Behavior: Not a sync path; it supports backend-to-backend credential discovery.  
-Related PBB Apps: Hotline, Support System, Hub/HQ topology.  
+Purpose: Resolve backend-only relationship credentials between source and target hubs for a named purpose such as Hotline media access.
+Main Code: `app\Http\Controllers\Api\Relay\Credentials\RelationshipController.php`, `app\Relay\Credentials\RelayRelationshipResolver.php`, `app\Relay\Credentials\RelayHubCredentialStore.php`.
+Database Tables: Reads a Relay-private credential snapshot rather than a normal application table.
+APIs / Routes: `POST /api/v1/relationships/resolve`.
+Offline Behavior: Can resolve from local Relay-private `storage/app/relay/hub-credentials.json` and public topology snapshot if present.
+Sync Behavior: Not a sync path; it supports backend-to-backend credential discovery.
+Related PBB Apps: Hotline, Support System, Hub/HQ topology.
 Evidence: `routes\api.php`; `app\Http\Controllers\Api\Relay\Credentials\RelationshipController.php`; `app\Relay\Credentials\RelayRelationshipResolver.php`; `docs\hub-relay-api-reference.md`; `tests\Feature\Relay\Api\RelationshipResolutionTest.php`.
 
 ### 6. Database Schema Summary
@@ -823,46 +837,46 @@ Hub solves hub/node registration and management, hub token lifecycle, heartbeat 
 
 ### Hub Registry
 
-Purpose: Create/update/list hubs and uplink relationships.  
-Main Code: `HubController`, `Hub.php`, `HubUplink.php`.  
-Database Tables: `hubs`, `hub_uplinks`.  
-APIs / Routes: `/api/admin/hubs`, `/api/hubs`, `/api/hubs/{hub}`.  
-Offline Behavior: Local HQ DB works without internet; remote heartbeat requires network.  
-Sync Behavior: Relay can sync registry from Hub.  
-Related PBB Apps: Relay.  
+Purpose: Create/update/list hubs and uplink relationships.
+Main Code: `HubController`, `Hub.php`, `HubUplink.php`.
+Database Tables: `hubs`, `hub_uplinks`.
+APIs / Routes: `/api/admin/hubs`, `/api/hubs`, `/api/hubs/{hub}`.
+Offline Behavior: Local HQ DB works without internet; remote heartbeat requires network.
+Sync Behavior: Relay can sync registry from Hub.
+Related PBB Apps: Relay.
 Evidence: `routes\api.php`; migrations.
 
 ### Hub Tokens and Heartbeats
 
-Purpose: Issue/revoke hub tokens and accept heartbeat reports.  
-Main Code: `HubTokenController`, `HubHeartbeatController`, `AuthenticateHubToken`.  
-Database Tables: `hub_tokens`, `hub_heartbeat_checks`, heartbeat fields on `hubs`.  
-APIs / Routes: `/api/admin/hubs/{hub}/token`, `POST /api/hubs/heartbeat`.  
-Offline Behavior: Token admin local; heartbeat requires hub-to-Hub connectivity.  
-Sync Behavior: Heartbeat state stored.  
-Related PBB Apps: Relay.  
+Purpose: Issue/revoke hub tokens and accept heartbeat reports.
+Main Code: `HubTokenController`, `HubHeartbeatController`, `AuthenticateHubToken`.
+Database Tables: `hub_tokens`, `hub_heartbeat_checks`, heartbeat fields on `hubs`.
+APIs / Routes: `/api/admin/hubs/{hub}/token`, `POST /api/hubs/heartbeat`.
+Offline Behavior: Token admin local; heartbeat requires hub-to-Hub connectivity.
+Sync Behavior: Heartbeat state stored.
+Related PBB Apps: Relay.
 Evidence: `routes\api.php`; migrations.
 
 ### Geodata
 
-Purpose: Region/province/city/barangay lookup and coordinate edits.  
-Main Code: `GeodataController`, `GeoRegion/Province/City/Barangay` models, `geodata/ph.json`.  
-Database Tables: geodata models exist; migrations not fully confirmed in generated list.  
-APIs / Routes: `/api/geodata/regions`, `/provinces`, `/cities`, `/barangays`, coordinate update routes; `/geodata/ph.json`.  
-Offline Behavior: Uses local geodata file/database.  
-Sync Behavior: Unknown / Not confirmed from code.  
-Related PBB Apps: MapServer, Relay, Hotline may use PSGC codes.  
+Purpose: Region/province/city/barangay lookup and coordinate edits.
+Main Code: `GeodataController`, `GeoRegion/Province/City/Barangay` models, `geodata/ph.json`.
+Database Tables: geodata models exist; migrations not fully confirmed in generated list.
+APIs / Routes: `/api/geodata/regions`, `/provinces`, `/cities`, `/barangays`, coordinate update routes; `/geodata/ph.json`.
+Offline Behavior: Uses local geodata file/database.
+Sync Behavior: Unknown / Not confirmed from code.
+Related PBB Apps: MapServer, Relay, Hotline may use PSGC codes.
 Evidence: `routes\api.php`; `routes\web.php`; `geodata`.
 
 ### Recovery Bundles
 
-Purpose: Create/list/download/delete backups and restore scripts.  
-Main Code: `RecoveryBundleController`, `RecoveryBundleService`, `MySqlDatabaseDumper`, `RestoreScriptFactory`.  
-Database Tables: likely file storage plus database dump; specific backup table not confirmed from migrations output.  
-APIs / Routes: `/api/admin/recovery/backups`.  
-Offline Behavior: Local backup generation.  
-Sync Behavior: Unknown / Not confirmed from code.  
-Related PBB Apps: Hub itself.  
+Purpose: Create/list/download/delete backups and restore scripts.
+Main Code: `RecoveryBundleController`, `RecoveryBundleService`, `MySqlDatabaseDumper`, `RestoreScriptFactory`.
+Database Tables: likely file storage plus database dump; specific backup table not confirmed from migrations output.
+APIs / Routes: `/api/admin/recovery/backups`.
+Offline Behavior: Local backup generation.
+Sync Behavior: Unknown / Not confirmed from code.
+Related PBB Apps: Hub itself.
 Evidence: `routes\api.php`; `app\Services\Recovery`.
 
 ### 6. Database Schema Summary
@@ -1038,46 +1052,46 @@ No formal role column was confirmed on `users`; access appears auth-based plus t
 
 ### Application Registry
 
-Purpose: Define monitored apps.  
-Main Code: `ApplicationIndexController`, `ApplicationStoreController`, `MaestroApplication`.  
-Database Tables: `maestro_applications`.  
-APIs / Routes: `GET/POST /api/v1/applications`.  
-Offline Behavior: Local.  
-Sync Behavior: None.  
-Related PBB Apps: Relay, Realtime.  
+Purpose: Define monitored apps.
+Main Code: `ApplicationIndexController`, `ApplicationStoreController`, `MaestroApplication`.
+Database Tables: `maestro_applications`.
+APIs / Routes: `GET/POST /api/v1/applications`.
+Offline Behavior: Local.
+Sync Behavior: None.
+Related PBB Apps: Relay, Realtime.
 Evidence: `routes\api.php`; migrations.
 
 ### Telemetry Tokens
 
-Purpose: Issue hashed ingestion tokens per app.  
-Main Code: `ApplicationTokenStoreController`, `MaestroTelemetryToken`, `EnsureTelemetryToken`.  
-Database Tables: `maestro_telemetry_tokens`.  
-APIs / Routes: `POST /api/v1/applications/{app_code}/tokens`; telemetry middleware accepts bearer or configured header.  
-Offline Behavior: Local.  
-Sync Behavior: None.  
-Related PBB Apps: Relay, Realtime.  
+Purpose: Issue hashed ingestion tokens per app.
+Main Code: `ApplicationTokenStoreController`, `MaestroTelemetryToken`, `EnsureTelemetryToken`.
+Database Tables: `maestro_telemetry_tokens`.
+APIs / Routes: `POST /api/v1/applications/{app_code}/tokens`; telemetry middleware accepts bearer or configured header.
+Offline Behavior: Local.
+Sync Behavior: None.
+Related PBB Apps: Relay, Realtime.
 Evidence: `README.md`; `routes\api.php`; `app\Http\Middleware\EnsureTelemetryToken.php`.
 
 ### Worker Heartbeats and Events
 
-Purpose: Ingest worker status and job events.  
-Main Code: `WorkerHeartbeatController`, `WorkerEventController`, `WorkerStatusResolver`.  
-Database Tables: `maestro_workers`, `maestro_worker_events`.  
-APIs / Routes: `POST /api/v1/telemetry/workers/heartbeat`, `POST /api/v1/telemetry/worker-events`.  
-Offline Behavior: Requires app-to-Maestro LAN/HTTP connectivity.  
-Sync Behavior: None; telemetry is local monitoring data.  
-Related PBB Apps: Relay, Realtime.  
+Purpose: Ingest worker status and job events.
+Main Code: `WorkerHeartbeatController`, `WorkerEventController`, `WorkerStatusResolver`.
+Database Tables: `maestro_workers`, `maestro_worker_events`.
+APIs / Routes: `POST /api/v1/telemetry/workers/heartbeat`, `POST /api/v1/telemetry/worker-events`.
+Offline Behavior: Requires app-to-Maestro LAN/HTTP connectivity.
+Sync Behavior: None; telemetry is local monitoring data.
+Related PBB Apps: Relay, Realtime.
 Evidence: `routes\api.php`; `README.md`; `config\maestro.php`.
 
 ### Stale Worker Reconciliation
 
-Purpose: Recompute stale worker statuses every minute.  
-Main Code: `StaleWorkerReconciler`, `routes\console.php`.  
-Database Tables: `maestro_workers`.  
-APIs / Routes: Console `maestro:reconcile-stale-workers`.  
-Offline Behavior: Local.  
-Sync Behavior: None.  
-Related PBB Apps: Monitored apps.  
+Purpose: Recompute stale worker statuses every minute.
+Main Code: `StaleWorkerReconciler`, `routes\console.php`.
+Database Tables: `maestro_workers`.
+APIs / Routes: Console `maestro:reconcile-stale-workers`.
+Offline Behavior: Local.
+Sync Behavior: None.
+Related PBB Apps: Monitored apps.
 Evidence: `routes\console.php`; `WorkerStatusResolver.php`.
 
 ### 6. Database Schema Summary
@@ -1240,57 +1254,57 @@ Realtime owns the shared live communication layer between product backends and b
 
 ### Session Admission
 
-Purpose: Validate short-lived realtime tokens and create session metadata.  
-Main Code: `RealtimeSessionController`, `RealtimeTokenValidator`, PHP SDK.  
-Database Tables: `realtime_sessions`, `realtime_clients`, `realtime_projects`.  
-APIs / Routes: `POST /api/realtime/session`.  
-Offline Behavior: Works on LAN if local Realtime HTTP app and DB are running.  
-Sync Behavior: None.  
-Related PBB Apps: Hotline.  
+Purpose: Validate short-lived realtime tokens and create session metadata.
+Main Code: `RealtimeSessionController`, `RealtimeTokenValidator`, PHP SDK.
+Database Tables: `realtime_sessions`, `realtime_clients`, `realtime_projects`.
+APIs / Routes: `POST /api/realtime/session`.
+Offline Behavior: Works on LAN if local Realtime HTTP app and DB are running.
+Sync Behavior: None.
+Related PBB Apps: Hotline.
 Evidence: `routes\api.php`; `README.md`.
 
 ### WebSocket Gateway
 
-Purpose: Room joins/leaves, presence, chat, app events, call signaling, media chunks.  
-Main Code: `RealtimeGateway`, `RealtimeServeCommand`.  
-Database Tables: `realtime_sessions`, `realtime_usage_buckets`, `realtime_media_chunks`, `realtime_server_events`.  
-APIs / Routes: `php artisan realtime:serve`; Ratchet route `/realtime`.  
-Offline Behavior: LAN-only possible. Room/presence state is in memory per process.  
-Sync Behavior: Backend events/media chunks are persisted then drained by gateway.  
-Related PBB Apps: Hotline, any product app using SDK.  
+Purpose: Room joins/leaves, presence, chat, app events, call signaling, media chunks.
+Main Code: `RealtimeGateway`, `RealtimeServeCommand`.
+Database Tables: `realtime_sessions`, `realtime_usage_buckets`, `realtime_media_chunks`, `realtime_server_events`.
+APIs / Routes: `php artisan realtime:serve`; Ratchet route `/realtime`.
+Offline Behavior: LAN-only possible. Room/presence state is in memory per process.
+Sync Behavior: Backend events/media chunks are persisted then drained by gateway.
+Related PBB Apps: Hotline, any product app using SDK.
 Evidence: `RealtimeGateway.php`; `RealtimeServeCommand.php`.
 
 ### Backend Event Ingress
 
-Purpose: Trusted product backends queue server-originated events.  
-Main Code: `EventPublishController`, `RealtimeEventIngressGate`, `RealtimeEventPublishQueue`, `RealtimeEventPublishDispatcher`.  
-Database Tables: `realtime_server_events`.  
-APIs / Routes: `POST /api/v1/events/publish`.  
-Offline Behavior: HTTP can queue while gateway is down; delivery waits for gateway drain.  
-Sync Behavior: Queue status pending/published/failed.  
-Related PBB Apps: Hotline.  
+Purpose: Trusted product backends queue server-originated events.
+Main Code: `EventPublishController`, `RealtimeEventIngressGate`, `RealtimeEventPublishQueue`, `RealtimeEventPublishDispatcher`.
+Database Tables: `realtime_server_events`.
+APIs / Routes: `POST /api/v1/events/publish`.
+Offline Behavior: HTTP can queue while gateway is down; delivery waits for gateway drain.
+Sync Behavior: Queue status pending/published/failed.
+Related PBB Apps: Hotline.
 Evidence: `routes\api.php`; `config\realtime.php`; `README.md`.
 
 ### Media Chunk Forwarding
 
-Purpose: Accept base64/binary media chunks, spool/queue, forward to product backend ingest.  
-Main Code: `RealtimeMediaChunkQueue`, `RealtimeMediaChunkDispatcher`, `RealtimeMediaChunkForwarder`, `RealtimeGateway`.  
-Database Tables: `realtime_media_chunks`.  
-APIs / Routes: WebSocket `media.chunk.prepare`, `media.chunk.publish`, binary frames; console `realtime:dispatch-media-chunks`.  
-Offline Behavior: Queue/spool local; forwarding requires configured product backend.  
-Sync Behavior: status pending/forwarded/failed.  
-Related PBB Apps: Hotline media ingest endpoints.  
+Purpose: Accept base64/binary media chunks, spool/queue, forward to product backend ingest.
+Main Code: `RealtimeMediaChunkQueue`, `RealtimeMediaChunkDispatcher`, `RealtimeMediaChunkForwarder`, `RealtimeGateway`.
+Database Tables: `realtime_media_chunks`.
+APIs / Routes: WebSocket `media.chunk.prepare`, `media.chunk.publish`, binary frames; console `realtime:dispatch-media-chunks`.
+Offline Behavior: Queue/spool local; forwarding requires configured product backend.
+Sync Behavior: status pending/forwarded/failed.
+Related PBB Apps: Hotline media ingest endpoints.
 Evidence: `RealtimeGateway.php`; `config\realtime.php`; migrations.
 
 ### Admin Console
 
-Purpose: Manage clients, projects, policies, sessions, audit, users, operations, telemetry.  
-Main Code: `app\Http\Controllers\Admin\*`.  
-Database Tables: `realtime_clients`, `realtime_projects`, `realtime_policies`, `users`, `realtime_audit_events`, usage tables.  
-APIs / Routes: `/admin`, `/api/admin/*`.  
-Offline Behavior: Local.  
-Sync Behavior: None.  
-Related PBB Apps: Maestro telemetry integration.  
+Purpose: Manage clients, projects, policies, sessions, audit, users, operations, telemetry.
+Main Code: `app\Http\Controllers\Admin\*`.
+Database Tables: `realtime_clients`, `realtime_projects`, `realtime_policies`, `users`, `realtime_audit_events`, usage tables.
+APIs / Routes: `/admin`, `/api/admin/*`.
+Offline Behavior: Local.
+Sync Behavior: None.
+Related PBB Apps: Maestro telemetry integration.
 Evidence: `routes\web.php`; migrations.
 
 ### 6. Database Schema Summary
@@ -1495,35 +1509,35 @@ MapServer provides local map tile caching and boundary overlays for apps such as
 
 ### Tile Proxy/Cache
 
-Purpose: Serve and cache raster/vector/terrain/glyph/POI tiles.  
-Main Code: `index.php`, `config.php`.  
-Database Tables: None.  
-APIs / Routes: `/tiles/raster/{z}/{x}/{y}.png`, `/tiles/vector/{z}/{x}/{y}.pbf`, `/tiles/terrain/*`, `/tiles/glyphs/*`, `/tiles/poi/*`.  
-Offline Behavior: Cache hits work offline; cache misses need upstream.  
-Sync Behavior: None.  
-Related PBB Apps: Hotline.  
+Purpose: Serve and cache raster/vector/terrain/glyph/POI tiles.
+Main Code: `index.php`, `config.php`.
+Database Tables: None.
+APIs / Routes: `/tiles/raster/{z}/{x}/{y}.png`, `/tiles/vector/{z}/{x}/{y}.pbf`, `/tiles/terrain/*`, `/tiles/glyphs/*`, `/tiles/poi/*`.
+Offline Behavior: Cache hits work offline; cache misses need upstream.
+Sync Behavior: None.
+Related PBB Apps: Hotline.
 Evidence: `README.md`; `index.php`; `config.php`.
 
 ### Boundary Overlays
 
-Purpose: Serve GeoJSON overlays for barangay/city/province/region.  
-Main Code: `index.php`, `tools\prepare-boundaries.php`, boundary resources.  
-Database Tables: None.  
-APIs / Routes: `/boundaries/{scope}/{code}.geojson`, `/boundaries.geojson?scope=...&relay_hub_id=...`.  
-Offline Behavior: Uses vendored boundary resources and caches generated outputs locally.  
-Sync Behavior: None.  
-Related PBB Apps: Hotline, Relay/Hub PSGC mapping.  
+Purpose: Serve GeoJSON overlays for barangay/city/province/region.
+Main Code: `index.php`, `tools\prepare-boundaries.php`, boundary resources.
+Database Tables: None.
+APIs / Routes: `/boundaries/{scope}/{code}.geojson`, `/boundaries.geojson?scope=...&relay_hub_id=...`.
+Offline Behavior: Uses vendored boundary resources and caches generated outputs locally.
+Sync Behavior: None.
+Related PBB Apps: Hotline, Relay/Hub PSGC mapping.
 Evidence: `README.md`; `resources\boundaries`; docs.
 
 ### Tile Population / Data Prep
 
-Purpose: Pre-populate local tile coverage and prepare boundary data for deployment.  
-Main Code: `tools\populate-tiles.php`, `tools\data-prep\prepare.php`, `tools\data-prep\verify.php`.  
-Database Tables: None.  
-APIs / Routes: CLI scripts.  
-Offline Behavior: Prepares for offline map use; upstream required during population unless source is local.  
-Sync Behavior: None.  
-Related PBB Apps: Kit Setup.  
+Purpose: Pre-populate local tile coverage and prepare boundary data for deployment.
+Main Code: `tools\populate-tiles.php`, `tools\data-prep\prepare.php`, `tools\data-prep\verify.php`.
+Database Tables: None.
+APIs / Routes: CLI scripts.
+Offline Behavior: Prepares for offline map use; upstream required during population unless source is local.
+Sync Behavior: None.
+Related PBB Apps: Kit Setup.
 Evidence: `README.md`; `tools`. Owner clarification: Kit Setup Data Prep auto-populates tiles for the boundary dictated by Hub HQ hub information during node installation.
 
 ### 6. Database Schema Summary
@@ -1653,7 +1667,7 @@ Evidence:
 
 ### 1. Executive Technical Summary
 
-PBB Chatviewer is a small plain PHP/JS local viewer for `C:\wamp64\www\pbb\chat_log.md`. It parses the shared inter-agent chat log into JSON and renders a searchable/timeline UI with vendored Helper components. It is a personal development coordination/review tool for the project owner, not an operational citizen/responder app.
+PBB Chatviewer is a plain PHP/JS development coordination app for PBB agent chat. It can read from the DB-backed `pbb_agentchat` schema and falls back to parsing `C:\wamp64\www\pbb\chat_log.md` when the database schema is unavailable. It exposes read APIs for messages/agents/topics, token-authenticated claim/post/edit/delete behavior, and renders a searchable timeline UI with vendored Helper components. It is development coordination tooling, not an operational citizen/responder app.
 
 ### 2. Repository Overview
 
@@ -1665,63 +1679,90 @@ PBB Chatviewer is a small plain PHP/JS local viewer for `C:\wamp64\www\pbb\chat_
 | Main Framework | Plain PHP |
 | Frontend Framework | Plain JS modules, Helper UI bundle |
 | Backend Framework | None |
-| Database | No database usage found / Not confirmed from code |
+| Database | MySQL `pbb_agentchat` by default, with Markdown fallback |
 | Realtime Technology | None |
 | Queue / Worker System | None |
 | Package Manager | None found |
-| Runtime Requirements | PHP web server; readable `..\chat_log.md` |
-| Main Entry Points | `index.php`, `api/chat-log.php`, `assets/app.mjs`, `src/ChatLogParser.php` |
+| Runtime Requirements | PHP web server; MySQL for DB-backed chat; readable `..\chat_log.md` fallback |
+| Main Entry Points | `index.php`, `api/chat-log.php`, `api/chat-entries.php`, `api/claim.php`, `assets/app.mjs`, `src/ChatRepository.php`, `src/ChatLogParser.php` |
 | Important Config Files | None found |
-| Important Environment Variables | None found |
+| Important Environment Variables | `PBB_AGENTCHAT_DB_HOST`, `PBB_AGENTCHAT_DB_NAME`, `PBB_AGENTCHAT_DB_USER`, `PBB_AGENTCHAT_DB_PASS`, `PBB_AGENTCHAT_SECRET` |
 | Deployment Target | Local WAMP/Apache PHP app |
 
 ### 3. App Purpose and PBB Role
 
-Chatviewer renders a local collaboration log for review. Owner clarification: it is for personal coordination of Codex agents during PBB ecosystem development. It depends on `chat_log.md` at the PBB root and vendored Helper UI assets. If unavailable, PBB operational apps are not affected; only chat log review is affected.
+Chatviewer stores and displays development coordination messages between PBB project agents. It depends on MySQL when the DB schema exists, falls back to `chat_log.md`, and uses vendored Helper UI assets. If unavailable, PBB operational apps are not affected; only agent coordination/review is affected.
 
 ### 4. User Roles and Permissions
 
 | Role | Purpose | Capabilities | Code Evidence |
 |---|---|---|---|
-| viewer | Local review user | Search/filter/render chat log | `index.php`; `assets\app.mjs`; `api\chat-log.php` |
+| viewer | Review user | Search/filter/render chat log | `index.php`; `assets\app.mjs`; `api\chat-log.php` |
+| claimed agent | Authenticated project identity | Post entries, derive sender from token, edit/delete own entries where API supports it | `api\chat-entries.php`; `ChatRepository.php`; `api\claim.php` |
+| admin agent | Administrative chat identity | Edit/delete entries beyond sender ownership where repository role permits | `ChatRepository.php` |
 
-No authentication or authorization was found.
+Read APIs are unauthenticated. Write/claim/edit/delete APIs use bearer or `X-Agent-Token` project tokens.
 
 ### 5. Main Features and Modules
 
 ### Chat Log API
 
-Purpose: Parse `chat_log.md` and return metadata/projects/topics/messages.  
-Main Code: `api\chat-log.php`, `src\ChatLogParser.php`.  
-Database Tables: None.  
-APIs / Routes: `GET api/chat-log.php`.  
-Offline Behavior: Fully local if file exists.  
-Sync Behavior: None.  
-Related PBB Apps: Shared PBB workspace only.  
-Evidence: `api\chat-log.php`; `src\ChatLogParser.php`.
+Purpose: Return metadata/projects/topics/messages from MySQL when available, otherwise parse `chat_log.md`.
+Main Code: `api\chat-log.php`, `src\ChatRepository.php`, `src\ChatLogParser.php`.
+Database Tables: `chat_entries`, `chat_agents`, `chat_entry_recipients`, `chat_entry_revisions`, `chat_topics`, `chat_audit_logs`.
+APIs / Routes: `GET api/chat-log.php`.
+Offline Behavior: Fully local if file exists.
+Sync Behavior: None.
+Related PBB Apps: Shared PBB workspace only.
+Evidence: `api\chat-log.php`; `src\ChatRepository.php`; `src\ChatLogParser.php`.
+
+### Agent Chat API
+
+Purpose: Let PBB project agents claim identities, post direct/broadcast messages, and query messages by sender/target/search.
+Main Code: `api\chat-entries.php`, `api\claim.php`, `src\ChatRepository.php`.
+Database Tables: `chat_entries`, `chat_agents`, `chat_entry_recipients`, `chat_entry_revisions`, `chat_audit_logs`.
+APIs / Routes: `GET/POST api/chat-entries.php`, claim API, edit/delete endpoints where present.
+Offline Behavior: Works on LAN/local PHP and MySQL.
+Sync Behavior: None.
+Related PBB Apps: All PBB project agents.
+Evidence: `api\chat-entries.php`; `api\claim.php`; `ChatRepository::messages()`, `ChatRepository::createEntry()`.
 
 ### Chat Timeline UI
 
-Purpose: Render search, summary, timeline, direct-only filter.  
-Main Code: `index.php`, `assets\app.mjs`, `assets\app.css`.  
-Database Tables: None.  
-APIs / Routes: Static page plus API fetch.  
-Offline Behavior: Fully local.  
-Sync Behavior: None.  
-Related PBB Apps: Helper UI.  
+Purpose: Render search, summary, timeline, direct-only filter.
+Main Code: `index.php`, `assets\app.mjs`, `assets\app.css`.
+Database Tables: None.
+APIs / Routes: Static page plus API fetch.
+Offline Behavior: Fully local.
+Sync Behavior: None.
+Related PBB Apps: Helper UI.
 Evidence: `index.php`; file inventory.
 
 ### 6. Database Schema Summary
 
-No database usage found / Not confirmed from code
+Chatviewer uses MySQL when the schema exists; otherwise `api/chat-log.php` falls back to parsing the Markdown file.
+
+| Table | Purpose | Important Columns | Relationships / Notes |
+|---|---|---|---|
+| chat_agents | Project identities | project_name, role, token_hash, claim_hash, is_active | Sender identity and token ownership |
+| chat_entries | Messages | sender_agent_id, message_timestamp, body, deleted_at | Sender FK to chat_agents |
+| chat_entry_recipients | Direct/multi-target recipients | entry_id, target_agent_id | Many-to-many recipients |
+| chat_entry_revisions | Edit history | entry_id, body, edited_by_agent_id | Revisions for edited entries |
+| chat_topics | Active topics | body, is_active | Topic list |
+| chat_audit_logs | Security/action audit | agent_id, action, success, details | Claim/post/edit/delete audit |
 
 Relationship map:
 
 ```text
-chat_log.md
-  -> ChatLogParser
-       -> JSON API
-       -> browser timeline UI
+pbb_agentchat
+  ├── chat_agents
+  │     └── chat_entries
+  │           ├── chat_entry_recipients
+  │           └── chat_entry_revisions
+  └── chat_topics
+
+fallback:
+chat_log.md -> ChatLogParser -> JSON API -> browser timeline UI
 ```
 
 ### 7. API and Route Inventory
@@ -1729,14 +1770,23 @@ chat_log.md
 | Method | Path / Endpoint | Purpose | Auth | Handler / File | Notes |
 |---|---|---|---|---|---|
 | GET | `/chatviewer/` | Viewer UI | none | `index.php` | Depending Apache path |
-| GET | `/chatviewer/api/chat-log.php` | Parsed log JSON | none | `api\chat-log.php` | Emits ETag/Last-Modified |
+| GET | `/chatviewer/api/chat-log.php` | DB-backed/fallback parsed log JSON | none | `api\chat-log.php` | Emits ETag/Last-Modified |
+| GET | `/chatviewer/api/chat-entries.php` | Query DB-backed chat entries | none | `api\chat-entries.php`; `ChatRepository::messages()` | Supports `sender`, `target`, `q`, `direct`, `order`; default `order=desc`, `order=asc` gives chronological |
+| POST | `/chatviewer/api/chat-entries.php` | Post broadcast/direct message | bearer or `X-Agent-Token` | `api\chat-entries.php`; `ChatRepository::createEntry()` | Sender is derived from token |
+| POST | `/chatviewer/api/claim.php` | Claim agent token with claim code | claim code | `api\claim.php`; `ChatRepository::claimAgent()` | Token returned once |
 
 ### 8. Data Flow and Operational Flow
 
 ```text
-Browser
+Browser/agent
+-> `api/chat-entries.php?sender=...`
+-> `ChatRepository::messages(order=desc by default)`
+-> recent-first filtered messages
+
+Browser UI
 -> `api/chat-log.php`
--> `ChatLogParser(dirname(__DIR__) . '/../chat_log.md')`
+-> `ChatRepository::payload()` if DB schema exists
+-> fallback `ChatLogParser(dirname(__DIR__) . '/../chat_log.md')`
 -> JSON metadata/messages
 -> `assets/app.mjs` renders summary/timeline
 ```
@@ -1749,19 +1799,21 @@ Fully local; depends only on local PHP and `chat_log.md`. No service worker or q
 
 | Integration | Direction | Protocol / Method | Purpose | Code Evidence |
 |---|---|---|---|---|
-| Chatviewer -> PBB root chat log | File read | Local filesystem | Parse shared chat log | `api\chat-log.php` |
+| Chatviewer -> MySQL `pbb_agentchat` | PDO | Local database | DB-backed agent chat | `Db.php`; `ChatRepository.php` |
+| Chatviewer -> PBB root chat log | File read | Local filesystem | Fallback parse of shared chat log | `api\chat-log.php` |
 | Chatviewer -> Helper UI | Static assets | JS/CSS | UI components | `index.php`; `vendor\pbb-helper` |
 
 ### 11. Deployment and Runtime Architecture
 
-Plain PHP app under WAMP/Apache. No build step or package manager found. The API reads `..\chat_log.md` relative to app directory.
+Plain PHP app under WAMP/Apache. No build step or package manager found. DB configuration comes from `PBB_AGENTCHAT_DB_*` env vars with defaults in `Db.php`; `api/chat-log.php` falls back to `..\chat_log.md` relative to app directory if DB access/schema is unavailable.
 
 ### 12. Security and Privacy Notes
 
 | Risk | Severity | Evidence | Suggested Fix |
 |---|---|---|---|
-| No auth on chat log viewer/API | Medium | `index.php`; `api\chat-log.php` no auth checks | Keep LAN/local only or add authentication |
-| Source path exposed in JSON metadata | Low | `ChatLogParser.php` returns `source_path` | Remove absolute path from API if exposed beyond local machine |
+| Read APIs expose coordination messages without auth | Medium | `api\chat-log.php`; `api\chat-entries.php` GET path | Keep local/private or add read auth before broader exposure |
+| Project chat tokens control sender identity | High | `ChatRepository::authenticate()`; `ChatRepository::createEntry()` | Store `pbb-chat-token.local.json` outside git and rotate/reset lost tokens |
+| Source path exposed in fallback JSON metadata | Low | `ChatLogParser.php` returns `source_path` | Remove absolute path from API if exposed beyond local machine |
 
 ### 13. Realtime Communication
 
@@ -1781,18 +1833,24 @@ No mapping/geolocation functionality found / Not confirmed from code.
 
 | Variable / Config | Purpose | Required | Default / Example | Related Module |
 |---|---|---|---|---|
-| `../chat_log.md` path | Source chat log | Yes | hardcoded relative path | Parser |
+| `PBB_AGENTCHAT_DB_HOST` | DB host | Optional | `127.0.0.1` | DB-backed chat |
+| `PBB_AGENTCHAT_DB_NAME` | DB name | Optional | `pbb_agentchat` | DB-backed chat |
+| `PBB_AGENTCHAT_DB_USER` | DB user | Optional | `root` | DB-backed chat |
+| `PBB_AGENTCHAT_DB_PASS` | DB password | Optional | empty | DB-backed chat |
+| `PBB_AGENTCHAT_SECRET` | HMAC secret for tokens/claim codes | Optional but security-sensitive | `pbb-chatviewer-local-secret` default | Token auth |
+| `../chat_log.md` path | Fallback source chat log | Yes for fallback | hardcoded relative path | Parser |
 
 ### 17. Known Technical Debt and Gaps
 
 | Area | Issue | Evidence | Recommended Next Step |
 |---|---|---|---|
-| Auth | No access control | `api\chat-log.php` | Add auth if served beyond localhost/LAN |
+| Read auth | Read APIs have no access control | `api\chat-log.php`; `api\chat-entries.php` GET | Add read auth if served beyond localhost/LAN |
 | Source coupling | Hardcoded relative source path | `api\chat-log.php` | Make source configurable if needed |
+| Tests | No local automated test suite found | file inventory | Add tests for ordering, token auth, claim/post/edit/delete behavior |
 
 ### 18. Testing Status
 
-No tests found / Not confirmed from code.
+No local automated test suite found / Not confirmed from code. Current behavior was confirmed from `ChatRepository.php` and `api/chat-entries.php`: list queries default to newest-first and support `order=asc`.
 
 ### 19. Evidence Summary
 
@@ -1808,7 +1866,7 @@ Evidence:
 
 ### 1. Executive Technical Summary
 
-PBB Support System is a Laravel 12 support/SITREP operations app. It receives Relay-delivered SITREPs and Hotline support requests, stages the latest valid SITREP per source hub, consolidates SITREPs, displays the current consolidated SITREP, relays latest consolidated SITREPs upstream, and lets support operators process support requests through received/accepted/rejected/assigned/en_route/completed local states. It runs as an operator/admin-facing Laravel web app on a PBB node or upper-level support node such as city/municipality, province, or HQ-side support deployment. It depends on Relay, Hub HQ `hub.json`, MapServer, local MySQL, queues, and vendored SITREP SDKs.
+PBB Support System is a Laravel 12 support/SITREP operations app. It receives Relay-delivered SITREPs and Hotline support requests, stages the latest valid SITREP per source hub, consolidates SITREPs, displays the current consolidated SITREP, relays latest consolidated SITREPs upstream, and lets support operators process support requests through received/accepted/rejected/assigned/en_route/completed local states. Current code also confirms a Relay source-heartbeat webhook receiver at `POST /api/relay/source-heartbeats` and Support-specific Realtime configuration for publishing heartbeat snapshots. It runs as an operator/admin-facing Laravel web app on a PBB node or upper-level support node such as city/municipality, province, or HQ-side support deployment. It depends on Relay, Hub HQ `hub.json`, MapServer, local MySQL, queues, Realtime, and vendored SITREP SDKs.
 
 ### 2. Repository Overview
 
@@ -1821,18 +1879,18 @@ PBB Support System is a Laravel 12 support/SITREP operations app. It receives Re
 | Frontend Framework | Vite, Tailwind/Vite plugin, custom JS, vendored Helper UI, MapLibre-style map code |
 | Backend Framework | Laravel |
 | Database | MySQL in `.env.example`; Laravel migrations for support settings, SITREP pipeline, support requests, jobs/cache/sessions |
-| Realtime Technology | Realtime settings exist, but no WebSocket integration confirmed in current routes |
+| Realtime Technology | Support-specific Realtime client/project settings and source-heartbeat publisher confirmed |
 | Queue / Worker System | Laravel database queue; jobs `SubmitSitrepRelayDelivery`, `SubmitSupportRequestUpdateDelivery`; scheduler commands |
 | Package Manager | Composer, npm |
 | Runtime Requirements | PHP `^8.2`, Node `>=22` per `release.json`, MySQL, queue worker, scheduler |
 | Main Entry Points | `public/index.php`, `artisan`, `routes/web.php`, `routes/api.php`, `routes/console.php`, `resources/js/app.js` |
 | Important Config Files | `.env.example`, `config/services.php`, `routes/*.php`, `release.json`, `vite.config.js` |
-| Important Environment Variables | `APP_URL`, `DB_*`, `SESSION_*`, `QUEUE_CONNECTION`, `RELAY_HUB_JSON_URL`; support runtime settings store Relay URL/token and handler token |
+| Important Environment Variables | `APP_URL`, `DB_*`, `SESSION_*`, `QUEUE_CONNECTION`, `RELAY_HUB_JSON_URL`; support runtime settings store Relay URL/token, handler token, source-heartbeat webhook token, Realtime client/project codes, and CA bundle |
 | Deployment Target | Laravel app under WAMP/Apache or PHP web server; Kit-bundle compatible per `release.json` |
 
 ### 3. App Purpose and PBB Role
 
-Support System solves upper-level or receiving-agency support operations: ingest source SITREPs, consolidate current status, display source/coverage context, receive Hotline support requests, manage support action lifecycle, and send lifecycle updates back through Relay. Hotline and Relay depend on it when support requests need downstream handling. It depends on Relay for inbound/outbound envelopes, Hub HQ/Relay `hub.json` for hub identity/uplinks, MapServer for maps and boundaries, and local database/queue/scheduler. If unavailable, support intake and consolidated SITREP support operations stop, but Hotline local incident handling can still run.
+Support System solves upper-level or receiving-agency support operations: ingest source SITREPs, consolidate current status, display source/coverage context, receive Hotline support requests, manage support action lifecycle, consume Relay source-heartbeat webhooks, and send lifecycle updates back through Relay. Hotline and Relay depend on it when support requests need downstream handling. It depends on Relay for inbound/outbound envelopes and heartbeat webhooks, Hub HQ/Relay `hub.json` for hub identity/uplinks, MapServer for maps and boundaries, Realtime for heartbeat snapshot publishing, and local database/queue/scheduler. If unavailable, support intake, consolidated SITREP support operations, and Support heartbeat dashboard updates stop, but Hotline local incident handling can still run.
 
 ### 4. User Roles and Permissions
 
@@ -1841,6 +1899,7 @@ Support System solves upper-level or receiving-agency support operations: ingest
 | authenticated user | Support dashboard operator/admin shell | Login, view dashboard/current SITREP/source heartbeats/support requests, update own user/password | `routes\web.php`; `AuthController.php`; `UserController.php` |
 | admin-like authenticated user | Manage users/settings | Admin user CRUD and settings update routes are inside generic `auth` middleware; no route-level role guard confirmed | `routes\web.php`; `AdminUsersController.php`; `SettingsController.php`; `User.php` role column |
 | Relay handler client | Machine-to-machine Relay handler | POST inbound SITREP/support request/lifecycle envelopes with bearer token from support settings | `routes\api.php`; `RelaySitrepHandlerController.php`; `RelaySupportRequestHandlerController.php` |
+| Relay source-heartbeat webhook client | Machine-to-machine Relay operational webhook | POST `source.heartbeat.updated` with bearer or `X-Relay-Webhook-Key` token; Support deduplicates by `event_id` | `routes\api.php`; `RelaySourceHeartbeatController.php`; `SourceHeartbeatRealtimeTest.php` |
 
 Formal route-level role authorization beyond authentication was not confirmed.
 
@@ -1848,57 +1907,68 @@ Formal route-level role authorization beyond authentication was not confirmed.
 
 ### SITREP Ingestion and Staging
 
-Purpose: Receive Relay SITREP envelopes, validate/normalize them, and stage latest valid report per source hub.  
-Main Code: `RelaySitrepHandlerController.php`, `DatabaseSitrepStagingStore.php`, vendored `pbb-sitrep-consolidator`.  
-Database Tables: `relay_inbound_sitreps`, `sitrep_stagings`.  
-APIs / Routes: `POST /api/relay/sitreps`.  
-Offline Behavior: Inbound processing is local once Relay delivers; source delivery depends on Relay reachability.  
-Sync Behavior: Latest valid SITREP per source hub is staged locally.  
-Related PBB Apps: PBB Relay, Hotline, Hub/HQ.  
+Purpose: Receive Relay SITREP envelopes, validate/normalize them, and stage latest valid report per source hub.
+Main Code: `RelaySitrepHandlerController.php`, `DatabaseSitrepStagingStore.php`, vendored `pbb-sitrep-consolidator`.
+Database Tables: `relay_inbound_sitreps`, `sitrep_stagings`.
+APIs / Routes: `POST /api/relay/sitreps`.
+Offline Behavior: Inbound processing is local once Relay delivers; source delivery depends on Relay reachability.
+Sync Behavior: Latest valid SITREP per source hub is staged locally.
+Related PBB Apps: PBB Relay, Hotline, Hub/HQ.
 Evidence: `routes\api.php`; `database\migrations\2026_05_30_020000_create_sitrep_pipeline_tables.php`.
 
 ### SITREP Consolidation and Upstream Relay
 
-Purpose: Consolidate staged SITREPs into one current SITREP and send latest-only upstream through Relay.  
-Main Code: `SitrepConsolidationService.php`, `SitrepRelayOutboxService.php`, `SitrepRelaySubmissionService.php`, `ConsolidateSitreps.php`, `SubmitLatestSitrepToRelay.php`.  
-Database Tables: `consolidated_sitreps`, `sitrep_relay_deliveries`.  
-APIs / Routes: CLI `support:sitreps:consolidate`, `support:sitreps:relay-latest`; `GET /api/sitreps/current`.  
-Offline Behavior: Consolidation works locally from staged data; upstream relay submission waits/fails if Relay URL/token or uplink target is unavailable.  
-Sync Behavior: Sends `sitrep.record` envelopes to Relay `/api/v1/messages` with `X-Relay-Key`.  
-Related PBB Apps: PBB Relay, Hub/HQ.  
+Purpose: Consolidate staged SITREPs into one current SITREP and send latest-only upstream through Relay.
+Main Code: `SitrepConsolidationService.php`, `SitrepRelayOutboxService.php`, `SitrepRelaySubmissionService.php`, `ConsolidateSitreps.php`, `SubmitLatestSitrepToRelay.php`.
+Database Tables: `consolidated_sitreps`, `sitrep_relay_deliveries`.
+APIs / Routes: CLI `support:sitreps:consolidate`, `support:sitreps:relay-latest`; `GET /api/sitreps/current`.
+Offline Behavior: Consolidation works locally from staged data; upstream relay submission waits/fails if Relay URL/token or uplink target is unavailable.
+Sync Behavior: Sends `sitrep.record` envelopes to Relay `/api/v1/messages` with `X-Relay-Key`.
+Related PBB Apps: PBB Relay, Hub/HQ.
 Evidence: `routes\console.php`; `SitrepRelaySubmissionService.php`; `release.json`.
 
 ### Support Request Intake and Lifecycle
 
-Purpose: Receive Hotline support requests, validate required justification fields, track support actions, and relay lifecycle updates back to Hotline.  
-Main Code: `RelaySupportRequestHandlerController.php`, `SupportRequestsController.php`, `SupportRequestLifecycleRelayService.php`.  
-Database Tables: `support_requests`, `support_request_messages`, `support_request_actions`, `support_request_update_deliveries`.  
-APIs / Routes: `POST /api/relay/support-requests`, `POST /api/relay/support-request-lifecycle`, authenticated `/api/support-requests/*` action routes.  
-Offline Behavior: Intake/action state persists locally; outbound lifecycle update delivery depends on Relay connectivity.  
-Sync Behavior: Local `completed` maps to outbound `support.request.fulfilled`; outbound lifecycle updates use Relay `/api/v1/messages`.  
-Related PBB Apps: Hotline, Relay.  
+Purpose: Receive Hotline support requests, validate required justification fields, track support actions, and relay lifecycle updates back to Hotline.
+Main Code: `RelaySupportRequestHandlerController.php`, `SupportRequestsController.php`, `SupportRequestLifecycleRelayService.php`.
+Database Tables: `support_requests`, `support_request_messages`, `support_request_actions`, `support_request_update_deliveries`.
+APIs / Routes: `POST /api/relay/support-requests`, `POST /api/relay/support-request-lifecycle`, authenticated `/api/support-requests/*` action routes.
+Offline Behavior: Intake/action state persists locally; outbound lifecycle update delivery depends on Relay connectivity.
+Sync Behavior: Local `completed` maps to outbound `support.request.fulfilled`; outbound lifecycle updates use Relay `/api/v1/messages`.
+Related PBB Apps: Hotline, Relay.
 Evidence: `routes\web.php`; `routes\api.php`; `SupportRequestLifecycleRelayService.php`.
+
+### Source Heartbeat Webhook and Realtime Publish
+
+Purpose: Receive Relay-owned `source.heartbeat.updated` operational webhook events and publish normalized source heartbeat snapshots to the Support Realtime room.
+Main Code: `RelaySourceHeartbeatController.php`, `SourceHeartbeatRealtimePublisher.php`, `SupportSettings.php`.
+Database Tables: Cache is used for event-id idempotency; settings are stored in `support_settings`.
+APIs / Routes: `POST /api/relay/source-heartbeats`; authenticated `GET /api/source-heartbeats` remains an initial load/fallback path.
+Offline Behavior: Webhook receipt is local if Relay can reach Support; Realtime publish may fail without rejecting accepted webhook receipt.
+Sync Behavior: This is operational telemetry, not a normal `hub_relay_messages` app-to-app message.
+Related PBB Apps: Relay, Realtime, Kit Setup.
+Evidence: `C:\wamp64\www\pbb\support\routes\api.php`; `C:\wamp64\www\pbb\support\app\Http\Controllers\Api\RelaySourceHeartbeatController.php`; `C:\wamp64\www\pbb\support\tests\Feature\SourceHeartbeatRealtimeTest.php`; `C:\wamp64\www\pbb\kit-setup\docs\relay-hotline-support-data-prep-contract.md`.
 
 ### Support Map and Dashboard
 
-Purpose: Display current support/SITREP context with map and source boundaries.  
-Main Code: `SupportMapConfigController.php`, `SupportMapBoundaryController.php`, `resources/js/maps/supportDashboardMap.js`, `MapServerUrls.php`.  
-Database Tables: Uses current SITREP/support tables for data; no dedicated map table.  
-APIs / Routes: `GET /support-map.json`, `GET /map-boundaries/{scope}/{code}.geojson`.  
-Offline Behavior: LAN/local operation depends on local MapServer cached/prepared tiles and boundaries.  
-Sync Behavior: None.  
-Related PBB Apps: PBB MapServer, Hub/HQ.  
+Purpose: Display current support/SITREP context with map and source boundaries.
+Main Code: `SupportMapConfigController.php`, `SupportMapBoundaryController.php`, `resources/js/maps/supportDashboardMap.js`, `MapServerUrls.php`.
+Database Tables: Uses current SITREP/support tables for data; no dedicated map table.
+APIs / Routes: `GET /support-map.json`, `GET /map-boundaries/{scope}/{code}.geojson`.
+Offline Behavior: LAN/local operation depends on local MapServer cached/prepared tiles and boundaries.
+Sync Behavior: None.
+Related PBB Apps: PBB MapServer, Hub/HQ.
 Evidence: `routes\web.php`; `app\Support\Maps\MapServerUrls.php`.
 
 ### Settings and Admin Shell
 
-Purpose: Store encrypted support settings such as Relay URL/token, handler token, target systems, realtime settings, and alert policy.  
-Main Code: `SupportSettings.php`, `SettingsController.php`, `AdminUsersController.php`.  
-Database Tables: `support_settings`, `users`.  
-APIs / Routes: Authenticated `GET/POST /api/settings`, `/api/admin/users`.  
-Offline Behavior: Local settings storage works offline.  
-Sync Behavior: Settings control Relay submissions but do not sync themselves.  
-Related PBB Apps: Relay, Realtime, MapServer.  
+Purpose: Store encrypted support settings such as Relay URL/token, handler token, target systems, realtime settings, and alert policy.
+Main Code: `SupportSettings.php`, `SettingsController.php`, `AdminUsersController.php`.
+Database Tables: `support_settings`, `users`.
+APIs / Routes: Authenticated `GET/POST /api/settings`, `/api/admin/users`.
+Offline Behavior: Local settings storage works offline.
+Sync Behavior: Settings control Relay submissions but do not sync themselves.
+Related PBB Apps: Relay, Realtime, MapServer.
 Evidence: `SupportSettings.php`; `routes\web.php`.
 
 ### 6. Database Schema Summary
@@ -1947,6 +2017,7 @@ users
 | GET/POST | `/api/support-requests*` | Support request list/detail/actions | auth | `SupportRequestsController` | receive/accept/reject/assign/en-route/complete |
 | GET | `/api/sitreps/current` | Current consolidated SITREP | auth | `CurrentSitrepController` | |
 | GET | `/api/source-heartbeats` | Relay source heartbeat lookup | auth | `SourceHeartbeatController` | Calls Relay source-heartbeats endpoint |
+| POST | `/api/relay/source-heartbeats` | Relay source heartbeat webhook receiver | bearer or `X-Relay-Webhook-Key` token | `RelaySourceHeartbeatController` | Accepts `event_type=source.heartbeat.updated`, deduplicates by `event_id`, publishes to Realtime |
 | POST | `/api/relay/sitreps` | Relay handler for SITREPs | bearer token from settings | `RelaySitrepHandlerController` | Throttled |
 | POST | `/api/relay/support-requests` | Relay handler for support.request | bearer token from settings | `RelaySupportRequestHandlerController` | Throttled |
 | POST | `/api/relay/support-request-lifecycle` | Relay handler for request lifecycle/cancel | bearer token from settings | `RelaySupportRequestLifecycleHandlerController` | Throttled |
@@ -2010,7 +2081,7 @@ Support is a Laravel app with `public/index.php`, Composer/npm, MySQL, Vite buil
 
 ### 13. Realtime Communication
 
-No realtime functionality found / Not confirmed from code. Settings include realtime URL/client/project/secret defaults, but no active Realtime route or WebSocket use was confirmed.
+Support has confirmed backend-to-Realtime publishing for source heartbeat snapshots. Relay posts `source.heartbeat.updated` to `POST /api/relay/source-heartbeats`; Support normalizes the source/heartbeat/rollup payload, deduplicates by `event_id`, and calls `SourceHeartbeatRealtimePublisher` to publish an availability/sources snapshot. Kit and Realtime now use Support-specific defaults such as `clt_PBB_SUPPORT`, `prj_SUPPORT_SERVER`, and `prj_SUPPORT_ADMIN`, plus a Support-specific backend ingress secret. Browser WebSocket usage inside Support was not confirmed from the reviewed files.
 
 ### 14. Mapping and Geolocation
 
@@ -2037,6 +2108,9 @@ Support uses dashboard map code and MapServer URLs. `GET /support-map.json` retu
 | `support_settings.relayUrl` | Relay base URL | Required for outbound relay | `https://relay.pbb.ph` | Settings DB |
 | `support_settings.relayToken` | Relay client token | Required for outbound relay | empty default | Settings DB |
 | `support_settings.relayHandlerToken` | Inbound Relay handler bearer token | Required for handlers | empty default | Settings DB |
+| `support_settings.sourceHeartbeatWebhookToken` | Inbound Relay source-heartbeat webhook token | Required for `/api/relay/source-heartbeats` | generated by Kit as `support_source_heartbeat_webhook_token` | Source heartbeat webhook |
+| Support Realtime settings | Realtime client/project/ingress config | Required for heartbeat publish | `clt_PBB_SUPPORT`, `prj_SUPPORT_SERVER`, `prj_SUPPORT_ADMIN` | Source heartbeat Realtime publisher |
+| `support_settings.relayCaBundle` / `relay_ca_bundle` | CA bundle for Support outbound Relay HTTPS | Required on local TLS installs | Kit-provided local fullchain path | Relay HTTP options |
 | `services.map_server.url` | MapServer base URL | Optional | `https://mapserver.pbb.ph` | Maps |
 
 ### 17. Known Technical Debt and Gaps
@@ -2045,7 +2119,7 @@ Support uses dashboard map code and MapServer URLs. `GET /support-map.json` retu
 |---|---|---|---|
 | Authorization | Admin routes appear auth-only | `routes\web.php` | Add role middleware or document single-role operator model |
 | Default credentials | README documents default login | `README.md` | Enforce password change during provisioning |
-| Realtime settings | Realtime config fields exist but integration not confirmed | `SupportSettings.php` | Either implement or remove/mark future realtime scope |
+| Realtime frontend behavior | Backend Realtime publish is confirmed, but browser socket behavior was not reviewed | `SourceHeartbeatRealtimePublisher.php`; `SourceHeartbeatRealtimeTest.php` | Document Support UI subscription behavior when finalized |
 | Endpoint metadata | Support may need remote Hotline media/app URLs; resolver/app endpoint contract remains separate | Support/Relay media flow context | Use Landing/Hub registry or Relay metadata for app URL discovery |
 | Tests for full production topology | App has tests, but complete multi-node SITREP/support topology not verified here | Local review only | Add integration tests with Relay + Hotline fixtures |
 
@@ -2065,6 +2139,8 @@ Evidence:
 - `C:\wamp64\www\pbb\support\database\migrations`
 - `C:\wamp64\www\pbb\support\app\Support`
 - `C:\wamp64\www\pbb\support\app\Http\Controllers\Api`
+- `C:\wamp64\www\pbb\support\app\Http\Controllers\Api\RelaySourceHeartbeatController.php`
+- `C:\wamp64\www\pbb\support\tests\Feature\SourceHeartbeatRealtimeTest.php`
 
 ---
 
@@ -2110,46 +2186,46 @@ Landing solves node launch/discovery and public-safe hub metadata exposure. It r
 
 ### Local Launcher
 
-Purpose: Render the local PBB launcher from hub projection and registered app records.  
-Main Code: `App.php`, `Renderer.php`, `public\assets\app.js`, `public\assets\app.css`.  
-Database Tables: No database.  
-APIs / Routes: `GET /` on local host `pbb.ph` or dev hosts.  
-Offline Behavior: Works locally if registry and Relay `hub.json` file are available; degrades if hub source missing.  
-Sync Behavior: None.  
-Related PBB Apps: Kit Setup, Relay, installed PBB apps.  
+Purpose: Render the local PBB launcher from hub projection and registered app records.
+Main Code: `App.php`, `Renderer.php`, `public\assets\app.js`, `public\assets\app.css`.
+Database Tables: No database.
+APIs / Routes: `GET /` on local host `pbb.ph` or dev hosts.
+Offline Behavior: Works locally if registry and Relay `hub.json` file are available; degrades if hub source missing.
+Sync Behavior: None.
+Related PBB Apps: Kit Setup, Relay, installed PBB apps.
 Evidence: `README.md`; `App.php`.
 
 ### Public Hub Metadata
 
-Purpose: Serve sanitized hub metadata and app endpoint projection.  
-Main Code: `HubSource.php`, `HubProjection.php`, `App.php`.  
-Database Tables: None.  
-APIs / Routes: `GET /.well-known/pbb-hub.json` on public hub domain from `hub.json`.  
-Offline Behavior: Reads local Relay `public/hub.json`; public access requires domain/vhost reachability.  
-Sync Behavior: None; projection reflects local files/registry.  
-Related PBB Apps: Relay, Hub/HQ, Kit Setup.  
+Purpose: Serve sanitized hub metadata and app endpoint projection.
+Main Code: `HubSource.php`, `HubProjection.php`, `App.php`.
+Database Tables: None.
+APIs / Routes: `GET /.well-known/pbb-hub.json` on public hub domain from `hub.json`.
+Offline Behavior: Reads local Relay `public/hub.json`; public access requires domain/vhost reachability.
+Sync Behavior: None; projection reflects local files/registry.
+Related PBB Apps: Relay, Hub/HQ, Kit Setup.
 Evidence: `config\landing.php`; `HubProjection.php`; `tests\run.php`.
 
 ### Internal App Registry
 
-Purpose: Store app launch/health/public gateway metadata registered by Kit Setup.  
-Main Code: `RegistryStore.php`, `Auth.php`, `App.php`.  
-Database Tables: JSON file `storage\registry.json`.  
-APIs / Routes: `GET /internal/registry/apps`, `PUT /internal/registry/apps/{appId}`, `DELETE /internal/registry/apps/{appId}` on local host only.  
-Offline Behavior: Fully local file store.  
-Sync Behavior: None.  
-Related PBB Apps: Kit Setup, all registered apps.  
+Purpose: Store app launch/health/public gateway metadata registered by Kit Setup.
+Main Code: `RegistryStore.php`, `Auth.php`, `App.php`.
+Database Tables: JSON file `storage\registry.json`.
+APIs / Routes: `GET /internal/registry/apps`, `PUT /internal/registry/apps/{appId}`, `DELETE /internal/registry/apps/{appId}` on local host only.
+Offline Behavior: Fully local file store.
+Sync Behavior: None.
+Related PBB Apps: Kit Setup, all registered apps.
 Evidence: `RegistryStore.php`; `README.md`.
 
 ### Relay Public Gateway
 
-Purpose: Forward public machine-to-machine Relay API traffic from hub domain `/relay/api/v1/*` to registered local Relay target.  
-Main Code: `Gateway.php`, `RegistryStore.php`, `HubProjection.php`.  
-Database Tables: Registry JSON.  
-APIs / Routes: `/relay/api/v1/*` on public hub domain.  
-Offline Behavior: Requires registered Relay target and network reachability to local Relay.  
-Sync Behavior: Forwards HTTP only; Relay handles store-and-forward.  
-Related PBB Apps: Relay, Hub/HQ, FRP/public exposure path.  
+Purpose: Forward public machine-to-machine Relay API traffic from hub domain `/relay/api/v1/*` to registered local Relay target.
+Main Code: `Gateway.php`, `RegistryStore.php`, `HubProjection.php`.
+Database Tables: Registry JSON.
+APIs / Routes: `/relay/api/v1/*` on public hub domain.
+Offline Behavior: Requires registered Relay target and network reachability to local Relay.
+Sync Behavior: Forwards HTTP only; Relay handles store-and-forward.
+Related PBB Apps: Relay, Hub/HQ, FRP/public exposure path.
 Evidence: `Gateway.php`; `tests\run.php`.
 
 ### 6. Database Schema Summary
@@ -2295,7 +2371,7 @@ Evidence:
 
 ### 1. Executive Technical Summary
 
-PBB Kit Setup is an Electron/Node desktop installer shell plus PHP runner that orchestrates installation, package staging, DNS, SSL/vhost, firewall, service management, data prep, smoke checks, updates, and bundled PBB app packages. It is setup/provisioning-only and targets Windows local node machines. Owner clarification: node installation validates an admin-provided Hub HQ hub ID and hub token, registers all PBB processes as Windows services, and runs Data Prep to populate MapServer tiles for the Hub HQ-defined boundary. Post-briefing updates confirm an updater policy that allows app-owned additive/preservative database migrations while blocking destructive migration patterns.
+PBB Kit Setup is an Electron/Node desktop installer shell plus PHP runner that orchestrates installation, package staging, DNS, SSL/vhost, firewall, service management, data prep, smoke checks, updates, and bundled PBB app packages. It is setup/provisioning-only and targets Windows local node machines. Current local `package.json` reports version `0.1.163`; the bundled manifest includes Landing, MapServer, Maestro, Realtime, Relay, Hotline, and Support as first-class app packages, plus the Cebu MapServer boundary supplemental pack. Owner clarification: node installation validates an admin-provided Hub HQ hub ID and hub token, registers all PBB processes as Windows services, and runs Data Prep to populate MapServer tiles for the Hub HQ-defined boundary. Current Kit docs/code also confirm the finalized Hotline/Relay/Support Data Prep contract and Support source-heartbeat webhook seeding.
 
 ### 2. Repository Overview
 
@@ -2319,7 +2395,7 @@ PBB Kit Setup is an Electron/Node desktop installer shell plus PHP runner that o
 
 ### 3. App Purpose and PBB Role
 
-Kit Setup orchestrates installing multiple PBB apps on a target machine, using each app's own bundle/installer. It bundles MapServer, Maestro, Realtime, Relay, and Hotline package ZIPs per `package.json`. It is responsible for local node provisioning rather than runtime emergency operations. Owner clarification: it validates Hub HQ hub ID/token information during installation, registers all processes as Windows services, and runs Data Prep for MapServer tile population. If unavailable, existing installed apps may run, but initial setup/update/service orchestration becomes manual.
+Kit Setup orchestrates installing multiple PBB apps on a target machine, using each app's own bundle/installer. It currently bundles Landing, MapServer, Maestro, Realtime, Relay, Hotline, and Support package ZIPs per `package.json` and `packages/packages.bundled.json`. It is responsible for local node provisioning rather than runtime emergency operations. Owner clarification: it validates Hub HQ hub ID/token information during installation, registers all processes as Windows services, and runs Data Prep for MapServer tile population. If unavailable, existing installed apps may run, but initial setup/update/service orchestration becomes manual.
 
 ### 4. User Roles and Permissions
 
@@ -2334,59 +2410,70 @@ No multi-user auth system was found.
 
 ### Desktop Installer Shell
 
-Purpose: Electron UI for setup workflow.  
-Main Code: `desktop\main.js`, `desktop\preload.js`, `desktop\renderer.js`, `desktop\config-builder.js`.  
-Database Tables: None.  
-APIs / Routes: Electron IPC, not HTTP.  
-Offline Behavior: Local desktop app; bundled packages can install offline if present.  
-Sync Behavior: Unknown / Not confirmed from code.  
-Related PBB Apps: All bundled apps.  
+Purpose: Electron UI for setup workflow.
+Main Code: `desktop\main.js`, `desktop\preload.js`, `desktop\renderer.js`, `desktop\config-builder.js`.
+Database Tables: None.
+APIs / Routes: Electron IPC, not HTTP.
+Offline Behavior: Local desktop app; bundled packages can install offline if present.
+Sync Behavior: Unknown / Not confirmed from code.
+Related PBB Apps: All bundled apps.
 Evidence: `package.json`; `desktop`.
 
 ### PHP Setup Runner
 
-Purpose: Execute install actions and produce reports/checkpoints.  
-Main Code: `bin\kit-setup.php`, `src\KitSetupRunner.php`.  
-Database Tables: None directly.  
-APIs / Routes: CLI actions.  
-Offline Behavior: Local. Remote checks/actions may need network.  
-Sync Behavior: Unknown / Not confirmed from code.  
-Related PBB Apps: MapServer, Maestro, Realtime, Relay, Hotline.  
+Purpose: Execute install actions and produce reports/checkpoints.
+Main Code: `bin\kit-setup.php`, `src\KitSetupRunner.php`.
+Database Tables: None directly.
+APIs / Routes: CLI actions.
+Offline Behavior: Local. Remote checks/actions may need network.
+Sync Behavior: Unknown / Not confirmed from code.
+Related PBB Apps: MapServer, Maestro, Realtime, Relay, Hotline.
 Evidence: `README.md`; `src\KitSetupRunner.php`.
 
 ### Bundled Package Management
 
-Purpose: Stage/verify bundled app packages.  
-Main Code: `scripts\build-bundled-packages.ps1`, `packages\packages.bundled.json`.  
-Database Tables: None.  
-APIs / Routes: CLI/script.  
-Offline Behavior: Bundled ZIPs support offline install.  
-Sync Behavior: Unknown.  
-Related PBB Apps: MapServer, Maestro, Realtime, Relay, Hotline.  
+Purpose: Stage/verify bundled app packages.
+Main Code: `scripts\build-bundled-packages.ps1`, `packages\packages.bundled.json`.
+Database Tables: None.
+APIs / Routes: CLI/script.
+Offline Behavior: Bundled ZIPs support offline install.
+Sync Behavior: Unknown.
+Related PBB Apps: Landing, MapServer, Maestro, Realtime, Relay, Hotline, Support.
 Evidence: `package.json`; `packages`.
+
+### Relay, Hotline, Support Data Prep Contract
+
+Purpose: Generate the machine identities, handler mappings, tokens, and webhook seed data needed for Hotline-to-Support flows through Relay.
+Main Code: `src\KitSetupRunner.php`, `docs\relay-hotline-support-data-prep-contract.md`.
+Database Tables: None directly; Relay Data Prep writes `hub_relay_clients`, `hub_relay_handlers`, `relay_webhook_subscribers`; Support Data Prep writes encrypted settings.
+APIs / Routes: Data Prep config generation, app installer/data-prep tools.
+Offline Behavior: Local config generation works offline; generated HTTPS endpoints and CA bundle validation depend on local TLS/DNS setup.
+Sync Behavior: Seeds Relay identities for `hotline.command`, `sitrep.ingestor`, and `support.dispatch`; seeds Support Source Heartbeats webhook subscriber for `source.heartbeat.updated`.
+Related PBB Apps: Hotline, Relay, Support, Realtime.
+Evidence: `C:\wamp64\www\pbb\kit-setup\docs\relay-hotline-support-data-prep-contract.md`; `C:\wamp64\www\pbb\kit-setup\src\KitSetupRunner.php`.
 
 ### App Bundle Update Policy
 
-Purpose: Apply app bundle updates while guarding local node data.  
-Main Code: `src\KitSetupRunner.php`, `docs\updater-workflow.md`, `docs\app-bundle-versioning-and-update-contract.md`.  
-Database Tables: None directly in Kit Setup; app-owned migrations are delegated to each app.  
-APIs / Routes: `update-plan`, `update-apply` runner actions.  
-Offline Behavior: Works with local/bundled update packages when available.  
-Sync Behavior: None.  
-Related PBB Apps: Hotline, Relay, Realtime, Maestro, MapServer.  
+Purpose: Apply app bundle updates while guarding local node data.
+Main Code: `src\KitSetupRunner.php`, `docs\updater-workflow.md`, `docs\app-bundle-versioning-and-update-contract.md`.
+Database Tables: None directly in Kit Setup; app-owned migrations are delegated to each app.
+APIs / Routes: `update-plan`, `update-apply` runner actions.
+Offline Behavior: Works with local/bundled update packages when available.
+Sync Behavior: None.
+Related PBB Apps: Hotline, Relay, Realtime, Maestro, MapServer.
 Evidence: `src\KitSetupRunner.php`; `docs\updater-workflow.md`; `docs\app-bundle-versioning-and-update-contract.md`.
 
 Policy confirmed from code/docs: `requires_database_migration=true` is allowed only when the bundle declares an additive/preservative app-owned migration policy. Kit Setup passes migration intent to the app installer, blocks destructive/unsupported/dropped-table-or-column/overwrite-style updates by policy, and treats file rollback separately from database rollback/repair.
 
 ### Runtime Service Management
 
-Purpose: Plan/start/stop/verify app services and clean WinSW services.  
-Main Code: `KitSetupRunner.php`, `bin\cleanup-winsw-services.ps1`, `assets\winsw`.  
-Database Tables: None.  
-APIs / Routes: runner actions `service-plan`, `service-start`, `service-stop`, `service-verify`.  
-Offline Behavior: Local.  
-Sync Behavior: None.  
-Related PBB Apps: Relay queue, Realtime gateway, Hotline workers, Maestro.  
+Purpose: Plan/start/stop/verify app services and clean WinSW services.
+Main Code: `KitSetupRunner.php`, `bin\cleanup-winsw-services.ps1`, `assets\winsw`.
+Database Tables: None.
+APIs / Routes: runner actions `service-plan`, `service-start`, `service-stop`, `service-verify`.
+Offline Behavior: Local.
+Sync Behavior: None.
+Related PBB Apps: Relay queue, Realtime gateway, Hotline workers, Maestro.
 Evidence: `src\KitSetupRunner.php`; `assets\winsw`.
 
 ### 6. Database Schema Summary
@@ -2432,7 +2519,7 @@ Installer operator
 
 ### 9. Offline-First Behavior
 
-Kit Setup can install from bundled packages listed in `package.json`, including MapServer, Maestro, Realtime, Relay, and Hotline ZIPs. Owner clarification and code evidence confirm WampServer and Technitium DNS as node installation prerequisites; Kit Setup validates/probes WAMP services and has Technitium DNS apply/verify actions. Remote dependency checks, SSL/remote-check, PBB-managed FRP tunnel registration, upstream tile population, or Hub validation may require network depending on config. Owner clarification: node installation validates admin-provided Hub HQ hub ID/token data and Setup Data Prep populates MapServer tiles from the Hub HQ-defined boundary. Exact offline guarantee is Unknown / Not confirmed from code.
+Kit Setup can install from bundled packages listed in `package.json` and `packages/packages.bundled.json`, including Landing, MapServer, Maestro, Realtime, Relay, Hotline, and Support ZIPs plus the Cebu MapServer boundary pack. Owner clarification and code evidence confirm WampServer and Technitium DNS as node installation prerequisites; Kit Setup validates/probes WAMP services and has Technitium DNS apply/verify actions. Remote dependency checks, SSL/remote-check, PBB-managed FRP tunnel registration, upstream tile population, or Hub validation may require network depending on config. Owner clarification: node installation validates admin-provided Hub HQ hub ID/token data and Setup Data Prep populates MapServer tiles from the Hub HQ-defined boundary. Exact offline guarantee is Unknown / Not confirmed from code.
 
 ### 10. Integration with Other PBB Apps
 

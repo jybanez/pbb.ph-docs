@@ -26,6 +26,10 @@ Fresh-scan updates verified in selected repositories:
 - Helper UI bundle updates include password fields, number-stepper form fields, row `className` alias support, and `ui.navigation.stack`.
 - PBB Support System at `C:\wamp64\www\pbb\support` is now reviewed as a Laravel SITREP/support operations app.
 - PBB Landing at `C:\wamp64\www\pbb\landing` is now reviewed as a lightweight PHP local launcher/public hub metadata/gateway surface.
+- 2026-06-22 alignment: Kit Setup `0.1.163` now bundles Landing, MapServer, Maestro, Realtime, Relay, Hotline, and Support as first-class app packages, plus the Cebu MapServer boundary pack.
+- 2026-06-22 alignment: the finalized Relay/Hotline/Support contract uses `hotline.command`, `sitrep.ingestor`, and `support.dispatch` machine identities; `sitrep.record` and `support.request` are separate flows.
+- 2026-06-22 alignment: Relay now has operational `source.heartbeat.updated` webhooks stored separately from normal app-to-app messages, and Support receives those events at `POST /api/relay/source-heartbeats`.
+- 2026-06-22 alignment: Chatviewer is DB-backed when `pbb_agentchat` exists, supports token-authenticated agent posting/claiming, and `GET /api/chat-entries.php` defaults to newest-first with `order=asc` available.
 
 Owner clarifications added after code review:
 
@@ -52,7 +56,7 @@ Owner clarifications added after code review:
 | PBB Maestro | Monitoring / Maintenance Tools | Local node | Operators/admins, monitored workers | Worker heartbeat/event monitoring and stale status computation |
 | PBB Realtime Server | Realtime Communication Services | Local node | Product apps, browsers, realtime admins | WebSocket gateway, admission, rooms, presence, chat, calls, media events |
 | PBB MapServer | Mapping Services | Local node | Client apps, setup operators | Tile cache/proxy, boundary overlays, offline map prep |
-| PBB Chatviewer | Monitoring / Maintenance Tools | Local development/PBB workspace | Project owner / development coordination | Render and search local shared chat log |
+| PBB Chatviewer | Monitoring / Maintenance Tools | Local development/PBB workspace | Project owner, PBB agents / development coordination | DB-backed agent chat, Markdown fallback, timeline/search, token-auth posting |
 | PBB Kit Setup | Setup / Provisioning Tools | Windows setup machine / PBB Node Kit | Installer operator | Install/update/configure bundled PBB apps and services |
 | PBB Support System | Operator Apps, HQ / Cloud Services, Support Operations | Support node / upper-level node / HQ-side support deployment | Support operators, receiving agencies, admins | SITREP consolidation and support request lifecycle handling |
 | PBB Landing | Core Infrastructure Services, Setup / Provisioning Tools | Local node and hub public domain surface | Local users, Kit Setup, peer nodes/backend clients | LAN app launcher, public hub metadata projection, Kit-managed app registry, Relay gateway |
@@ -85,6 +89,8 @@ PBB Support System
   -> stages latest valid SITREPs and consolidates current SITREP
   -> sends latest consolidated SITREP through Relay `/api/v1/messages`
   -> sends support lifecycle updates through Relay `/api/v1/messages`
+  -> receives Relay `source.heartbeat.updated` webhooks at `/api/relay/source-heartbeats`
+  -> publishes heartbeat snapshots to Realtime support rooms
   -> uses MapServer URLs for support maps/boundaries
 
 PBB Landing
@@ -108,6 +114,7 @@ PBB Kit Setup
   -> Validates Hub HQ hub ID/token during installation
   -> Plans/applies DNS, SSL/vhost, firewall, services, data prep, smoke checks
   -> Registers processes as Windows services
+  -> Seeds Relay support identities and Support source heartbeat webhook token
 ```
 
 ## 4. Communication Matrix
@@ -121,6 +128,7 @@ PBB Kit Setup
 | Hotline | Relay | Laravel service/HTTP relay client path | `support.request` envelopes with support request fields and justification codes | Support request creation/submission | `hotline\app\Support\SupportRequests\SupportRequestRelaySubmissionService.php`; `hotline\database\migrations`; `hotline\docs\support-request-relay-contract-proposal.md` |
 | Relay | Support System | HTTP `POST /api/relay/sitreps` | Relay-delivered SITREP envelopes | Relay handler delivery | `support\routes\api.php`; `support\app\Http\Controllers\Api\RelaySitrepHandlerController.php` |
 | Relay | Support System | HTTP `POST /api/relay/support-requests` | Hotline-origin `support.request` envelopes | Support request handler delivery | `support\routes\api.php`; `support\app\Http\Controllers\Api\RelaySupportRequestHandlerController.php` |
+| Relay | Support System | HTTP `POST /api/relay/source-heartbeats` | `source.heartbeat.updated` operational webhook payloads | Source heartbeat status update | `relay\docs\relay-source-heartbeat-webhooks-implementation-checklist.md`; `support\app\Http\Controllers\Api\RelaySourceHeartbeatController.php` |
 | Support System | Relay | HTTP `POST /api/v1/messages` | Consolidated `sitrep.record` envelopes | `support:sitreps:relay-latest` command/job | `support\app\Services\SitrepRelaySubmissionService.php`; `support\routes\console.php` |
 | Support System | Relay / Hotline | HTTP `POST /api/v1/messages` via Relay | `support.request.received`, `accepted`, `rejected`, `assigned`, `en_route`, `fulfilled`, `closed` lifecycle updates | Support operator handling | `support\app\Services\SupportRequestLifecycleRelayService.php`; `support\app\Http\Controllers\Api\SupportRequestsController.php` |
 | Backend apps | Relay | HTTP `POST /api/v1/relationships/resolve` | Source/target hub IDs, purpose, returned relationship credentials | Backend credential resolution | `relay\routes\api.php`; `relay\app\Http\Controllers\Api\Relay\Credentials\RelationshipController.php`; `relay\app\Relay\Credentials\RelayRelationshipResolver.php` |
@@ -138,7 +146,9 @@ PBB Kit Setup
 | Realtime | Maestro | HTTP telemetry endpoints | Gateway heartbeat/dispatch stats | `realtime:serve` timers | `realtime\config\realtime.php`; `realtime\RealtimeServeCommand.php` |
 | Realtime | Product backend | HTTP forwarding | Media chunks, product queries | WebSocket media/query events | `realtime\app\Realtime\Media`; `realtime\app\Realtime\ProductQuery` |
 | Kit Setup | App installers | CLI/PHP/file operations | install config, package manifests, reports | Setup/update workflow | `kit-setup\src\KitSetupRunner.php`; `kit-setup\package.json` |
-| Chatviewer | PBB root | Local file read | `chat_log.md` parsed into JSON | Browser API request | `chatviewer\api\chat-log.php` |
+| Kit Setup | Relay and Support Data Prep | Generated config/secrets | `hotline.command`, `sitrep.ingestor`, `support.dispatch`, Support Source Heartbeats webhook token | Node Data Prep | `kit-setup\docs\relay-hotline-support-data-prep-contract.md`; `kit-setup\src\KitSetupRunner.php` |
+| Chatviewer | MySQL `pbb_agentchat` | PDO | Chat entries, agents, recipients, topics | Agent chat API/UI reads | `chatviewer\src\Db.php`; `chatviewer\src\ChatRepository.php` |
+| Chatviewer | PBB root | Local file read fallback | `chat_log.md` parsed into JSON | Browser API request when DB unavailable | `chatviewer\api\chat-log.php` |
 
 ## 5. Shared Database / Shared Storage Map
 
@@ -154,6 +164,9 @@ PBB Kit Setup
 | `public/vendor/helpers.pbb.ph` / vendored helper folders | Hotline, Hub, Maestro, MapServer, Chatviewer | Shared UI library | file inventories |
 | `C:\wamp64\www\pbb\chat_log.md` | Chatviewer | Source chat log | `chatviewer\api\chat-log.php` |
 | `packages/bundled/*.zip` | Kit Setup | Bundled app installation packages | `kit-setup\package.json` |
+| `packages/packages.bundled.json` | Kit Setup | Trusted bundled package manifest for Landing, MapServer, Maestro, Realtime, Relay, Hotline, Support | `kit-setup\packages\packages.bundled.json`; `kit-setup\package.json` |
+| `pbb_agentchat` database | Chatviewer | Agent identities, chat entries, recipients, revisions, topics, audit | `chatviewer\src\ChatRepository.php`; `chatviewer\src\Db.php` |
+| `relay_webhook_subscribers`, `relay_webhook_deliveries` | Relay | Operational webhook subscribers and delivery state | `relay\tools\data-prep\apply-settings.php`; `relay\tests\Feature\Relay\RelayHeartbeatTest.php` |
 | `pbb_support` database tables | Support System | Relay inbound SITREPs, staged/current consolidated SITREPs, support requests/messages/actions, relay deliveries, settings | `support\database\migrations`; `support\.env.example` |
 | `support_settings` encrypted values | Support System | Relay URL/token, handler token, source/target systems, map/realtime settings | `support\app\Support\Settings\SupportSettings.php`; `support\database\migrations\2026_06_12_000001_create_support_settings_table.php` |
 | `landing\storage\registry.json` | Landing, Kit Setup | App launcher, health, and public gateway registry records | `landing\config\landing.php`; `landing\src\RegistryStore.php`; `landing\README.md` |
@@ -192,6 +205,7 @@ Confirmed retry/queue behavior:
 - Realtime backend event and media chunk pending/failed/published or forwarded state.
 - Hotline has Laravel queue/scheduler, stale media finalization, confirmed SITREP Relay delivery/outbox support, and confirmed Support Request relay submission/lifecycle services. A durable browser-side citizen outbox was still not confirmed.
 - Support System has database queue usage for SITREP relay delivery and support request lifecycle delivery jobs. Landing has no queue/retry layer; Relay handles store-and-forward behind it.
+- Relay source-heartbeat operational webhooks are queued/tracked in `relay_webhook_deliveries`; Support accepts duplicate protection by `event_id`.
 
 Conflict handling:
 
@@ -220,7 +234,9 @@ What is synced:
 - Attachments through attachment/upload session tables.
 - HQ registry hub/link snapshots and heartbeat status.
 - Hotline latest SITREPs and support requests are submitted through Relay-facing services.
-- Support System receives SITREPs/support requests through Relay handlers, submits consolidated `sitrep.record` upstream, and submits support lifecycle updates back through Relay.
+- Support System receives SITREPs/support requests through Relay handlers. The current confirmed identities are `sitrep.ingestor` for `sitrep.record` and `support.dispatch` for `support.request` / `support.request.cancelled`.
+- Support submits consolidated `sitrep.record` upstream and submits support lifecycle updates back through Relay.
+- Relay emits `source.heartbeat.updated` operational webhooks outside the normal `hub_relay_messages` app-to-app path.
 - Landing can expose a public `/relay/api/v1/*` gateway to the registered local Relay target, but it does not implement the store-and-forward queue itself.
 
 Known gaps:
@@ -379,12 +395,14 @@ Maestro computes worker status as starting/idle/busy/stale/stopped. Owner clarif
 | SITREP media access token | Hotline media manifest/download API is token-protected and evidence-oriented | Hotline, Support System | High | `hotline\docs\sitrep-media-access-contract.md`; `hotline\packages\pbb-hotline-media-sdk` | Rotate token, audit access, define media cache/purge policy in consumers |
 | Support default admin credential | Support README documents default `admin@support.pbb.ph` / `password` login for local development | Support System | High if shared deployment keeps default; Low for dev only | `support\README.md` | Force password change or disable seeded default before shared deployment |
 | Support handler/client tokens | Support rejects inbound Relay handler calls without matching bearer token and uses Relay client token for outbound messages | Support System, Relay | High | `support\app\Http\Controllers\Api\RelaySitrepHandlerController.php`; `support\app\Services\SitrepRelaySubmissionService.php`; `support\app\Support\Settings\SupportSettings.php` | Rotate, store encrypted, mask in UI/logs, and document token ownership |
+| Support source heartbeat webhook token | Relay operational webhook uses a dedicated Support token and Support accepts bearer or `X-Relay-Webhook-Key` | Relay, Support System, Kit Setup | High | `kit-setup\docs\relay-hotline-support-data-prep-contract.md`; `RelaySourceHeartbeatController.php`; `relay\tools\data-prep\apply-settings.php` | Generate per-node token through Kit, keep server-side only, rotate on compromise |
 | Landing registry token | Landing internal registry writes are bearer-token protected by `PBB_LANDING_REGISTRY_TOKEN_HASH` | Landing, Kit Setup | High | `landing\src\Auth.php`; `landing\README.md`; `landing\config\landing.php` | Generate per-node token in Kit Setup, store only hash, and keep `/internal/*` local-only |
 | Landing Relay gateway exposure | Landing forwards `/relay/api/v1/*` only for allowed peers and registry-enabled M2M gateway config | Landing, Relay | High | `landing\src\Gateway.php`; `landing\src\RegistryStore.php`; `landing\tests\run.php` | Keep peer-domain allowlist strict and document gateway threat model with FRP/public DNS setup |
 | Hub tokens | Hub machine endpoints use token auth | Hub/HQ, Relay | High | `hub.ph\routes\api.php`; `hub_tokens` migration | Rotate tokens and scope access |
 | Map provider keys | MapServer requires provider API keys for defaults | MapServer | Medium | `mapserver\config.php` | Keep keys out of source and mask diagnostics |
 | Admin surface role gaps | Hub geodata coordinate updates are auth-only; Maestro management APIs auth-only | Hub/HQ, Maestro | Medium | `hub.ph\routes\api.php`; `maestro\routes\api.php` | Confirm intended permissions and add roles where needed |
-| No auth on local viewers/static endpoints | Chatviewer and MapServer public endpoints have no app auth; Chatviewer is owner-confirmed personal-only tooling | Chatviewer, MapServer | Low for Chatviewer if kept local/private; Medium for shared deployments | `chatviewer\api\chat-log.php`; `mapserver\README.md` | Keep LAN/local/private or add auth/reverse proxy restrictions |
+| Chatviewer read API exposure | Chatviewer read APIs are unauthenticated, while posting/claiming uses project tokens | Chatviewer | Low if kept local/private; Medium if shared | `chatviewer\api\chat-log.php`; `chatviewer\api\chat-entries.php`; `ChatRepository.php` | Keep LAN/local/private or add read auth before broader deployment |
+| No auth on MapServer static endpoints | MapServer public endpoints have no app auth | MapServer | Medium for shared deployments | `mapserver\README.md` | Keep LAN/local/private or add reverse proxy restrictions |
 | Installer admin privileges | Kit Setup installer requests admin rights | Kit Setup | High | `kit-setup\package.json` | Use signed packages, verify manifests, mask reports |
 
 ## 13. System-Wide Technical Gaps
@@ -392,7 +410,7 @@ Maestro computes worker status as starting/idle/busy/stale/stopped. Owner clarif
 | Gap | Affected Apps | Impact | Recommended Priority |
 |---|---|---|---|
 | Broad editable incident sync is intentionally not the current design | Hotline, Relay, Hub | Future docs should avoid describing incidents as replicated mutable records across nodes | Medium |
-| SITREP/support upstream contracts need explicit final documentation | Relay, Hotline, Hub, Support System | Code/chat confirm latest-SITREP and support-request flows, but production envelope, schedule, consolidation, and endpoint metadata need stable contracts | High |
+| SITREP/support upstream contracts still need endpoint/runbook documentation | Relay, Hotline, Hub, Support System, Kit Setup | Code confirms role identities and message names, but production schedule, endpoint metadata, and runbook details need stable documentation | High |
 | Support role enforcement needs review | Support System | Admin users/settings routes are auth-protected, but route-level role middleware was not confirmed in the reviewed code | High |
 | Landing registry/gateway contract needs final operational docs | Landing, Kit Setup, Relay, Hub/HQ | Registry fields, gateway peer rules, public projection, and FRP/vhost ownership are security-sensitive deployment contracts | High |
 | Cross-app endpoint metadata missing for media access | Relay, Hotline, Support System, Hub/HQ | Relay resolver provides topology/credentials but not the source Hotline media base URL | High |
@@ -402,18 +420,18 @@ Maestro computes worker status as starting/idle/busy/stale/stopped. Owner clarif
 | Map offline completeness depends on successful Setup Data Prep | MapServer, Hotline, Kit Setup | Field kits may have map gaps if tile/boundary preflight is skipped or fails | High |
 | Service recovery runbook not documented here | Maestro, Kit Setup, Relay, Realtime | Owner clarified Maestro observes only and Windows services own lifecycle; operators still need recovery expectations | Medium |
 | Role/permission model differs by app | Hotline, Hub, Relay, Realtime, Maestro | Security review complexity | Medium |
-| Chatviewer exposes local chat log without auth | Chatviewer | Sensitive internal notes if exposed beyond the owner's local/personal use | Low if kept local/private; Medium if shared |
+| Chatviewer has authenticated writes but unauthenticated reads | Chatviewer | Sensitive internal notes if exposed beyond the owner's local/personal use | Low if kept local/private; Medium if shared |
 | Documentation mixes proposals and implemented code | Helper, Realtime, Relay, Hotline | Future readers may over-assume features | Medium |
 
 ## 14. Recommended Next Technical Priorities
 
 | Priority | Recommendation | Reason | Affected Apps |
 |---|---|---|---|
-| 1 | Finalize the SITREP Relay and Support Request lifecycle contracts | These are now confirmed flows and should replace older generic incident-sync assumptions | Hotline, Relay, Hub, Support System |
+| 1 | Publish the finalized Relay/Hotline/Support Data Prep and runtime contract as an operator runbook | The two Support identities and source heartbeat webhook are now implemented and should replace older generic incident-sync assumptions | Hotline, Relay, Hub, Support System, Kit Setup |
 | 2 | Define app endpoint metadata for cross-node Hotline media access | Relay relationship resolver returns credentials/topology but not a source app URL | Hub/HQ, Relay, Hotline, Support System |
 | 3 | Finalize Landing registry, public projection, and Relay gateway deployment contract | Landing is now confirmed as the public-safe hub metadata and M2M Relay gateway surface | Landing, Kit Setup, Relay, Hub/HQ |
 | 4 | Document the Hub HQ `hub.json` identity contract and Kit Setup hub ID/token validation flow | Hub HQ provides node identity and Kit Setup validates installation from admin-provided credentials | Hub, Relay, MapServer, Kit Setup, Landing, Support System |
-| 5 | Review and harden Support System authorization boundaries | Support has auth-protected admin/settings routes, but route-level role middleware was not confirmed | Support System |
+| 5 | Review and harden Support System authorization boundaries and webhook token rotation | Support has auth-protected admin/settings routes and new webhook credentials; route-level role middleware was not confirmed | Support System, Relay, Kit Setup |
 | 6 | Define the responder/helper mobile assignment, status, field-report, and sync API contract | Owner clarified the intended field response loop; implementation is not confirmed in reviewed code | Hotline, Relay, Realtime, planned responder app |
 | 7 | Document the PBB-managed FRP tunnel gateway control-plane and node-client lifecycle | Owner clarified the tunnel model and non-dependence on external tunnel providers | Hub/HQ, Relay, Kit Setup, Landing |
 | 8 | Harden machine/API secrets and diagnostics | Several services carry high-impact local credentials | Relay, Realtime, Hub, Maestro, MapServer, Support System, Landing |
