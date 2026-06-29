@@ -1,14 +1,16 @@
 # PBB Selected Apps Technical Briefing
 
-Scope: `C:\wamp64\www\pbb\hotline`, `C:\wamp64\www\hotline-helpers`, `C:\wamp64\www\pbb\relay`, `C:\wamp64\www\pbb\hub.ph`, `C:\wamp64\www\pbb\maestro`, `C:\wamp64\www\pbb\realtime`, `C:\wamp64\www\mapserver`, `C:\wamp64\www\pbb\chatviewer`, `C:\wamp64\www\pbb\support`, `C:\wamp64\www\pbb\landing`, `C:\wamp64\www\pbb\kit-setup`.
+Scope: `C:\wamp64\www\pbb\hotline`, `C:\wamp64\www\hotline-helpers`, `C:\wamp64\www\pbb\relay`, `C:\wamp64\www\pbb\hub.ph`, `C:\wamp64\www\pbb\maestro`, `C:\wamp64\www\pbb\realtime`, `C:\wamp64\www\mapserver`, `C:\wamp64\www\pbb\chatviewer`, `C:\wamp64\www\pbb\support`, `C:\wamp64\www\pbb\landing`, `C:\wamp64\www\pbb\chat`, `C:\wamp64\www\pbb\games`, `C:\wamp64\www\pbb\kit-setup`.
 
 Important evidence rule: code and config were inspected locally. Claims below are limited to what was found in the listed folders. Where a detail was not confirmed from code, it is marked `Unknown / Not confirmed from code`.
 
 Owner clarification added after the local code review: Hub HQ provides node identity details, with `https://relay.pbb.ph/hub.json` identified by the project owner as a sample hub information endpoint; Kit Setup validates installation from an admin-provided hub ID and hub token; production topology is currently barangay -> city/municipality -> province -> cloud PBB HQ; incidents are not intended to sync as editable records across different nodes, and nodes instead send periodic consolidated SITREPs upstream; Realtime is expected to run as one shared gateway instance per node; Setup Data Prep populates MapServer tiles for the Hub HQ-defined boundary; Maestro is strictly observer-only while Windows services registered by Kit Setup own process lifecycle; Chatviewer is personal development coordination tooling; Kit Setup requires WampServer and Technitium DNS for node installation; PBB-managed FRP is the planned tunnel model, with Hub HQ as control plane, FRPS as tunnel server, and FRPC on each local node to expose each Relay node without static IPs, port forwarding, Cloudflare, or an external tunnel provider; the planned responder/helper mobile workflow is a field-ready, offline-capable companion app for responders/helpers, but implementation was not found in the reviewed repositories.
 
-Fresh-scan update source: local code under `C:\wamp64\www\pbb`, plus earlier `C:\wamp64\www\pbb\chat_log.md` context where relevant. The main changes since the original briefing are: Hotline now has SITREP Relay outbox/delivery code, Support Request persistence and relay lifecycle services, and a backend-token-protected SITREP media manifest/download API plus SDK; Relay now has a backend-only relationship resolver at `POST /api/v1/relationships/resolve`; Kit Setup now documents/enforces additive app database migration policy; Helper UI bundle updates reached `UI_BUNDLE_REV = "0.21.89"`; PBB Support System at `C:\wamp64\www\pbb\support` is now reviewed as a Laravel SITREP/support operations app; and PBB Landing at `C:\wamp64\www\pbb\landing` is now reviewed as a lightweight PHP local launcher/public hub metadata/gateway surface.
+Fresh-scan update source: local code under `C:\wamp64\www\pbb`, plus earlier `C:\wamp64\www\pbb\chat_log.md` context where relevant. The main changes since the original briefing are: Hotline now has SITREP Relay outbox/delivery code, Support Request persistence and relay lifecycle services, and a backend-token-protected SITREP media manifest/download API plus SDK; Relay now has a backend-only relationship resolver at `POST /api/v1/relationships/resolve`; Kit Setup now documents/enforces additive app database migration policy; Helper UI bundle updates have continued through active loader cache revision `0.21.117`; PBB Support System at `C:\wamp64\www\pbb\support` is now reviewed as a Laravel SITREP/support operations app; and PBB Landing at `C:\wamp64\www\pbb\landing` is now reviewed as a lightweight PHP local launcher/public hub metadata/gateway surface.
 
-Current-state alignment note, 2026-06-22: local code and DB-backed Chatviewer updates now confirm additional changes since the prior briefing. Kit Setup is at `0.1.163` and its bundled package manifest includes `pbb-landing`, `pbb-mapserver`, `pbb-maestro`, `pbb-realtime`, `pbb-relay`, `pbb-hotline`, and `pbb-support`, plus the Cebu MapServer boundary pack. The finalized Hotline/Relay/Support Data Prep model uses separate Support role identities: `sitrep.ingestor` for `sitrep.record` and `support.dispatch` for `support.request` / `support.request.cancelled`. Relay now implements operational `source.heartbeat.updated` webhooks through `relay_webhook_subscribers` and `relay_webhook_deliveries`; Kit seeds a Support Source Heartbeats subscriber, and Support receives it at `POST /api/relay/source-heartbeats`, validates a dedicated token, deduplicates by `event_id`, and publishes accepted snapshots to Realtime. Chatviewer now has a DB-backed agent chat API with token-authenticated posting/claiming and `GET /api/chat-entries.php` list queries defaulting newest-first while `order=asc` is available for chronological API reads.
+Current-state alignment note, 2026-06-22: local code and DB-backed Chatviewer updates confirmed additional changes after the prior briefing. Kit Setup first had the bundled package manifest with `pbb-landing`, `pbb-mapserver`, `pbb-maestro`, `pbb-realtime`, `pbb-relay`, `pbb-hotline`, and `pbb-support`, plus the Cebu MapServer boundary pack; current 2026-06-29 local Kit version is `0.1.164`. The finalized Hotline/Relay/Support Data Prep model uses separate Support role identities: `sitrep.ingestor` for `sitrep.record` and `support.dispatch` for `support.request` / `support.request.cancelled`. Relay now implements operational `source.heartbeat.updated` webhooks through `relay_webhook_subscribers` and `relay_webhook_deliveries`; Kit seeds a Support Source Heartbeats subscriber, and Support receives it at `POST /api/relay/source-heartbeats`, validates a dedicated token, deduplicates by `event_id`, and publishes accepted snapshots to Realtime. Chatviewer now has a DB-backed agent chat API with token-authenticated posting/claiming and `GET /api/chat-entries.php` list queries defaulting newest-first while `order=asc` is available for chronological API reads.
+
+Current-state alignment note, 2026-06-29: local code and recent DB-backed Chatviewer entries confirm two additional local projects. PBB Chat at `C:\wamp64\www\pbb\chat` is a Laravel 12 local barangay chat app with rooms, direct messages, message requests, badges, reports/blocks/moderation, Realtime admission/publishing, and a Hotline escalation handoff stub. PBB Games at `C:\wamp64\www\pbb\games` is a plain PHP optional local engagement/learning app with no database and no operational API integration in version 1. Kit Setup local `package.json` is now `0.1.164`; the bundled package manifest still lists Landing, MapServer, Maestro, Realtime, Relay, Hotline, Support, and the Cebu MapServer boundary pack. Helper `package.json` remains `0.21.83`, but active loader cache revisions in `js\ui\ui.loader.js` are `0.21.117` and recent Helper changes add Chat envelope/block/mute icons, sender presence indicators, `ui.file.input`, login-form media branding options, paste attachments in `ui.chat.composer`, and improved `ui.game.state.chrome.showMilestone(...)`. `C:\wamp64\www\pbb\account` exists but no app files were found during this scan; account-app behavior is `Unknown / Not confirmed from code`.
 
 ---
 
@@ -343,7 +345,7 @@ Evidence:
 
 ### 1. Executive Technical Summary
 
-PBB Helper at `C:\wamp64\www\hotline-helpers` is not a responder account app in the inspected code. It is a static JavaScript/CSS UI helper library and demo site used by Hotline and other PBB apps. It contains incident UI components, general UI controls, bundled/minified build output, boot JSON reference samples, demos, and documentation. It runs as static frontend assets and uses Node/esbuild only to build the UI bundle. Post-briefing updates confirm `UI_BUNDLE_REV = "0.21.89"` with shared password fields, number-stepper form fields, row `className` alias support, and `ui.navigation.stack` including `chrome:false`. Owner clarification: a separate responder/helper mobile workflow is planned as a field-ready, offline-capable companion app for barangay responders, rescue teams, medical responders, and utility helpers.
+PBB Helper at `C:\wamp64\www\hotline-helpers` is not a responder account app in the inspected code. It is a static JavaScript/CSS UI helper library and demo site used by Hotline and other PBB apps. It contains incident UI components, general UI controls, bundled/minified build output, boot JSON reference samples, demos, and documentation. It runs as static frontend assets and uses Node/esbuild only to build the UI bundle. Post-briefing updates confirm active loader cache revisions at `0.21.117`, including shared password fields, number-stepper form fields, row `className` alias support, `ui.navigation.stack`, Chat envelope/block/mute icons, sender presence indicators, `ui.file.input`, login-form media branding options, paste attachments in `ui.chat.composer`, and improved `ui.game.state.chrome.showMilestone(...)`. Owner clarification: a separate responder/helper mobile workflow is planned as a field-ready, offline-capable companion app for barangay responders, rescue teams, medical responders, and utility helpers.
 
 ### 2. Repository Overview
 
@@ -485,7 +487,7 @@ Helper includes `ui.map.controls` and hierarchy map helpers; no tile service or 
 
 | Variable / Config | Purpose | Required | Default / Example | Related Module |
 |---|---|---|---|---|
-| `package.json` version | Library version | Yes | `0.21.83` | Build/release |
+| `package.json` version | Package metadata version | Yes | `0.21.83`; active loader cache revisions are `0.21.117` | Build/release |
 | boot JSON files | Demo/reference bootstrap data | Optional | incident/status/team/resource JSON | Demos/components |
 
 ### 17. Known Technical Debt and Gaps
@@ -2367,11 +2369,428 @@ Evidence:
 
 ---
 
+## App: PBB Chat
+
+### 1. Executive Technical Summary
+
+PBB Chat is a Laravel 12 local barangay chat app. It is citizen-facing and admin/moderator-facing. Code and `release.json` identify it as a local LAN app with public gateway disabled, running at `https://chat.pbb.ph`, backed by a local `pbb_chat` MySQL database, Helper UI assets, and PBB Realtime admission/event publishing. It supports rooms, direct conversations, message requests, local profiles/sessions, reports/blocks/moderation, badges, room access controls, and a Hotline escalation handoff response that returns the configured Hotline URL and local chat user context.
+
+### 2. Repository Overview
+
+| Area | Details |
+|---|---|
+| App Name | PBB Chat |
+| Local Path | `C:\wamp64\www\pbb\chat` |
+| Main Language | PHP, JavaScript |
+| Main Framework | Laravel 12 |
+| Frontend Framework | Vite, Tailwind, Helper UI components |
+| Backend Framework | Laravel |
+| Database | MySQL database `pbb_chat` in `.env.example`; Laravel migrations define chat/session/cache/queue tables |
+| Realtime Technology | PBB Realtime SDK/admission and backend ingest publishing |
+| Queue / Worker System | Laravel queue config exists; no Chat-specific background command was confirmed |
+| Package Manager | Composer, npm |
+| Runtime Requirements | PHP `^8.2`, Composer, Node/npm for builds, MySQL, WAMP/Apache or PHP web server |
+| Main Entry Points | `public/index.php`, `artisan`, `routes/web.php`, `resources/js` |
+| Important Config Files | `.env.example`, `config/chat.php`, `config/session.php`, `release.json`, `public/openapi/pbb-chat.yaml` |
+| Important Environment Variables | `DB_*`, `SESSION_*`, `PBB_CHAT_HOME_HUB_ID`, `PBB_CHAT_HOME_NAME`, `PBB_CHAT_HOTLINE_URL`, `PBB_CHAT_REALTIME_URL`, `PBB_CHAT_REALTIME_SDK_URL`, `PBB_CHAT_REALTIME_TOKEN_SIGNING_SECRET`, `PBB_CHAT_REALTIME_BACKEND_INGRESS_SECRET`, `PBB_CHAT_REALTIME_TOKEN_TTL_SECONDS` |
+| Deployment Target | Local barangay LAN browser app; `release.json` sets Landing launcher visible and `public_gateway.enabled=false` |
+
+### 3. App Purpose and PBB Role
+
+PBB Chat solves local barangay community messaging on the PBB local network. It is not the emergency operations system; escalation to Hotline is represented by a handoff endpoint rather than confirmed direct incident creation. It depends on local MySQL, Helper UI components, and PBB Realtime for live chat rooms/direct-message channels. If unavailable, local community chat, direct messages, message requests, reports/moderation, and badge UX are unavailable, but core Hotline/Relay/SITREP operations are not shown as depending on it.
+
+### 4. User Roles and Permissions
+
+| Role | Purpose | Capabilities | Code Evidence |
+|---|---|---|---|
+| local chat user | Citizen/local participant | View rooms, join/leave rooms, post/read room messages, direct conversations, block/report users/messages, message requests | `routes\web.php`; `app\Http\Controllers\Api\Concerns\ResolvesChatUser.php` |
+| blocked local user | Suspended/blocked participant | Rejected by `requireChatUser` when `blocked_at` is set | `app\Http\Controllers\Api\Concerns\ResolvesChatUser.php`; `database\migrations\2026_06_29_000100_add_room_member_and_user_moderation_fields.php` |
+| admin / moderator | Chat administration and moderation | User CRUD/session ping, suspend/block-login/unblock-login, badges, reports review/hide/resolve, room/member controls | `routes\web.php`; `app\Http\Controllers\Api\ChatSafetyController.php`; migrations with moderation fields |
+
+### 5. Main Features and Modules
+
+### Room Chat
+
+Purpose: Local room listing, membership, messages, reads, room access controls, and room realtime admission.
+Main Code: `routes\web.php`; room/chat controllers under `app\Http\Controllers\Api`; `app\Services\ChatRealtimeEventPublisher.php`.
+Database Tables: `chat_rooms`, `chat_room_memberships`, `chat_messages`, `chat_reports`.
+APIs / Routes: `GET /api/chat/rooms`, `POST /api/chat/rooms/{room}/join`, `POST /api/chat/rooms/{room}/leave`, `GET /api/chat/rooms/{room}/messages`, `POST /api/chat/rooms/{room}/messages`, `POST /api/chat/rooms/{room}/realtime/admission`.
+Offline Behavior: LAN/local operation is confirmed by release metadata and README. Browser-side offline queue was not confirmed.
+Sync Behavior: Realtime room admission/publish is confirmed. Relay sync was not confirmed.
+Related PBB Apps: PBB Realtime, PBB Helper.
+Evidence: `routes\web.php`; `release.json`; `app\Http\Controllers\Api\ChatRealtimeController.php`.
+
+### Direct Messaging and Message Requests
+
+Purpose: One-to-one conversations, direct-message read state, mute/unmute, and request/accept/decline/cancel flow.
+Main Code: `routes\web.php`; direct conversation/message request controllers.
+Database Tables: `chat_direct_conversations`, direct message tables, `chat_message_requests`, read-state migrations.
+APIs / Routes: `/api/chat/message-requests`, `/api/chat/direct-conversations`, `/api/chat/direct-conversations/{conversation}/messages`, direct mute/unmute and realtime admission endpoints.
+Offline Behavior: Local/LAN operation confirmed; durable offline compose queue was not confirmed.
+Sync Behavior: Realtime direct admission confirmed; Relay sync not confirmed.
+Related PBB Apps: PBB Realtime, PBB Helper.
+Evidence: `routes\web.php`; `database\migrations\2026_06_28_000140_add_direct_conversation_read_state.php`; recent Helper envelope/block/mute icon contracts.
+
+### Safety, Reports, Blocks, and Moderation
+
+Purpose: User/message reports, block/unblock, moderation review/hide/resolve, room member mute/kick/report controls.
+Main Code: `app\Http\Controllers\Api\ChatSafetyController.php`; admin/report routes in `routes\web.php`.
+Database Tables: `chat_reports`, `chat_blocks`, moderation columns on memberships/users/messages.
+APIs / Routes: `POST /api/chat/messages/{message}/report`, `POST /api/chat/users/{user}/block`, `POST /api/chat/users/{user}/unblock`, `POST /api/chat/users/{user}/report`, admin report review/hide/resolve endpoints.
+Offline Behavior: Local DB-backed moderation works on LAN; upstream reporting not confirmed.
+Sync Behavior: `ChatSafetyController` publishes `chat.user_block.updated` through Realtime when configured.
+Related PBB Apps: PBB Realtime.
+Evidence: `app\Http\Controllers\Api\ChatSafetyController.php`; `database\migrations\2026_06_29_000100_add_room_member_and_user_moderation_fields.php`.
+
+### Hotline Escalation Handoff
+
+Purpose: Return a handoff payload pointing the local user to Hotline with optional summary/context flag.
+Main Code: `app\Http\Controllers\Api\HotlineEscalationController.php`.
+Database Tables: No dedicated escalation table confirmed.
+APIs / Routes: `POST /api/chat/escalate-to-hotline`.
+Offline Behavior: Returns configured local Hotline URL; direct Hotline API incident creation was not confirmed.
+Sync Behavior: No Relay sync confirmed.
+Related PBB Apps: PBB Hotline.
+Evidence: `app\Http\Controllers\Api\HotlineEscalationController.php`; `config\chat.php`; `.env.example`.
+
+### 6. Database Schema Summary
+
+| Table | Purpose | Important Columns | Relationships / Notes |
+|---|---|---|---|
+| `users` | Local chat/admin users | identity/session/moderation fields including `blocked_at` | Used by chat sessions, memberships, messages, badges |
+| `chat_rooms` | Room records | room identity, metadata/access fields | Has memberships and messages |
+| `chat_room_memberships` | Room membership state | user/room, mute/member moderation fields | Links users to rooms |
+| `chat_messages` | Room messages | user/room, text, reply, edit/delete/moderation fields | Supports reply-to and moderation |
+| `chat_reports` | User/message/report records | reporter, target, reason/status | Admin review/hide/resolve |
+| `chat_blocks` | User block relationships | blocker/blocked user IDs | Supports block/unblock |
+| `chat_message_requests` | Direct message request workflow | sender/recipient/status | Request/accept/decline/cancel |
+| `chat_direct_conversations` | Direct chat threads | participant IDs, read/mute state | Direct messages and realtime admission |
+| `chat_invitation_tokens` | Invitation tokens | token, user/room context, expiry/status | Admin/user invitation flow |
+| `badges`, `badge_awarders`, `user_badges` | Badge catalog and awards | badge metadata, awarder/user relationships | Community badge features |
+| `sessions`, `cache`, `jobs` | Laravel infrastructure | standard Laravel columns | Session/queue/cache |
+
+```text
+users
+  ├── chat_room_memberships
+  │     └── chat_rooms
+  │           └── chat_messages
+  ├── chat_direct_conversations
+  ├── chat_message_requests
+  ├── chat_reports
+  ├── chat_blocks
+  └── user_badges
+        └── badges
+```
+
+### 7. API and Route Inventory
+
+| Method | Path / Endpoint | Purpose | Auth | Handler / File | Notes |
+|---|---|---|---|---|---|
+| GET | `/` and `/rooms/{path?}`, `/messages/{path?}`, `/users/{path?}`, `/badges/{path?}`, `/reports/{path?}` | Frontend app routes | Browser/session | `routes\web.php` | SPA-style views |
+| GET | `/api/bootstrap` | App bootstrap | Open | `routes\web.php`; `BootstrapController` | Health path in `release.json` |
+| POST | `/api/login` | Login | Throttled open | `routes\web.php` | throttle 6/min |
+| GET/POST | `/api/chat/rooms*` | Rooms, membership, messages, reads, realtime admission | Local chat user/session for state-changing routes | `routes\web.php` | Room chat module |
+| POST | `/api/chat/messages/{message}/report` | Report message | Local chat user | `ChatSafetyController` | Safety |
+| POST | `/api/chat/users/{user}/block`, `/unblock`, `/report` | Block/report user | Local chat user | `ChatSafetyController` | Publishes block update when configured |
+| POST | `/api/chat/escalate-to-hotline` | Hotline handoff payload | Local chat user | `HotlineEscalationController` | Returns HTTP 202 |
+| GET/POST | `/api/chat/message-requests*` | Direct-message request workflow | Auth/session | `routes\web.php` | Auth group |
+| GET/POST | `/api/chat/direct-conversations*` | Direct conversations/messages/read/mute/realtime admission | Auth/session | `routes\web.php` | Auth group |
+| POST/PUT/DELETE | `/api/chat/badges*` | Badge catalog/awards | Auth/session | `routes\web.php` | Admin/community badge flow |
+| POST | `/api/chat/admin/reports*` | Review/hide/resolve reports | Auth/session | `routes\web.php` | Moderation |
+
+### 8. Data Flow and Operational Flow
+
+```text
+Citizen/local user
+-> PBB Chat Laravel API
+-> pbb_chat local database
+-> optional Realtime admission for chat.thread/chat.direct rooms
+-> PBB Realtime WebSocket
+-> other local browser clients
+```
+
+```text
+Chat user chooses Hotline escalation
+-> POST /api/chat/escalate-to-hotline
+-> validates local chat user
+-> returns configured PBB_CHAT_HOTLINE_URL and optional summary/context metadata
+```
+
+### 9. Offline-First Behavior
+
+`release.json` marks PBB Chat as local LAN only and disables public gateway exposure. The app can run without internet when local PHP/MySQL/assets/Realtime are available. Room/direct-message operation depends on local server and DB. Realtime live updates require the local PBB Realtime service. Durable browser-side offline queues, Relay sync, conflict handling, and service-worker/PWA behavior were not confirmed from code.
+
+### 10. Integration with Other PBB Apps
+
+| Integration | Direction | Protocol / Method | Purpose | Code Evidence |
+|---|---|---|---|---|
+| PBB Chat -> Realtime | HTTP backend ingest/admission and browser WebSocket SDK | Room/direct/notification realtime | `app\Services\ChatRealtimeEventPublisher.php`; `app\Http\Controllers\Api\ChatRealtimeController.php`; `config\chat.php` |
+| PBB Chat -> Hotline | HTTP/browser handoff URL in response | Escalate chat context to Hotline | `HotlineEscalationController.php`; `PBB_CHAT_HOTLINE_URL` |
+| PBB Chat -> Helper | Vendored frontend assets | Chat thread/composer/login/file/input/icon UI contracts | `README.md`; recent Helper `ui.loader.js` and changelog evidence |
+| Landing -> PBB Chat | Launcher metadata | Local app launcher only; public gateway disabled | `release.json` |
+
+### 11. Deployment and Runtime Architecture
+
+PBB Chat is a Laravel app under WAMP/Apache or equivalent PHP web server pointing at `public/`. `release.json` declares PHP `>=8.2` and required extensions `curl`, `fileinfo`, `json`, `mbstring`, `openssl`, `pdo`, `pdo_mysql`, `tokenizer`, and `xml`. `.env.example` configures `APP_URL=https://chat.pbb.ph`, `DB_DATABASE=pbb_chat`, database sessions, `SESSION_DOMAIN=chat.pbb.ph`, and secure cookies. Build commands are Composer/npm standard Laravel/Vite commands; no Docker file was confirmed.
+
+### 12. Security and Privacy Notes
+
+| Risk | Severity | Evidence | Suggested Fix |
+|---|---|---|---|
+| Chat content, blocks, reports, and direct messages are locally stored citizen/community data | High | Chat migrations and routes | Define retention, moderation access, backup, and purge rules |
+| Realtime backend ingress secret is required for trusted server publishing | High | `PBB_CHAT_REALTIME_BACKEND_INGRESS_SECRET`; `ChatRealtimeEventPublisher.php` | Generate per install and keep server-only |
+| Token signing secret is required for realtime admission | High | `PBB_CHAT_REALTIME_TOKEN_SIGNING_SECRET`; `config\chat.php` | Generate per install and rotate on compromise |
+| Public gateway must remain disabled unless explicitly designed | Medium | `release.json` has `public_gateway.enabled=false` | Keep Chat LAN-only; add tests/installer checks for gateway flag |
+| Session lifetime is very long by default | Medium | `.env.example` `SESSION_LIFETIME=5256000` | Confirm local-device threat model and add lock/logout expectations |
+
+### 13. Realtime Communication
+
+Confirmed. `ChatRealtimeController` creates Realtime admission payloads for room/direct/notification flows. `ChatRealtimeEventPublisher` posts backend events to the configured Realtime URL with `X-Realtime-Backend-Secret`. Allowed room prefixes include `chat.thread.` and `chat.direct.`; room naming includes `chat.thread.pbb-chat.{room_uuid}`. Fallback behavior when backend ingress is not configured is to log and skip publish.
+
+### 14. Mapping and Geolocation
+
+No mapping/geolocation functionality found / Not confirmed from code.
+
+### 15. Background Jobs, Schedulers, and Maintenance Tasks
+
+| Task | Schedule / Trigger | Purpose | Code Evidence |
+|---|---|---|---|
+| Realtime event publish | Controller/service trigger | Publish chat safety/message-related events to Realtime backend ingress | `app\Services\ChatRealtimeEventPublisher.php` |
+| Laravel queue infrastructure | Framework config | Queue tables/config exist, but Chat-specific worker task was not confirmed | migrations and Laravel config |
+
+### 16. Configuration and Environment Variables
+
+| Variable / Config | Purpose | Required | Default / Example | Related Module |
+|---|---|---|---|---|
+| `APP_URL` | Chat app URL | Yes | `https://chat.pbb.ph` | Laravel URL/session |
+| `DB_DATABASE` | Local DB | Yes | `pbb_chat` | Database |
+| `SESSION_DOMAIN` | Cookie domain | Yes | `chat.pbb.ph` | Session |
+| `PBB_CHAT_HOME_HUB_ID` | Local hub identity | Yes | `local` | Bootstrap/topology |
+| `PBB_CHAT_HOME_NAME` | Local hub display name | Yes | `Local Barangay` | Bootstrap |
+| `PBB_CHAT_HOTLINE_URL` | Hotline handoff URL | Yes | `https://hotline.pbb.ph` | Escalation |
+| `PBB_CHAT_REALTIME_URL` | Realtime base URL | Yes for realtime | `https://realtime.pbb.ph` | Realtime |
+| `PBB_CHAT_REALTIME_SDK_URL` | Browser SDK path | Yes for realtime UI | `/vendor/realtime.pbb.ph/js/sdk/index.js` | Realtime UI |
+| `PBB_CHAT_REALTIME_TOKEN_SIGNING_SECRET` | Realtime admission signing secret | Yes for realtime auth | empty | Realtime |
+| `PBB_CHAT_REALTIME_BACKEND_INGRESS_SECRET` | Backend event publish secret | Yes for backend publish | empty | Realtime |
+| `PBB_CHAT_REALTIME_TOKEN_TTL_SECONDS` | Realtime token lifetime | No | `3600` | Realtime |
+
+### 17. Known Technical Debt and Gaps
+
+| Area | Issue | Evidence | Recommended Next Step |
+|---|---|---|---|
+| Hotline escalation | Endpoint returns handoff payload only; direct Hotline incident/report creation not confirmed | `HotlineEscalationController.php` | Define whether Chat escalation remains handoff-only or creates Hotline records |
+| Offline behavior | LAN operation confirmed; durable offline compose queue not confirmed | `release.json`; no service worker/outbox found in reviewed evidence | Decide whether PBB Chat needs offline message queueing |
+| Public exposure | Release metadata disables gateway, but installer/policy should enforce it | `release.json` | Add Kit/Landing validation that Chat is not public-gateway exposed |
+| Account/profile ownership | Local user/session model exists, but relationship to a future PBB Account app is unknown | `C:\wamp64\www\pbb\account` has no app files found | Define shared identity direction before cross-app account integration |
+
+### 18. Testing Status
+
+Composer and PHPUnit are present. Route/controller tests were not run during this documentation update. OpenAPI baseline exists at `public/openapi/pbb-chat.yaml`. Coverage for offline queueing, public-gateway disabled enforcement, and Realtime admission/security was not confirmed from test execution.
+
+### 19. Evidence Summary
+
+Evidence:
+- `C:\wamp64\www\pbb\chat\README.md`
+- `C:\wamp64\www\pbb\chat\release.json`
+- `C:\wamp64\www\pbb\chat\.env.example`
+- `C:\wamp64\www\pbb\chat\routes\web.php`
+- `C:\wamp64\www\pbb\chat\config\chat.php`
+- `C:\wamp64\www\pbb\chat\app\Services\ChatRealtimeEventPublisher.php`
+- `C:\wamp64\www\pbb\chat\app\Http\Controllers\Api\ChatRealtimeController.php`
+- `C:\wamp64\www\pbb\chat\app\Http\Controllers\Api\HotlineEscalationController.php`
+- `C:\wamp64\www\pbb\chat\app\Http\Controllers\Api\ChatSafetyController.php`
+- `C:\wamp64\www\pbb\chat\database\migrations`
+
+---
+
+## App: PBB Games
+
+### 1. Executive Technical Summary
+
+PBB Games is a plain PHP optional local citizen engagement and emergency-preparedness learning app. It runs on the local PBB/WAMP node at `https://games.pbb.ph` with fallback `https://pbb.ph/games`. It is citizen-facing but not an emergency operations app. The README explicitly states version 1 does not call Hotline, Relay, Support, Realtime, Hub/HQ, Maestro, MapServer, or Kit Setup APIs. It uses local static assets and vendored Helper UI bundles, has no database, and includes modes that hide or disable games during active incidents or emergency state.
+
+### 2. Repository Overview
+
+| Area | Details |
+|---|---|
+| App Name | PBB Games |
+| Local Path | `C:\wamp64\www\pbb\games` |
+| Main Language | PHP, JavaScript |
+| Main Framework | Plain PHP/static app |
+| Frontend Framework | Plain JavaScript modules, Helper UI/game components |
+| Backend Framework | None beyond PHP scripts/classes |
+| Database | No database usage found / Not confirmed from code |
+| Realtime Technology | None confirmed |
+| Queue / Worker System | None confirmed |
+| Package Manager | No root `package.json` or `composer.json` confirmed |
+| Runtime Requirements | WAMP/Apache/PHP; local static assets |
+| Main Entry Points | `index.php`, `health.php`, `src\ModePolicy.php`, `src\GameRegistry.php` |
+| Important Config Files | `config\games.php`, `config\games.registry.php`, `manifest.json`, `README.md` |
+| Important Environment Variables | None confirmed |
+| Deployment Target | Optional local node app, local LAN |
+
+### 3. App Purpose and PBB Role
+
+PBB Games provides local games and preparedness learning activities for citizens connected to the local PBB network. It is intentionally outside core emergency operations. If unavailable, emergency reporting/SITREP/Relay operations are unaffected, but the optional local engagement surface is unavailable. It depends on vendored Helper UI assets; operational app API dependencies were not confirmed.
+
+### 4. User Roles and Permissions
+
+| Role | Purpose | Capabilities | Code Evidence |
+|---|---|---|---|
+| citizen/local visitor | Local app user | View visible games and preparedness activities based on mode policy | `README.md`; `index.php`; `src\ModePolicy.php` |
+| setup/operator via config | Controls mode/availability through config | Set `normal`, `monitoring`, `active_incident`, or `emergency` mode and feature visibility | `config\games.php`; `src\ModePolicy.php` |
+
+No formal authentication/authorization system was found.
+
+### 5. Main Features and Modules
+
+### Mode Policy
+
+Purpose: Control game visibility and emergency-disabled behavior.
+Main Code: `src\ModePolicy.php`; `config\games.php`.
+Database Tables: None.
+APIs / Routes: Used by `index.php` and `health.php`.
+Offline Behavior: Local config-driven.
+Sync Behavior: None confirmed.
+Related PBB Apps: Landing may link to Games; no runtime API integration confirmed.
+Evidence: `README.md`; `src\ModePolicy.php`; `config\games.php`.
+
+### Game Registry
+
+Purpose: Define available local, quick, learning, and retro game entries and their mode visibility.
+Main Code: `src\GameRegistry.php`; `config\games.registry.php`.
+Database Tables: None.
+APIs / Routes: `index.php`, `health.php`.
+Offline Behavior: Fully local after assets are installed.
+Sync Behavior: None confirmed.
+Related PBB Apps: PBB Helper.
+Evidence: `config\games.registry.php`; `README.md`.
+
+### Health Endpoint
+
+Purpose: Report app status, enabled flag, mode, version, total/visible games, and categories.
+Main Code: `health.php`.
+Database Tables: None.
+APIs / Routes: `GET /health.php`.
+Offline Behavior: Fully local.
+Sync Behavior: None.
+Related PBB Apps: Landing or Kit Setup health checks may use it; direct integration not confirmed.
+Evidence: `health.php`.
+
+### 6. Database Schema Summary
+
+No database usage found / Not confirmed from code.
+
+```text
+No database tables confirmed.
+```
+
+### 7. API and Route Inventory
+
+| Method | Path / Endpoint | Purpose | Auth | Handler / File | Notes |
+|---|---|---|---|---|---|
+| GET | `/` | Games home/list/play surface | None confirmed | `index.php` | Mode policy controls visibility |
+| GET | `/health.php` | JSON health/status summary | None confirmed | `health.php` | Reports mode/version/game counts |
+| GET | `/manifest.json` | PWA/app metadata | None confirmed | `manifest.json` | Local/offline-safe manifest per README |
+
+### 8. Data Flow and Operational Flow
+
+```text
+Citizen browser
+-> PBB Games `index.php`
+-> config/games.php + config/games.registry.php
+-> local static assets and Helper UI bundle
+```
+
+```text
+Health check
+-> health.php
+-> ModePolicy + GameRegistry
+-> JSON status/mode/version/counts
+```
+
+### 9. Offline-First Behavior
+
+README states internet is not required after installation. Game content/assets are local. `active_incident` mode hides Quick Games and Retro Corner and allows learning games; `emergency` mode disables all games and shows emergency guidance. No Relay outbox, conflict handling, or upstream sync exists because the app is not operational data infrastructure.
+
+### 10. Integration with Other PBB Apps
+
+| Integration | Direction | Protocol / Method | Purpose | Code Evidence |
+|---|---|---|---|---|
+| PBB Games -> Helper | Vendored static assets | UI/game components | `README.md`; `assets/helper`; Helper game component usage |
+| PBB Games -> Hotline | Link/config only | `hotline_url` configured for emergency message/navigation | `config\games.php`; README says no Hotline API calls in v1 |
+| Landing -> PBB Games | Launcher/navigation assumption | Local app link possible | README URL conventions; no direct registry evidence confirmed in Games code |
+
+### 11. Deployment and Runtime Architecture
+
+PBB Games is deployed as local PHP/static files under WAMP/Apache at `C:\wamp64\www\pbb\games`. README documents primary URL `https://games.pbb.ph` and fallback `https://pbb.ph/games`. No Docker, queue, database, Composer, or npm runtime was confirmed. Helper bundles are vendored from `C:\wamp64\www\hotline-helpers\dist` into `assets/helper`.
+
+### 12. Security and Privacy Notes
+
+| Risk | Severity | Evidence | Suggested Fix |
+|---|---|---|---|
+| Games must not distract during emergencies | Medium | `ModePolicy.php`; README emergency/active-incident mode behavior | Ensure Kit/operator runbook sets `emergency` or `active_incident` when needed |
+| No auth on health endpoint | Low | `health.php` | Keep health data non-sensitive and local-only |
+| Copyrighted ROM/assets must not be bundled | Medium | README states no commercial ROMs/BIOS/copyrighted assets | Keep asset review checklist before adding retro games |
+
+### 13. Realtime Communication
+
+No realtime functionality found / Not confirmed from code.
+
+### 14. Mapping and Geolocation
+
+No mapping/geolocation functionality found / Not confirmed from code.
+
+### 15. Background Jobs, Schedulers, and Maintenance Tasks
+
+| Task | Schedule / Trigger | Purpose | Code Evidence |
+|---|---|---|---|
+| None found | Not applicable | No cron, queue, worker, scheduler, or service task found | Local file inventory |
+
+### 16. Configuration and Environment Variables
+
+| Variable / Config | Purpose | Required | Default / Example | Related Module |
+|---|---|---|---|---|
+| `enabled` | App enabled flag | Yes | `true` | `config\games.php` |
+| `mode` | Runtime mode | Yes | `normal` | `ModePolicy` |
+| `show_quick_games` | Quick games visibility | No | `true` | Registry/policy |
+| `show_learning_games` | Learning games visibility | No | `true` | Registry/policy |
+| `show_retro_corner` | Retro corner visibility | No | `true` | Registry/policy |
+| `landing_url` | Local hub URL | No | `https://pbb.ph` | Navigation |
+| `hotline_url` | Hotline URL for emergency guidance | No | `https://hotline.pbb.ph` | Emergency guidance |
+| `version` | App version | Yes | `0.2.13` | Health endpoint |
+
+### 17. Known Technical Debt and Gaps
+
+| Area | Issue | Evidence | Recommended Next Step |
+|---|---|---|---|
+| Emergency mode control | No runtime API/admin UI confirmed for mode changes | `config\games.php` | Document how Kit/operator changes mode during active incidents |
+| Operational integration | README explicitly says no v1 API calls to core PBB apps | `README.md` | Keep this boundary or define a future read-only status contract |
+| Tests | No root package/composer test runner confirmed | file inventory | Add lightweight PHP/unit checks for mode policy and registry visibility |
+
+### 18. Testing Status
+
+Manual/local tests were not run during this documentation update. No root package test script was confirmed. Health behavior is inspectable through `health.php`.
+
+### 19. Evidence Summary
+
+Evidence:
+- `C:\wamp64\www\pbb\games\README.md`
+- `C:\wamp64\www\pbb\games\index.php`
+- `C:\wamp64\www\pbb\games\health.php`
+- `C:\wamp64\www\pbb\games\config\games.php`
+- `C:\wamp64\www\pbb\games\config\games.registry.php`
+- `C:\wamp64\www\pbb\games\src\ModePolicy.php`
+- `C:\wamp64\www\pbb\games\src\GameRegistry.php`
+- `C:\wamp64\www\pbb\games\manifest.json`
+
+---
+
 ## App: PBB Kit Setup
 
 ### 1. Executive Technical Summary
 
-PBB Kit Setup is an Electron/Node desktop installer shell plus PHP runner that orchestrates installation, package staging, DNS, SSL/vhost, firewall, service management, data prep, smoke checks, updates, and bundled PBB app packages. It is setup/provisioning-only and targets Windows local node machines. Current local `package.json` reports version `0.1.163`; the bundled manifest includes Landing, MapServer, Maestro, Realtime, Relay, Hotline, and Support as first-class app packages, plus the Cebu MapServer boundary supplemental pack. Owner clarification: node installation validates an admin-provided Hub HQ hub ID and hub token, registers all PBB processes as Windows services, and runs Data Prep to populate MapServer tiles for the Hub HQ-defined boundary. Current Kit docs/code also confirm the finalized Hotline/Relay/Support Data Prep contract and Support source-heartbeat webhook seeding.
+PBB Kit Setup is an Electron/Node desktop installer shell plus PHP runner that orchestrates installation, package staging, DNS, SSL/vhost, firewall, service management, data prep, smoke checks, updates, and bundled PBB app packages. It is setup/provisioning-only and targets Windows local node machines. Current local `package.json` reports version `0.1.164`; the bundled manifest includes Landing, MapServer, Maestro, Realtime, Relay, Hotline, and Support as first-class app packages, plus the Cebu MapServer boundary supplemental pack. Owner clarification: node installation validates an admin-provided Hub HQ hub ID and hub token, registers all PBB processes as Windows services, and runs Data Prep to populate MapServer tiles for the Hub HQ-defined boundary. Current Kit docs/code also confirm the finalized Hotline/Relay/Support Data Prep contract and Support source-heartbeat webhook seeding.
 
 ### 2. Repository Overview
 

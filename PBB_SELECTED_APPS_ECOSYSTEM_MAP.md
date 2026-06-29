@@ -15,6 +15,8 @@ The selected codebase is a local-node-oriented PBB stack built around Laravel/PH
 - Kit Setup is the Windows desktop/CLI installer and service orchestration tool.
 - Support System is the support/SITREP operations app that receives Relay-delivered SITREPs and Hotline support requests, consolidates latest SITREPs, and sends support lifecycle updates back through Relay.
 - Landing is the lightweight local LAN launcher plus public hub-safe metadata/gateway surface for node discovery and machine-to-machine Relay gateway exposure.
+- Chat is a local barangay chat app for rooms, direct messages, safety reporting/moderation, badges, and Realtime-powered local messaging.
+- Games is an optional local citizen engagement and preparedness-learning app with no confirmed operational API dependency.
 
 Fresh-scan updates verified in selected repositories:
 
@@ -26,10 +28,14 @@ Fresh-scan updates verified in selected repositories:
 - Helper UI bundle updates include password fields, number-stepper form fields, row `className` alias support, and `ui.navigation.stack`.
 - PBB Support System at `C:\wamp64\www\pbb\support` is now reviewed as a Laravel SITREP/support operations app.
 - PBB Landing at `C:\wamp64\www\pbb\landing` is now reviewed as a lightweight PHP local launcher/public hub metadata/gateway surface.
-- 2026-06-22 alignment: Kit Setup `0.1.163` now bundles Landing, MapServer, Maestro, Realtime, Relay, Hotline, and Support as first-class app packages, plus the Cebu MapServer boundary pack.
+- 2026-06-22 alignment: Kit Setup first added bundled Landing, MapServer, Maestro, Realtime, Relay, Hotline, and Support as first-class app packages, plus the Cebu MapServer boundary pack. Current 2026-06-29 local Kit version is `0.1.164`.
 - 2026-06-22 alignment: the finalized Relay/Hotline/Support contract uses `hotline.command`, `sitrep.ingestor`, and `support.dispatch` machine identities; `sitrep.record` and `support.request` are separate flows.
 - 2026-06-22 alignment: Relay now has operational `source.heartbeat.updated` webhooks stored separately from normal app-to-app messages, and Support receives those events at `POST /api/relay/source-heartbeats`.
 - 2026-06-22 alignment: Chatviewer is DB-backed when `pbb_agentchat` exists, supports token-authenticated agent posting/claiming, and `GET /api/chat-entries.php` defaults to newest-first with `order=asc` available.
+- 2026-06-29 alignment: PBB Chat at `C:\wamp64\www\pbb\chat` is reviewed as a Laravel 12 local/LAN-only barangay chat app. `release.json` disables public gateway exposure.
+- 2026-06-29 alignment: PBB Games at `C:\wamp64\www\pbb\games` is reviewed as a plain PHP optional local games/learning app. Its README says version 1 does not call Hotline, Relay, Support, Realtime, Hub/HQ, Maestro, MapServer, or Kit Setup APIs.
+- 2026-06-29 alignment: Kit Setup local `package.json` is `0.1.164`. Helper active loader cache revisions are `0.21.117`, even though Helper `package.json` still reports `0.21.83`.
+- 2026-06-29 alignment: `C:\wamp64\www\pbb\account` exists but no app files were found; behavior is `Unknown / Not confirmed from code`.
 
 Owner clarifications added after code review:
 
@@ -60,6 +66,8 @@ Owner clarifications added after code review:
 | PBB Kit Setup | Setup / Provisioning Tools | Windows setup machine / PBB Node Kit | Installer operator | Install/update/configure bundled PBB apps and services |
 | PBB Support System | Operator Apps, HQ / Cloud Services, Support Operations | Support node / upper-level node / HQ-side support deployment | Support operators, receiving agencies, admins | SITREP consolidation and support request lifecycle handling |
 | PBB Landing | Core Infrastructure Services, Setup / Provisioning Tools | Local node and hub public domain surface | Local users, Kit Setup, peer nodes/backend clients | LAN app launcher, public hub metadata projection, Kit-managed app registry, Relay gateway |
+| PBB Chat | Citizen Apps, Barangay Node Services, Realtime Communication Services | Local barangay node / LAN-only app | Citizens/local chat users, admins/moderators | Local rooms, direct messages, reports/blocks/moderation, badges, Hotline handoff |
+| PBB Games | Citizen Apps, Setup / Provisioning-adjacent local content | Local node / LAN-only optional app | Citizens/local visitors | Optional local games and emergency-preparedness learning activities |
 
 ## 3. High-Level Architecture Diagram
 
@@ -92,6 +100,19 @@ PBB Support System
   -> receives Relay `source.heartbeat.updated` webhooks at `/api/relay/source-heartbeats`
   -> publishes heartbeat snapshots to Realtime support rooms
   -> uses MapServer URLs for support maps/boundaries
+
+PBB Chat
+  -> local `pbb_chat` database
+  -> PBB Realtime admission and backend ingress publishing
+  -> Helper-backed chat UI, composer, login/account/password modals, icons
+  -> handoff-only Hotline escalation endpoint returning configured Hotline URL
+  -> local/LAN-only Landing launcher entry; public gateway disabled
+
+PBB Games
+  -> local PHP/static game registry and mode policy
+  -> Helper-backed UI/game components
+  -> no confirmed operational API calls to Hotline, Relay, Support, Realtime, Hub/HQ, Maestro, MapServer, or Kit Setup in version 1
+  -> active incident/emergency modes hide or disable games
 
 PBB Landing
   -> reads Relay public `hub.json`
@@ -138,6 +159,11 @@ PBB Kit Setup
 | Kit Setup | Landing | HTTP `/internal/registry/apps/{appId}` with bearer token | App launch/health/gateway registry records | App install/update registration | `landing\README.md`; `landing\src\Auth.php`; `landing\src\RegistryStore.php` |
 | Landing | Relay hub JSON | Local file read | Hub identity and public projection source | Public `/.well-known/pbb-hub.json` rendering | `landing\config\landing.php`; `landing\src\HubSource.php`; `landing\src\HubProjection.php` |
 | Landing | Relay | HTTP cURL gateway for `/relay/api/v1/*` | Allowed machine-to-machine Relay API traffic | Peer/backend calls through public hub domain | `landing\src\Gateway.php`; `landing\src\App.php`; `landing\storage\registry.json` |
+| PBB Chat | PBB Realtime | HTTP backend ingest/admission and browser WebSocket SDK | Room/direct/notification admission and chat events | Local chat and safety actions | `chat\app\Services\ChatRealtimeEventPublisher.php`; `chat\app\Http\Controllers\Api\ChatRealtimeController.php`; `chat\config\chat.php` |
+| PBB Chat | PBB Hotline | HTTP/browser handoff URL response | Chat user context, optional summary/context flag, configured Hotline URL | `POST /api/chat/escalate-to-hotline` | `chat\app\Http\Controllers\Api\HotlineEscalationController.php`; `chat\config\chat.php` |
+| PBB Chat | PBB Helper | Vendored JS/CSS UI contracts | Chat thread/composer/login/file/icon UI surfaces | Browser rendering | `chat\README.md`; `hotline-helpers\js\ui\ui.loader.js`; `hotline-helpers\CHANGELOG.md` |
+| PBB Games | PBB Helper | Vendored JS/CSS/game components | Launcher/game UI components and styles | Browser rendering | `games\README.md`; `games\assets\helper`; `hotline-helpers\js\ui\ui.game.state.chrome.js` |
+| PBB Games | PBB Hotline | Configured URL/link only | Emergency guidance/navigation target | Emergency/disabled mode messaging | `games\config\games.php`; `games\README.md` |
 | Relay | Relay peers | HTTP `/api/v1/receive`, `/api/v1/receive-batch`, upload APIs | Relay envelopes, attachments, receipts | Delivery worker | `relay\routes\api.php`; `relay\config\relay.php` |
 | Local apps | Relay | HTTP `/api/v1/messages`, inbox/handler/upload APIs | Local relay envelopes and files | App submission | `relay\routes\api.php` |
 | Relay | Hub/HQ | HTTP HQ registry/heartbeat APIs | Registry sync, heartbeat | CLI/worker/scheduled external process | `relay\config\relay.php`; `relay\app\Console\Commands` |
@@ -172,6 +198,11 @@ PBB Kit Setup
 | `landing\storage\registry.json` | Landing, Kit Setup | App launcher, health, and public gateway registry records | `landing\config\landing.php`; `landing\src\RegistryStore.php`; `landing\README.md` |
 | `landing\storage\logs\*.log` | Landing | Registry audit and gateway logs | `landing\config\landing.php`; `landing\src\RegistryStore.php`; `landing\src\Gateway.php` |
 | `C:\wamp64\www\pbb\relay\public\hub.json` | Landing, Support System, Kit Setup context | Hub identity/public projection source and topology context | `landing\config\landing.php`; `support\.env.example`; owner clarification |
+| `pbb_chat` database | PBB Chat | Local rooms, memberships, messages, direct conversations, message requests, reports/blocks, badges, sessions/queues | `chat\.env.example`; `chat\database\migrations`; `chat\routes\web.php` |
+| `chat\public\openapi\pbb-chat.yaml` | PBB Chat | Chat API baseline documentation | `chat\README.md`; file inventory |
+| `games\config\games.php`, `games\config\games.registry.php` | PBB Games | Mode policy and local game registry | `games\config\games.php`; `games\config\games.registry.php`; `games\health.php` |
+| `games\assets\helper` | PBB Games | Vendored Helper UI/game assets | `games\README.md`; file inventory |
+| `C:\wamp64\www\pbb\account` | Unknown / Not confirmed from code | Folder exists but no app files were found in scan | local folder inventory |
 
 ## 6. Offline-First Architecture Summary
 
@@ -186,6 +217,8 @@ Confirmed local/LAN-capable parts:
 - Helper is static and vendored.
 - Support System can run locally/LAN with its own MySQL database after Relay has delivered data; outbound sync requires local Relay availability.
 - Landing can serve the local launcher and read local registry/hub JSON files without internet.
+- PBB Chat can run as a local/LAN Laravel app with local `pbb_chat` database and local Realtime; public gateway exposure is disabled in `release.json`.
+- PBB Games can run locally after install with static/PHP assets and no database; emergency/active-incident mode behavior is local config-driven.
 - Kit Setup can install bundled ZIPs locally.
 - Owner clarification: Setup Data Prep populates MapServer tiles for the Hub HQ-defined boundary during node installation.
 
@@ -197,6 +230,8 @@ Requires upstream/internet/cloud connectivity:
 - Hub/HQ heartbeat visibility requires nodes to reach Hub/HQ.
 - Landing public metadata/gateway behavior requires the public hub domain/tunnel path to be reachable.
 - Support System upstream SITREP and support lifecycle delivery require Relay and upstream topology reachability.
+- PBB Chat live updates require local PBB Realtime availability. Internet/cloud is not confirmed as required; public gateway is explicitly disabled.
+- PBB Games has no confirmed cloud/upstream dependency after install.
 - Kit Setup validates local WampServer and Technitium DNS prerequisites. DNS apply/verify can use Technitium locally; SSL/remote-check/provider-specific steps may still need network depending on configuration.
 
 Confirmed retry/queue behavior:
@@ -206,6 +241,8 @@ Confirmed retry/queue behavior:
 - Hotline has Laravel queue/scheduler, stale media finalization, confirmed SITREP Relay delivery/outbox support, and confirmed Support Request relay submission/lifecycle services. A durable browser-side citizen outbox was still not confirmed.
 - Support System has database queue usage for SITREP relay delivery and support request lifecycle delivery jobs. Landing has no queue/retry layer; Relay handles store-and-forward behind it.
 - Relay source-heartbeat operational webhooks are queued/tracked in `relay_webhook_deliveries`; Support accepts duplicate protection by `event_id`.
+- PBB Chat has local DB persistence and Realtime publish skipping/logging when backend ingress is not configured; durable browser-side offline compose queues and Relay sync were not confirmed.
+- PBB Games has no retry/queue layer because it does not manage operational sync data.
 
 Conflict handling:
 
@@ -292,6 +329,8 @@ Design constraints from owner clarification:
 Confirmed Realtime users:
 
 - Hotline uses Realtime admission routes and SDK.
+- PBB Chat uses Realtime admission for room/direct/notification flows and backend ingest publishing for chat events.
+- Support System publishes accepted source heartbeat snapshots to Realtime support rooms.
 - Realtime is product-app agnostic and exposes PHP backend SDK/docs.
 
 Confirmed WebSocket events/channels:
@@ -317,6 +356,8 @@ Known behavior:
 - Backend-published events and media chunk outcomes persist in DB and are drained by the gateway.
 - Multiple gateway processes do not share in-memory state. Owner clarification: the production expectation is one shared Realtime gateway instance per node.
 - WebRTC signaling is supported as `call.signal.publish`; Realtime itself is not the media SFU/MCU in inspected code.
+- PBB Chat room naming includes `chat.thread.pbb-chat.{room_uuid}` and allowed prefixes include `chat.thread.` and `chat.direct.`.
+- PBB Games has no realtime functionality confirmed.
 
 ## 9. Mapping Architecture Summary
 
@@ -342,6 +383,8 @@ Client
 Offline map behavior exists only for cached/prepared tiles and local boundary resources. Complete offline coverage depends on tile population/data prep.
 
 Owner clarification: during node installation, Kit Setup Data Prep is expected to auto-populate MapServer with tiles for the boundary dictated by Hub HQ hub information.
+
+No mapping/geolocation functionality was confirmed in PBB Chat or PBB Games.
 
 ## 10. Kit Setup / Provisioning Flow
 
@@ -398,6 +441,9 @@ Maestro computes worker status as starting/idle/busy/stale/stopped. Owner clarif
 | Support source heartbeat webhook token | Relay operational webhook uses a dedicated Support token and Support accepts bearer or `X-Relay-Webhook-Key` | Relay, Support System, Kit Setup | High | `kit-setup\docs\relay-hotline-support-data-prep-contract.md`; `RelaySourceHeartbeatController.php`; `relay\tools\data-prep\apply-settings.php` | Generate per-node token through Kit, keep server-side only, rotate on compromise |
 | Landing registry token | Landing internal registry writes are bearer-token protected by `PBB_LANDING_REGISTRY_TOKEN_HASH` | Landing, Kit Setup | High | `landing\src\Auth.php`; `landing\README.md`; `landing\config\landing.php` | Generate per-node token in Kit Setup, store only hash, and keep `/internal/*` local-only |
 | Landing Relay gateway exposure | Landing forwards `/relay/api/v1/*` only for allowed peers and registry-enabled M2M gateway config | Landing, Relay | High | `landing\src\Gateway.php`; `landing\src\RegistryStore.php`; `landing\tests\run.php` | Keep peer-domain allowlist strict and document gateway threat model with FRP/public DNS setup |
+| Chat local community data | Chat stores local messages, direct conversations, reports, blocks, badges, and session data | PBB Chat | High | `chat\database\migrations`; `chat\routes\web.php` | Define retention, moderation access, backup, and purge policy |
+| Chat public exposure should remain disabled | Chat release metadata disables public gateway exposure | PBB Chat, Landing, Kit Setup | Medium | `chat\release.json` | Keep Chat LAN-only unless a separate public security model is designed |
+| Games emergency distraction risk | Games has active-incident and emergency modes but mode changes are config-driven | PBB Games | Medium | `games\config\games.php`; `games\src\ModePolicy.php` | Document/automate operator mode switching during active incidents |
 | Hub tokens | Hub machine endpoints use token auth | Hub/HQ, Relay | High | `hub.ph\routes\api.php`; `hub_tokens` migration | Rotate tokens and scope access |
 | Map provider keys | MapServer requires provider API keys for defaults | MapServer | Medium | `mapserver\config.php` | Keep keys out of source and mask diagnostics |
 | Admin surface role gaps | Hub geodata coordinate updates are auth-only; Maestro management APIs auth-only | Hub/HQ, Maestro | Medium | `hub.ph\routes\api.php`; `maestro\routes\api.php` | Confirm intended permissions and add roles where needed |
@@ -421,6 +467,9 @@ Maestro computes worker status as starting/idle/busy/stale/stopped. Owner clarif
 | Service recovery runbook not documented here | Maestro, Kit Setup, Relay, Realtime | Owner clarified Maestro observes only and Windows services own lifecycle; operators still need recovery expectations | Medium |
 | Role/permission model differs by app | Hotline, Hub, Relay, Realtime, Maestro | Security review complexity | Medium |
 | Chatviewer has authenticated writes but unauthenticated reads | Chatviewer | Sensitive internal notes if exposed beyond the owner's local/personal use | Low if kept local/private; Medium if shared |
+| PBB Chat offline scope is not fully specified | PBB Chat, Realtime, Landing | LAN-only operation is confirmed, but durable offline message queueing and Relay sync were not confirmed | Medium |
+| PBB Games emergency mode operation needs a runbook | PBB Games, Kit Setup/Landing context | Games should not compete with emergency workflows during active incidents | Medium |
+| PBB Account folder is unconfirmed | Account/future identity apps, Chat | Folder exists but no app files were found; shared account behavior should not be assumed | Low |
 | Documentation mixes proposals and implemented code | Helper, Realtime, Relay, Hotline | Future readers may over-assume features | Medium |
 
 ## 14. Recommended Next Technical Priorities
@@ -437,6 +486,8 @@ Maestro computes worker status as starting/idle/busy/stale/stopped. Owner clarif
 | 8 | Harden machine/API secrets and diagnostics | Several services carry high-impact local credentials | Relay, Realtime, Hub, Maestro, MapServer, Support System, Landing |
 | 9 | Automate or document offline map preflight after Setup Data Prep | MapServer only serves cached/prepared tiles offline, and Data Prep should verify Hub HQ-defined coverage | MapServer, Hotline, Kit Setup, Support System |
 | 10 | Document Maestro as observer-only and Windows service recovery as service-layer responsibility | Current code monitors; owner clarified Kit Setup/Windows services manage lifecycle | Maestro, Kit Setup |
+| 11 | Decide and document PBB Chat offline/sync boundary | Code confirms LAN/local Realtime chat, but not durable offline queues or Relay synchronization | PBB Chat, Realtime, Landing |
+| 12 | Add a Games emergency-mode operator runbook | Games has safety modes but no confirmed runtime admin control | PBB Games, Kit Setup, Landing |
 
 ## 15. Questions for Project Owner
 
@@ -450,3 +501,29 @@ Maestro computes worker status as starting/idle/busy/stale/stopped. Owner clarif
 | Should Hotline work with a durable browser-side offline incident queue, or only local server/LAN offline? | Current code confirms local/LAN and frontend offline handling, not durable browser outbox. |
 | Which data must be retained, archived, encrypted, or purged for incidents, media, chat, and location? | Sensitive emergency data is stored locally. |
 | What pass/fail thresholds should the offline map preflight enforce after Setup Data Prep? | Owner clarified Setup Data Prep populates MapServer tiles from Hub HQ boundary data; deployment needs objective validation. |
+| Should PBB Chat ever synchronize messages upstream, or is it strictly local/LAN-only community chat? | Current code confirms local/LAN Chat with Realtime and public gateway disabled, not Relay sync. |
+| Should PBB Games mode be controlled manually by config, by Kit Setup, or by a local incident state signal? | Code confirms mode policy but not a runtime control source. |
+| Is `C:\wamp64\www\pbb\account` intended to become a shared account/identity app? | Folder exists but no app files were found; future Chat identity integration should not be inferred. |
+
+## 16. Evidence Addendum For 2026-06-29 Alignment
+
+- `C:\wamp64\www\pbb\chat\README.md`
+- `C:\wamp64\www\pbb\chat\release.json`
+- `C:\wamp64\www\pbb\chat\.env.example`
+- `C:\wamp64\www\pbb\chat\routes\web.php`
+- `C:\wamp64\www\pbb\chat\config\chat.php`
+- `C:\wamp64\www\pbb\chat\app\Services\ChatRealtimeEventPublisher.php`
+- `C:\wamp64\www\pbb\chat\app\Http\Controllers\Api\ChatRealtimeController.php`
+- `C:\wamp64\www\pbb\chat\app\Http\Controllers\Api\HotlineEscalationController.php`
+- `C:\wamp64\www\pbb\chat\app\Http\Controllers\Api\ChatSafetyController.php`
+- `C:\wamp64\www\pbb\chat\database\migrations`
+- `C:\wamp64\www\pbb\games\README.md`
+- `C:\wamp64\www\pbb\games\health.php`
+- `C:\wamp64\www\pbb\games\config\games.php`
+- `C:\wamp64\www\pbb\games\config\games.registry.php`
+- `C:\wamp64\www\pbb\games\src\ModePolicy.php`
+- `C:\wamp64\www\pbb\games\src\GameRegistry.php`
+- `C:\wamp64\www\hotline-helpers\js\ui\ui.loader.js`
+- `C:\wamp64\www\hotline-helpers\CHANGELOG.md`
+- `C:\wamp64\www\pbb\kit-setup\package.json`
+- `C:\wamp64\www\pbb\kit-setup\packages\packages.bundled.json`
