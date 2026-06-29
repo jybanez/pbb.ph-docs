@@ -35,7 +35,7 @@ Fresh-scan updates verified in selected repositories:
 - 2026-06-29 alignment: PBB Chat at `C:\wamp64\www\pbb\chat` is reviewed as a Laravel 12 local/LAN-only barangay chat app. `release.json` disables public gateway exposure.
 - 2026-06-29 alignment: PBB Games at `C:\wamp64\www\pbb\games` is reviewed as a plain PHP optional local games/learning app. Its README says version 1 does not call Hotline, Relay, Support, Realtime, Hub/HQ, Maestro, MapServer, or Kit Setup APIs.
 - 2026-06-29 alignment: Kit Setup local `package.json` is `0.1.164`. Helper active loader cache revisions are `0.21.117`, even though Helper `package.json` still reports `0.21.83`.
-- 2026-06-29 alignment: `C:\wamp64\www\pbb\account` exists but no app files were found; behavior is `Unknown / Not confirmed from code`.
+- 2026-06-29 alignment: `C:\wamp64\www\pbb\account` exists but no implementation files were found. `PBB_ACCOUNT_SERVICE_PROPOSAL.md` confirms the intended Account Service direction as a draft central identity/SSO proposal: canonical `pbb_user_id`, central credentials, app-local sessions, and app-local user rows linked by `pbb_user_id`.
 
 Owner clarifications added after code review:
 
@@ -68,6 +68,7 @@ Owner clarifications added after code review:
 | PBB Landing | Core Infrastructure Services, Setup / Provisioning Tools | Local node and hub public domain surface | Local users, Kit Setup, peer nodes/backend clients | LAN app launcher, public hub metadata projection, Kit-managed app registry, Relay gateway |
 | PBB Chat | Citizen Apps, Barangay Node Services, Realtime Communication Services | Local barangay node / LAN-only app | Citizens/local chat users, admins/moderators | Local rooms, direct messages, reports/blocks/moderation, badges, Hotline handoff |
 | PBB Games | Citizen Apps, Setup / Provisioning-adjacent local content | Local node / LAN-only optional app | Citizens/local visitors | Optional local games and emergency-preparedness learning activities |
+| PBB Account | Planned Core Infrastructure Services, Identity / SSO | Proposed local/top-level app; implementation not found | Citizens, operators, command users, admins, support users, trusted apps | Proposed central identity/credential authority with app-local sessions linked by `pbb_user_id` |
 
 ## 3. High-Level Architecture Diagram
 
@@ -113,6 +114,13 @@ PBB Games
   -> Helper-backed UI/game components
   -> no confirmed operational API calls to Hotline, Relay, Support, Realtime, Hub/HQ, Maestro, MapServer, or Kit Setup in version 1
   -> active incident/emergency modes hide or disable games
+
+PBB Account (proposal only; no implementation found)
+  -> central canonical `pbb_user_id`
+  -> central credentials/account status/verified contact fields
+  -> `/oauth/authorize` and `/oauth/token` style SSO flow
+  -> app-local sessions and app-local users linked by `pbb_user_id`
+  -> planned Chat login and Chat-to-Hotline auto-login
 
 PBB Landing
   -> reads Relay public `hub.json`
@@ -202,7 +210,8 @@ PBB Kit Setup
 | `chat\public\openapi\pbb-chat.yaml` | PBB Chat | Chat API baseline documentation | `chat\README.md`; file inventory |
 | `games\config\games.php`, `games\config\games.registry.php` | PBB Games | Mode policy and local game registry | `games\config\games.php`; `games\config\games.registry.php`; `games\health.php` |
 | `games\assets\helper` | PBB Games | Vendored Helper UI/game assets | `games\README.md`; file inventory |
-| `C:\wamp64\www\pbb\account` | Unknown / Not confirmed from code | Folder exists but no app files were found in scan | local folder inventory |
+| `C:\wamp64\www\pbb\account` | PBB Account proposal context | Intended future Account Service path; no implementation files found | local folder inventory |
+| `PBB_ACCOUNT_SERVICE_PROPOSAL.md` | PBB Account, Chat, Hotline, future apps | Draft central identity/SSO proposal and migration plan | `documentations\PBB_ACCOUNT_SERVICE_PROPOSAL.md` |
 
 ## 6. Offline-First Architecture Summary
 
@@ -219,6 +228,7 @@ Confirmed local/LAN-capable parts:
 - Landing can serve the local launcher and read local registry/hub JSON files without internet.
 - PBB Chat can run as a local/LAN Laravel app with local `pbb_chat` database and local Realtime; public gateway exposure is disabled in `release.json`.
 - PBB Games can run locally after install with static/PHP assets and no database; emergency/active-incident mode behavior is local config-driven.
+- PBB Account offline behavior is not implemented or confirmed. The proposal implies a credential authority that apps depend on for new SSO sessions, but local/offline availability rules are still open.
 - Kit Setup can install bundled ZIPs locally.
 - Owner clarification: Setup Data Prep populates MapServer tiles for the Hub HQ-defined boundary during node installation.
 
@@ -232,6 +242,7 @@ Requires upstream/internet/cloud connectivity:
 - Support System upstream SITREP and support lifecycle delivery require Relay and upstream topology reachability.
 - PBB Chat live updates require local PBB Realtime availability. Internet/cloud is not confirmed as required; public gateway is explicitly disabled.
 - PBB Games has no confirmed cloud/upstream dependency after install.
+- PBB Account external dependency is Unknown / Not confirmed from code; deployment placement is still an open proposal question.
 - Kit Setup validates local WampServer and Technitium DNS prerequisites. DNS apply/verify can use Technitium locally; SSL/remote-check/provider-specific steps may still need network depending on configuration.
 
 Confirmed retry/queue behavior:
@@ -444,6 +455,7 @@ Maestro computes worker status as starting/idle/busy/stale/stopped. Owner clarif
 | Chat local community data | Chat stores local messages, direct conversations, reports, blocks, badges, and session data | PBB Chat | High | `chat\database\migrations`; `chat\routes\web.php` | Define retention, moderation access, backup, and purge policy |
 | Chat public exposure should remain disabled | Chat release metadata disables public gateway exposure | PBB Chat, Landing, Kit Setup | Medium | `chat\release.json` | Keep Chat LAN-only unless a separate public security model is designed |
 | Games emergency distraction risk | Games has active-incident and emergency modes but mode changes are config-driven | PBB Games | Medium | `games\config\games.php`; `games\src\ModePolicy.php` | Document/automate operator mode switching during active incidents |
+| Central identity service would become high-value credential target | PBB Account, Chat, Hotline, Support, Maestro, Landing | High | `PBB_ACCOUNT_SERVICE_PROPOSAL.md` | Store password hashes only in Account Service, hash authorization codes/client secrets, audit security events, and enforce exact redirect URI matching |
 | Hub tokens | Hub machine endpoints use token auth | Hub/HQ, Relay | High | `hub.ph\routes\api.php`; `hub_tokens` migration | Rotate tokens and scope access |
 | Map provider keys | MapServer requires provider API keys for defaults | MapServer | Medium | `mapserver\config.php` | Keep keys out of source and mask diagnostics |
 | Admin surface role gaps | Hub geodata coordinate updates are auth-only; Maestro management APIs auth-only | Hub/HQ, Maestro | Medium | `hub.ph\routes\api.php`; `maestro\routes\api.php` | Confirm intended permissions and add roles where needed |
@@ -469,7 +481,7 @@ Maestro computes worker status as starting/idle/busy/stale/stopped. Owner clarif
 | Chatviewer has authenticated writes but unauthenticated reads | Chatviewer | Sensitive internal notes if exposed beyond the owner's local/personal use | Low if kept local/private; Medium if shared |
 | PBB Chat offline scope is not fully specified | PBB Chat, Realtime, Landing | LAN-only operation is confirmed, but durable offline message queueing and Relay sync were not confirmed | Medium |
 | PBB Games emergency mode operation needs a runbook | PBB Games, Kit Setup/Landing context | Games should not compete with emergency workflows during active incidents | Medium |
-| PBB Account folder is unconfirmed | Account/future identity apps, Chat | Folder exists but no app files were found; shared account behavior should not be assumed | Low |
+| PBB Account implementation is not started | Account/future identity apps, Chat, Hotline, Support, Maestro, Landing | Proposal defines intended central identity/SSO direction, but no app code/migrations/routes exist yet | High |
 | Documentation mixes proposals and implemented code | Helper, Realtime, Relay, Hotline | Future readers may over-assume features | Medium |
 
 ## 14. Recommended Next Technical Priorities
@@ -488,6 +500,7 @@ Maestro computes worker status as starting/idle/busy/stale/stopped. Owner clarif
 | 10 | Document Maestro as observer-only and Windows service recovery as service-layer responsibility | Current code monitors; owner clarified Kit Setup/Windows services manage lifecycle | Maestro, Kit Setup |
 | 11 | Decide and document PBB Chat offline/sync boundary | Code confirms LAN/local Realtime chat, but not durable offline queues or Relay synchronization | PBB Chat, Realtime, Landing |
 | 12 | Add a Games emergency-mode operator runbook | Games has safety modes but no confirmed runtime admin control | PBB Games, Kit Setup, Landing |
+| 13 | Decide Account Service implementation placement and scaffold plan | Proposal identifies `C:\wamp64\www\pbb\account` as an open placement question and recommends proving Chat-to-Hotline SSO first | PBB Account, Chat, Hotline |
 
 ## 15. Questions for Project Owner
 
@@ -503,7 +516,9 @@ Maestro computes worker status as starting/idle/busy/stale/stopped. Owner clarif
 | What pass/fail thresholds should the offline map preflight enforce after Setup Data Prep? | Owner clarified Setup Data Prep populates MapServer tiles from Hub HQ boundary data; deployment needs objective validation. |
 | Should PBB Chat ever synchronize messages upstream, or is it strictly local/LAN-only community chat? | Current code confirms local/LAN Chat with Realtime and public gateway disabled, not Relay sync. |
 | Should PBB Games mode be controlled manually by config, by Kit Setup, or by a local incident state signal? | Code confirms mode policy but not a runtime control source. |
-| Is `C:\wamp64\www\pbb\account` intended to become a shared account/identity app? | Folder exists but no app files were found; future Chat identity integration should not be inferred. |
+| Should Account Service live as a new top-level Laravel app under `C:\wamp64\www\pbb\account`? | Proposal identifies this as an open implementation-placement question. |
+| What local/offline behavior should app login have when Account Service is unavailable? | Proposal defines SSO but not durable offline identity behavior. |
+| Should Account Service use full OIDC later or a PBB-internal OAuth-like V1? | Proposal leaves this open and affects client contracts. |
 
 ## 16. Evidence Addendum For 2026-06-29 Alignment
 
@@ -527,3 +542,4 @@ Maestro computes worker status as starting/idle/busy/stale/stopped. Owner clarif
 - `C:\wamp64\www\hotline-helpers\CHANGELOG.md`
 - `C:\wamp64\www\pbb\kit-setup\package.json`
 - `C:\wamp64\www\pbb\kit-setup\packages\packages.bundled.json`
+- `C:\wamp64\www\pbb\documentations\PBB_ACCOUNT_SERVICE_PROPOSAL.md`

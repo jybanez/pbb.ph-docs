@@ -10,7 +10,7 @@ Fresh-scan update source: local code under `C:\wamp64\www\pbb`, plus earlier `C:
 
 Current-state alignment note, 2026-06-22: local code and DB-backed Chatviewer updates confirmed additional changes after the prior briefing. Kit Setup first had the bundled package manifest with `pbb-landing`, `pbb-mapserver`, `pbb-maestro`, `pbb-realtime`, `pbb-relay`, `pbb-hotline`, and `pbb-support`, plus the Cebu MapServer boundary pack; current 2026-06-29 local Kit version is `0.1.164`. The finalized Hotline/Relay/Support Data Prep model uses separate Support role identities: `sitrep.ingestor` for `sitrep.record` and `support.dispatch` for `support.request` / `support.request.cancelled`. Relay now implements operational `source.heartbeat.updated` webhooks through `relay_webhook_subscribers` and `relay_webhook_deliveries`; Kit seeds a Support Source Heartbeats subscriber, and Support receives it at `POST /api/relay/source-heartbeats`, validates a dedicated token, deduplicates by `event_id`, and publishes accepted snapshots to Realtime. Chatviewer now has a DB-backed agent chat API with token-authenticated posting/claiming and `GET /api/chat-entries.php` list queries defaulting newest-first while `order=asc` is available for chronological API reads.
 
-Current-state alignment note, 2026-06-29: local code and recent DB-backed Chatviewer entries confirm two additional local projects. PBB Chat at `C:\wamp64\www\pbb\chat` is a Laravel 12 local barangay chat app with rooms, direct messages, message requests, badges, reports/blocks/moderation, Realtime admission/publishing, and a Hotline escalation handoff stub. PBB Games at `C:\wamp64\www\pbb\games` is a plain PHP optional local engagement/learning app with no database and no operational API integration in version 1. Kit Setup local `package.json` is now `0.1.164`; the bundled package manifest still lists Landing, MapServer, Maestro, Realtime, Relay, Hotline, Support, and the Cebu MapServer boundary pack. Helper `package.json` remains `0.21.83`, but active loader cache revisions in `js\ui\ui.loader.js` are `0.21.117` and recent Helper changes add Chat envelope/block/mute icons, sender presence indicators, `ui.file.input`, login-form media branding options, paste attachments in `ui.chat.composer`, and improved `ui.game.state.chrome.showMilestone(...)`. `C:\wamp64\www\pbb\account` exists but no app files were found during this scan; account-app behavior is `Unknown / Not confirmed from code`.
+Current-state alignment note, 2026-06-29: local code and recent DB-backed Chatviewer entries confirm two additional local projects. PBB Chat at `C:\wamp64\www\pbb\chat` is a Laravel 12 local barangay chat app with rooms, direct messages, message requests, badges, reports/blocks/moderation, Realtime admission/publishing, and a Hotline escalation handoff stub. PBB Games at `C:\wamp64\www\pbb\games` is a plain PHP optional local engagement/learning app with no database and no operational API integration in version 1. Kit Setup local `package.json` is now `0.1.164`; the bundled package manifest still lists Landing, MapServer, Maestro, Realtime, Relay, Hotline, Support, and the Cebu MapServer boundary pack. Helper `package.json` remains `0.21.83`, but active loader cache revisions in `js\ui\ui.loader.js` are `0.21.117` and recent Helper changes add Chat envelope/block/mute icons, sender presence indicators, `ui.file.input`, login-form media branding options, paste attachments in `ui.chat.composer`, and improved `ui.game.state.chrome.showMilestone(...)`. `C:\wamp64\www\pbb\account` exists but no implementation files were found during this scan; `PBB_ACCOUNT_SERVICE_PROPOSAL.md` now confirms the intended Account Service direction as a draft central identity/SSO proposal.
 
 ---
 
@@ -2581,7 +2581,7 @@ No mapping/geolocation functionality found / Not confirmed from code.
 | Hotline escalation | Endpoint returns handoff payload only; direct Hotline incident/report creation not confirmed | `HotlineEscalationController.php` | Define whether Chat escalation remains handoff-only or creates Hotline records |
 | Offline behavior | LAN operation confirmed; durable offline compose queue not confirmed | `release.json`; no service worker/outbox found in reviewed evidence | Decide whether PBB Chat needs offline message queueing |
 | Public exposure | Release metadata disables gateway, but installer/policy should enforce it | `release.json` | Add Kit/Landing validation that Chat is not public-gateway exposed |
-| Account/profile ownership | Local user/session model exists, but relationship to a future PBB Account app is unknown | `C:\wamp64\www\pbb\account` has no app files found | Define shared identity direction before cross-app account integration |
+| Account/profile ownership | Local user/session model exists; proposal now recommends Account Service as canonical identity owner with app-local sessions and `pbb_user_id` links | `C:\wamp64\www\pbb\account` has no app files found; `PBB_ACCOUNT_SERVICE_PROPOSAL.md` | Implement Account Service and plan Chat local-user migration around `pbb_user_id` |
 
 ### 18. Testing Status
 
@@ -2783,6 +2783,214 @@ Evidence:
 - `C:\wamp64\www\pbb\games\src\ModePolicy.php`
 - `C:\wamp64\www\pbb\games\src\GameRegistry.php`
 - `C:\wamp64\www\pbb\games\manifest.json`
+
+---
+
+## App: PBB Account (Proposal / No Implementation Found)
+
+### 1. Executive Technical Summary
+
+PBB Account is a draft proposal for a central Account Service / central identity app. The proposal recommends centralizing canonical user identity and credentials while keeping app sessions and app-specific records local. It is intended to support Chat, Hotline, Support, Maestro, Landing, and future apps through app-local user rows linked by a stable `pbb_user_id`. No implementation code, routes, migrations, package files, or config files were found under `C:\wamp64\www\pbb\account` during the scan.
+
+### 2. Repository Overview
+
+| Area | Details |
+|---|---|
+| App Name | PBB Account / Account Service |
+| Local Path | Proposed path: `C:\wamp64\www\pbb\account`; implementation files not found |
+| Main Language | Unknown / Not confirmed from code; proposal suggests a new Laravel app or service directory |
+| Main Framework | Proposed Laravel app or service; not implemented in code |
+| Frontend Framework | Unknown / Not confirmed from code |
+| Backend Framework | Proposed central identity/SSO service |
+| Database | Proposed `accounts`, `account_login_identifiers`, `sso_authorization_codes`, `trusted_clients`, `account_audit_events`; no migrations found |
+| Realtime Technology | None proposed for V1 identity flow |
+| Queue / Worker System | Unknown / Not confirmed from code |
+| Package Manager | Unknown / Not confirmed from code |
+| Runtime Requirements | Unknown / Not confirmed from code |
+| Main Entry Points | Proposed `/oauth/authorize`, `/oauth/token`, account profile APIs; no files found |
+| Important Config Files | `PBB_ACCOUNT_SERVICE_PROPOSAL.md` only |
+| Important Environment Variables | Unknown / Not confirmed from code |
+| Deployment Target | Proposed local/node identity service; exact placement not confirmed |
+
+### 3. App Purpose and PBB Role
+
+The proposal positions PBB Account as the canonical identity and credential authority for PBB users. Apps should not share one mutable `users` table or one shared session cookie. Instead, Account Service should authenticate users, issue short-lived authorization codes, and return identity claims. Each app then creates its own local session and local user/profile row linked by `pbb_user_id`. The first planned milestone is Chat login through Account Service, then Chat-to-Hotline auto-login without a second password prompt.
+
+### 4. User Roles and Permissions
+
+| Role | Purpose | Capabilities | Code Evidence |
+|---|---|---|---|
+| canonical account user | Proposed global identity holder | Owns `pbb_user_id`, login identifiers, password hash, account status, verified contacts | `PBB_ACCOUNT_SERVICE_PROPOSAL.md` |
+| trusted client app | Proposed registered app client | Exchanges SSO authorization codes and refreshes identity claims through authenticated server-to-server calls | `PBB_ACCOUNT_SERVICE_PROPOSAL.md` |
+| app-local user | Existing/proposed local app profile | Keeps app-local session, role, permissions, preferences, and domain records linked to `pbb_user_id` | `PBB_ACCOUNT_SERVICE_PROPOSAL.md` |
+
+The proposal explicitly recommends not centralizing all app roles on day one. Account Service owns global account status; apps continue owning operational permissions.
+
+### 5. Main Features and Modules
+
+### Central Identity And Credentials
+
+Purpose: Own canonical `pbb_user_id`, login identifiers, password hash, account status, verification state, display name, optional avatar, and audit events.
+Main Code: No implementation found.
+Database Tables: Proposed `accounts`, optional `account_login_identifiers`, `account_audit_events`.
+APIs / Routes: Proposed account profile/update APIs and lookup/sync endpoints.
+Offline Behavior: Unknown / Not confirmed from code.
+Sync Behavior: Proposed profile refresh, SSO claims, webhook, or scheduled sync for app-local cached fields.
+Related PBB Apps: Chat, Hotline, Support, Maestro, Landing, future apps.
+Evidence: `PBB_ACCOUNT_SERVICE_PROPOSAL.md`.
+
+### Browser SSO
+
+Purpose: Let apps redirect users to Account Service, exchange short-lived one-time authorization codes server-to-server, and create app-local sessions.
+Main Code: No implementation found.
+Database Tables: Proposed `sso_authorization_codes`, `trusted_clients`.
+APIs / Routes: Proposed `GET /oauth/authorize`, `POST /oauth/token`.
+Offline Behavior: Unknown / Not confirmed from code.
+Sync Behavior: App-local sessions remain separate; identity claims come from Account Service.
+Related PBB Apps: Chat first, then Hotline.
+Evidence: `PBB_ACCOUNT_SERVICE_PROPOSAL.md`.
+
+### Chat To Hotline Auto-Login
+
+Purpose: Evolve Chat's current Hotline handoff into an Account Service authorization flow for Hotline.
+Main Code: Current Chat handoff exists; Account SSO implementation not found.
+Database Tables: Proposed app-local `pbb_user_id` mappings in Chat and Hotline users tables.
+APIs / Routes: Existing `POST /api/chat/escalate-to-hotline`; proposed Account `/oauth/authorize?client_id=hotline...`; proposed Hotline `/auth/account/callback`.
+Offline Behavior: Unknown / Not confirmed from code.
+Sync Behavior: Local app sessions remain separate; same `pbb_user_id` links Chat and Hotline local users.
+Related PBB Apps: PBB Chat, PBB Hotline.
+Evidence: `PBB_ACCOUNT_SERVICE_PROPOSAL.md`; `C:\wamp64\www\pbb\chat\app\Http\Controllers\Api\HotlineEscalationController.php`.
+
+### 6. Database Schema Summary
+
+No implemented database usage found / Not confirmed from code.
+
+Proposed schema:
+
+| Table | Purpose | Important Columns | Relationships / Notes |
+|---|---|---|---|
+| `accounts` | Canonical account | `pbb_user_id`, `name`, `email`, `mobile`, `password_hash`, `status`, verification timestamps, `avatar_url`, `last_login_at` | Proposed central identity table |
+| `account_login_identifiers` | Multiple identifiers per user | `pbb_user_id`, `type`, `value`, `normalized_value`, `verified_at` | Optional proposal |
+| `sso_authorization_codes` | One-time app authorization codes | `code_hash`, `pbb_user_id`, `client_id`, `redirect_uri`, `scopes_json`, `expires_at`, `consumed_at` | Store only hashed code |
+| `trusted_clients` | Registered PBB apps | `client_id`, `client_secret_hash`, allowed redirect URIs/scopes, status | Store only hashed secrets |
+| `account_audit_events` | Identity/security audit | `pbb_user_id`, `event_type`, `actor_pbb_user_id`, `client_id`, IP/user-agent, metadata | Proposed audit trail |
+
+```text
+accounts
+  ├── account_login_identifiers
+  ├── sso_authorization_codes
+  └── account_audit_events
+
+trusted_clients
+  └── sso_authorization_codes
+
+app-local users
+  └── pbb_user_id -> accounts.pbb_user_id
+```
+
+### 7. API and Route Inventory
+
+| Method | Path / Endpoint | Purpose | Auth | Handler / File | Notes |
+|---|---|---|---|---|---|
+| GET | `/oauth/authorize` | Proposed browser SSO authorization start | Account session / login | No implementation found | Query: `client_id`, `redirect_uri`, `response_type=code`, `scope`, `state` |
+| POST | `/oauth/token` | Proposed authorization code exchange | Trusted client secret | No implementation found | Returns identity claims; code must be one-time and short-lived |
+| GET | `/api/me` | Proposed current account profile | Account session/API auth | No implementation found | Identity profile |
+| PATCH | `/api/me/profile` | Proposed central profile update | Account session/API auth | No implementation found | Name/mobile/email/avatar fields |
+| GET | `/api/accounts/{pbb_user_id}` | Proposed trusted app lookup | App authentication | No implementation found | Server-to-server only |
+| POST | `/api/accounts/lookup` | Proposed controlled account lookup | App authentication | No implementation found | Server-to-server only |
+| POST | `/api/accounts/sync` | Proposed local cached profile refresh | App authentication | No implementation found | Server-to-server only |
+
+### 8. Data Flow and Operational Flow
+
+Proposed Chat first-login flow:
+
+```text
+Citizen
+-> Chat
+-> Account Service /oauth/authorize
+-> Account login/password verification
+-> short-lived authorization code
+-> Chat server-side /oauth/token exchange
+-> Chat local user linked by pbb_user_id
+-> Chat local session
+```
+
+Proposed Chat-to-Hotline flow:
+
+```text
+Chat Hotline icon
+-> Account Service /oauth/authorize?client_id=hotline...
+-> Hotline /auth/account/callback?code=...
+-> Hotline server-side /oauth/token exchange
+-> Hotline local citizen linked by same pbb_user_id
+-> Hotline local session
+-> /citizen
+```
+
+### 9. Offline-First Behavior
+
+Unknown / Not confirmed from code. The proposal does not define a durable offline SSO mode. Because Account Service is proposed as the credential authority, local node deployment and local availability would likely be important, but this is an inference and not confirmed from implementation.
+
+### 10. Integration with Other PBB Apps
+
+| Integration | Direction | Protocol / Method | Purpose | Code Evidence |
+|---|---|---|---|---|
+| Chat -> Account Service | Proposed browser redirect + server-side token exchange | SSO login and local Chat session creation | `PBB_ACCOUNT_SERVICE_PROPOSAL.md` |
+| Chat -> Hotline via Account Service | Proposed browser redirect + Hotline callback | Auto-login Hotline from active Chat session | `PBB_ACCOUNT_SERVICE_PROPOSAL.md`; current Chat handoff controller |
+| Hotline -> Account Service | Proposed server-side token exchange and profile update API | Create local citizen session and update central identity fields | `PBB_ACCOUNT_SERVICE_PROPOSAL.md` |
+| Support/Maestro/Landing -> Account Service | Proposed later adoption | Central login/identity for additional apps | `PBB_ACCOUNT_SERVICE_PROPOSAL.md` |
+
+### 11. Deployment and Runtime Architecture
+
+No implementation found. Proposal asks whether Account Service should live as a new top-level app under `C:\wamp64\www\pbb\account` or inside an existing workspace until stabilized. The recommended V1 is a central credential and identity authority using SSO token exchange, separate app sessions, and app-local `pbb_user_id` links.
+
+### 12. Security and Privacy Notes
+
+| Risk | Severity | Evidence | Suggested Fix |
+|---|---|---|---|
+| Central credential store becomes high-value target | High | Proposal centralizes password hashes and account status | Implement strict hashing, secret handling, audit logs, backup/encryption policy |
+| Authorization-code misuse | High | Proposal uses authorization codes | Make codes short-lived, one-time, stored hashed, and bound to exact client/redirect URI |
+| Client secret leakage | High | Proposal uses trusted clients | Store only hashed client secrets; rotate per app |
+| Redirect URI abuse | High | Proposal requires redirect URIs | Exact-match pre-registered redirects |
+| App-local role confusion | Medium | Proposal keeps roles app-owned initially | Document global account status versus app-local permissions |
+
+### 13. Realtime Communication
+
+No realtime functionality found / Not confirmed from code.
+
+### 14. Mapping and Geolocation
+
+No mapping/geolocation functionality found / Not confirmed from code.
+
+### 15. Background Jobs, Schedulers, and Maintenance Tasks
+
+| Task | Schedule / Trigger | Purpose | Code Evidence |
+|---|---|---|---|
+| None implemented | Not applicable | No Account Service code found | `C:\wamp64\www\pbb\account` scan |
+
+### 16. Configuration and Environment Variables
+
+Unknown / Not confirmed from code.
+
+### 17. Known Technical Debt and Gaps
+
+| Area | Issue | Evidence | Recommended Next Step |
+|---|---|---|---|
+| No implementation | Proposal exists, but `C:\wamp64\www\pbb\account` has no app files | folder scan; `PBB_ACCOUNT_SERVICE_PROPOSAL.md` | Scaffold Account Service or decide interim workspace |
+| App user migrations | Chat/Hotline/Support/Maestro/Landing local users need `pbb_user_id` migration plan | proposal | Inventory current user schemas and define mapping strategy |
+| SSO contract | OAuth-like endpoints are proposed, not implemented | proposal | Implement and test `/oauth/authorize` and `/oauth/token` |
+| Offline identity behavior | Local/offline SSO behavior not defined | proposal | Decide whether Account runs per node and how unavailable Account affects app login |
+
+### 18. Testing Status
+
+No tests found because no Account Service implementation was found. Proposal recommends first proving Chat login through Account Service, Chat local user/session creation, Chat-to-Hotline auto-login, Hotline local session creation, central profile update behavior, separate app sessions, and disabled-account rejection.
+
+### 19. Evidence Summary
+
+Evidence:
+- `C:\wamp64\www\pbb\documentations\PBB_ACCOUNT_SERVICE_PROPOSAL.md`
+- `C:\wamp64\www\pbb\account`
+- `C:\wamp64\www\pbb\chat\app\Http\Controllers\Api\HotlineEscalationController.php`
 
 ---
 
