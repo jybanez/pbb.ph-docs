@@ -1,165 +1,218 @@
 # Wizaya Server Suite Product Architecture
 
-Status: Draft architecture based on local folders inspected under `C:\wamp64\www` as of 2026-06-29.
+Status: Corrected product framing, 2026-06-29.
 
-## 1. Scope
+## 1. Product Framing
 
-Local Wizaya folders found:
-
-```text
-C:\wamp64\www\wizaya
-C:\wamp64\www\cdn.wizaya
-C:\wamp64\www\cron.wizaya.com
-```
-
-This document describes only what was confirmed from local files. It does not assume a current production deployment.
-
-## 2. High-Level Product Shape
+Use this terminology consistently:
 
 ```text
-Wizaya main web app
-  -> Joomla/PHP application
-  -> MySQL database
-  -> files/media/templates/components/plugins/modules
+Project Bantay Bayan (PBB)
+= The civic/emergency-response initiative and public-interest platform.
 
-cdn.wizaya
-  -> PHP asset/data serving and cache layer
-  -> data folder with cached/generated assets
-  -> CORS-enabled static/dynamic asset responses
+Wizaya Server Suite
+= The reusable technical foundation / edge-server infrastructure layer developed by Wizaya IT Solutions.
 
-cron.wizaya.com
-  -> PHP long-running/lock-file cron runner
-  -> report/data generator libraries
-  -> FTP/SFTP/remote client libraries
+PBB Node Kit
+= The field deployment package that runs the Wizaya Server Suite plus PBB applications on local hardware.
+
+PBB Apps
+= The mission-specific and citizen-facing applications built on top of the server suite.
 ```
 
-## 3. Evidence
+Wizaya Server Suite is not a replacement name for Project Bantay Bayan. PBB remains the public-interest emergency response platform. Wizaya Server Suite is the reusable server foundation that can host, install, connect, monitor, and expose PBB applications on local edge hardware.
 
-- `C:\wamp64\www\wizaya\index.php`
-- `C:\wamp64\www\wizaya\configuration.php`
-- `C:\wamp64\www\wizaya\components`
-- `C:\wamp64\www\wizaya\modules`
-- `C:\wamp64\www\wizaya\plugins`
-- `C:\wamp64\www\cdn.wizaya\index.php`
-- `C:\wamp64\www\cdn.wizaya\app.php`
-- `C:\wamp64\www\cdn.wizaya\data`
-- `C:\wamp64\www\cron.wizaya.com\index.php`
-- `C:\wamp64\www\cron.wizaya.com\app.php`
-- `C:\wamp64\www\cron.wizaya.com\libraries\generators`
+## 2. Scope Boundary
 
-## 4. Main Web App
+This document describes the proposed product architecture for Wizaya Server Suite as it relates to PBB Node Kits.
 
-`C:\wamp64\www\wizaya\index.php` is a Joomla front controller. It defines `_JEXEC`, sets `JPATH_BASE`, loads `includes\defines.php` and `includes\framework.php`, then creates and initializes the Joomla site application.
+It does not rename individual PBB apps as Wizaya apps.
 
-Confirmed app characteristics:
+It does not claim every item is already implemented as a single packaged product. Implementation status must be read from the underlying PBB repositories and docs.
 
-| Area | Details |
-|---|---|
-| Framework | Joomla/PHP, legacy Joomla front controller |
-| Database | MySQL/MariaDB via Joomla `configuration.php` |
-| App folders | `components`, `modules`, `plugins`, `templates`, `administrator`, `media`, `images`, `files` |
-| Cache/log/tmp | `cache`, `logs`, `tmp` |
-| Mail | SMTP settings present in config |
-
-Secrets exist in local config and are intentionally not reproduced here.
-
-## 5. CDN / Asset Service
-
-`C:\wamp64\www\cdn.wizaya\index.php` loads local config and `app.php`, defines `DATA_PATH`, and sets permissive CORS headers when `HTTP_ORIGIN` is present.
-
-`cdn.wizaya\app.php` confirms:
-
-- `DOWNLOAD_DOMAIN`
-- `DOWNLOAD_SECRET`
-- libraries: `path`, `folder`, `file`, `uri`, `jsmin`
-- data storage under `data`
-- MIME handling for CSS and JS
-- redirect to configured domain when path is `/`
-
-Confirmed purpose:
-
-- serve/generated cached frontend assets
-- store per-domain/per-template assets in `data`
-- provide CSS/JS responses
-
-Risk:
-
-- CORS currently uses `Access-Control-Allow-Origin: *` in `index.php`.
-
-## 6. Cron / Job Service
-
-`C:\wamp64\www\cron.wizaya.com\index.php` loads libraries and uses a `cron.lock` file to prevent duplicate process starts. If no lock file exists, it instantiates `App`.
-
-`cron.wizaya.com\app.php` confirms:
-
-- long-running loop with `sleepTime`
-- lock/reset file model
-- remote/local caller traits
-- logging
-
-Confirmed generator libraries include merchandising reports, employee teams, commodities, business partners, branches, and other report/export modules under:
+## 3. Relationship Model
 
 ```text
-C:\wamp64\www\cron.wizaya.com\libraries\generators
+Project Bantay Bayan (PBB)
+  -> civic/emergency-response program
+  -> PBB workflows, operations, data, and public service outcomes
+
+PBB Node Kit
+  -> deployable field kit
+  -> local hardware + Windows/WAMP/Technitium + Wizaya Server Suite + PBB apps
+
+Wizaya Server Suite
+  -> reusable edge-server foundation
+  -> installer/provisioning, local DNS, service runtime, relay, realtime, map cache, gateway, monitoring
+
+PBB Apps
+  -> Hotline, Relay, Hub/HQ, Support, Landing, Realtime, MapServer, Maestro, Chat, Games, Account, Helper
+  -> mission-specific app code and user workflows
 ```
 
-Confirmed remote/file-transfer libraries include FTP/SFTP/phpseclib.
+## 4. What Belongs To The Server Suite
 
-## 7. Data Flow
+The suite should be understood as the edge-server layer that makes a PBB Node Kit operable.
 
-```text
-Browser/admin user
--> wizaya Joomla app
--> MySQL database and local files/media
--> references generated/static assets
--> cdn.wizaya serves cached CSS/JS/media assets
-```
-
-```text
-Cron request/process
--> cron.wizaya.com index.php
--> lock file check
--> App loop
--> generator libraries
--> local data CSV/report outputs
--> optional FTP/SFTP/remote delivery
-```
-
-## 8. Deployment Assumptions
-
-Confirmed local deployment:
-
-- WAMP-style PHP filesystem under `C:\wamp64\www`
-- multiple host-folder apps
-- local MySQL credentials in app config
-- PHP include-based libraries, not Composer-based in inspected files
-
-Unknown / Not confirmed from code:
-
-- current production hostnames
-- current PHP version requirement
-- database schema inventory
-- queue/scheduler outside web-triggered cron runner
-- service manager or Windows scheduled task configuration
-
-## 9. Security Notes
-
-| Area | Risk | Recommendation |
+| Layer | Responsibility | Current PBB Evidence |
 |---|---|---|
-| Main app config | Contains DB and mail secrets | Keep out of docs/repo, rotate if exposed |
-| CDN CORS | `Access-Control-Allow-Origin: *` | Restrict to known domains if credentials/sensitive assets are served |
-| Cron lock runner | Web-triggered process control | Restrict access and monitor stale lock files |
-| Legacy framework | Joomla 2005-2010-era front controller comments | Review dependency/security patch status |
-| FTP/SFTP libraries | Remote delivery credentials likely exist elsewhere | Mask and rotate credentials; audit transfer targets |
+| Provisioning | Install/update/configure local app packages | Kit Setup |
+| Local runtime | WAMP/Apache/PHP/MySQL assumptions, Windows services | Kit Setup, app release metadata |
+| Local DNS | Local `*.pbb.ph` hostnames | Kit Setup owner clarification: Technitium DNS requirement |
+| Service registration | Register app processes/workers as Windows services | Kit Setup owner clarification |
+| Node identity | Hub ID/token validation and local `hub.json` identity | Kit Setup, Relay `public\hub.json`, Hub/HQ |
+| Store-and-forward | Relay messages, deliveries, handlers, webhook delivery | PBB Relay |
+| Public gateway | Sanitized hub metadata and M2M gateway | PBB Landing |
+| Realtime gateway | Local shared WebSocket service | PBB Realtime |
+| Offline maps | Local tile/boundary cache and preflight/data prep target | PBB MapServer |
+| Monitoring | Observe local worker/service telemetry | PBB Maestro |
+| Local identity | Planned local-node Account Service | PBB Account proposal |
 
-## 10. Product Architecture Summary
+## 5. What Remains PBB App Layer
 
-Wizaya Server Suite appears to be a legacy PHP/Joomla business web platform with separate asset CDN/cache and cron/report generation services. The suite is file-system organized rather than package-manager organized in inspected files. It likely supports administration, content/modules/plugins/templates, generated reports, static asset delivery, and remote file/report distribution.
+PBB apps remain mission-specific applications. They are not renamed as Wizaya apps.
 
-Unknown / Not confirmed from code:
+| PBB App | Role In PBB | Relationship To Server Suite |
+|---|---|---|
+| PBB Hotline | Emergency reporting, operator handling, command/SITREP, support request creation | Runs on node runtime; uses Realtime, Relay, MapServer, Account later |
+| PBB Support System | SITREP/support operations and support lifecycle handling | Runs on node runtime; consumes Relay and Realtime |
+| PBB Chat | Local barangay chat | Runs as local app; uses Realtime; proposed Account SSO later |
+| PBB Games | Optional local engagement/preparedness learning | Runs as optional local PHP/static app |
+| PBB Landing | Local launcher and public-safe gateway | Part app, part server-suite surface |
+| PBB Relay | Store-and-forward infrastructure | Core server-suite service for PBB |
+| PBB Realtime | Shared local WebSocket gateway | Core server-suite service for PBB |
+| PBB MapServer | Offline/local maps | Core server-suite mapping service |
+| PBB Maestro | Observability | Core server-suite monitoring service |
+| PBB Account | Planned local identity service | Core server-suite identity service |
 
-- exact product modules active in production
-- current customer/domain routing
-- current database schema
-- current authentication/authorization model beyond Joomla app conventions
+## 6. PBB Node Kit Architecture
+
+```text
+Local PBB Node Hardware
+  -> Windows
+  -> WampServer
+  -> Technitium DNS
+  -> Kit Setup
+      -> installs app bundles
+      -> validates Hub HQ hub ID/token
+      -> configures local DNS/vhosts/services
+      -> runs data prep
+      -> populates MapServer tiles/boundaries
+  -> Wizaya Server Suite services
+      -> Relay
+      -> Realtime
+      -> MapServer
+      -> Maestro
+      -> Landing
+      -> Account (planned)
+  -> PBB apps
+      -> Hotline
+      -> Support
+      -> Chat
+      -> Games
+      -> future responder/helper apps
+```
+
+## 7. Edge-Server Responsibilities
+
+Wizaya Server Suite should provide reusable capabilities that are not specific to one emergency workflow:
+
+- local-first hosting and runtime setup
+- local DNS and service discovery
+- app package install/update lifecycle
+- node identity and topology wiring
+- LAN-first operation
+- store-and-forward messaging
+- public-safe gateway and metadata projection
+- shared realtime transport
+- local map/tile serving
+- service health observation
+- local identity/SSO, once Account V1 is implemented
+
+These capabilities can support PBB and potentially other local edge-server deployments, but the current reviewed implementation evidence is from the PBB stack.
+
+## 8. Connectivity Model
+
+```text
+LAN users
+  -> local PBB app domains
+  -> PBB apps
+  -> local databases/services
+
+Local PBB apps
+  -> Relay for store-and-forward upstream/downstream messages
+  -> Realtime for WebSocket rooms/events
+  -> MapServer for cached tiles/boundaries
+  -> Account for local SSO (planned)
+
+Public/upper-level access
+  -> PBB-managed FRP tunnel model (planned owner-confirmed design)
+  -> Landing public hub metadata and M2M gateway
+  -> Relay node endpoint
+  -> upstream city/municipality/province/cloud HQ topology
+```
+
+## 9. Product Packaging View
+
+PBB Node Kit should be the deployable product package for field use:
+
+| Package Area | Contents |
+|---|---|
+| Platform prerequisites | WampServer, Technitium DNS, Windows service support |
+| Installer | Kit Setup |
+| Server-suite services | Relay, Realtime, MapServer, Maestro, Landing, Account planned |
+| Mission apps | Hotline, Support, Chat, Games, future responder/helper app |
+| Data prep | Hub identity, local config, map tiles/boundaries, Relay client/handler identities |
+| Operations docs | runtime contracts, gateway runbook, authorization guides, emergency-mode procedures |
+
+## 10. Implementation Status
+
+| Area | Status |
+|---|---|
+| Kit Setup | Implemented in current PBB codebase |
+| Relay | Implemented |
+| Realtime | Implemented |
+| MapServer | Implemented |
+| Maestro | Implemented as observer-only |
+| Landing | Implemented baseline |
+| Hotline | Implemented |
+| Support | Implemented baseline |
+| Chat | Implemented baseline, local-only |
+| Games | Implemented optional local app |
+| Account | Planned local-node service; proposal/checklist exist, implementation not found |
+| PBB-managed FRP tunnel | Owner-confirmed design; code-level implementation not confirmed in reviewed repos |
+| Responder/helper mobile app | Planned/design-stage; implementation not confirmed |
+
+## 11. Evidence
+
+Primary PBB documentation:
+
+- `C:\wamp64\www\pbb\documentations\PBB_SELECTED_APPS_TECHNICAL_BRIEFING.md`
+- `C:\wamp64\www\pbb\documentations\PBB_SELECTED_APPS_ECOSYSTEM_MAP.md`
+- `C:\wamp64\www\pbb\documentations\PBB_SELECTED_APPS_CODEX_FINDINGS.md`
+- `C:\wamp64\www\pbb\documentations\PBB_NODE_IDENTITY_AND_HUB_JSON_CONTRACT.md`
+- `C:\wamp64\www\pbb\documentations\PBB_LANDING_REGISTRY_AND_PUBLIC_GATEWAY_RUNBOOK.md`
+- `C:\wamp64\www\pbb\documentations\PBB_ACCOUNT_V1_IMPLEMENTATION_PLAN.md`
+
+Primary local repositories:
+
+- `C:\wamp64\www\pbb\kit-setup`
+- `C:\wamp64\www\pbb\relay`
+- `C:\wamp64\www\pbb\realtime`
+- `C:\wamp64\www\mapserver`
+- `C:\wamp64\www\pbb\maestro`
+- `C:\wamp64\www\pbb\landing`
+- `C:\wamp64\www\pbb\hotline`
+- `C:\wamp64\www\pbb\support`
+- `C:\wamp64\www\pbb\chat`
+- `C:\wamp64\www\pbb\games`
+- `C:\wamp64\www\pbb\account`
+
+## 12. Explicit Non-Goals
+
+- Do not rename Project Bantay Bayan to Wizaya Server Suite.
+- Do not present PBB as only a private vendor product.
+- Do not rename PBB Hotline, PBB Relay, PBB Support, or other PBB apps as Wizaya apps.
+- Do not claim Account, FRP gateway, or responder/helper mobile workflow are implemented until code confirms it.
+- Do not mix unrelated legacy `C:\wamp64\www\wizaya` application architecture into PBB Node Kit product framing unless a separate migration/reuse decision is made.
 
