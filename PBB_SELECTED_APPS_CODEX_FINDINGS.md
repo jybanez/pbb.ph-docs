@@ -17,6 +17,8 @@
 | PBB Landing | `C:\wamp64\www\pbb\landing` | Yes | Lightweight PHP LAN launcher, public hub metadata projection, Kit-managed app registry, and Relay gateway surface |
 | PBB Chat | `C:\wamp64\www\pbb\chat` | Yes | Laravel 12 local barangay chat app with rooms, direct conversations, message requests, reports/blocks/moderation, badges, Realtime admission/publishing, and Hotline handoff |
 | PBB Games | `C:\wamp64\www\pbb\games` | Yes | Plain PHP optional local citizen engagement/preparedness-learning app with no database and no confirmed operational API calls in version 1 |
+| PBB Natalium | `C:\wamp64\www\pbb\natalium` | Yes | Custom PHP/Composer local health-center foundation with Account SSO/admin sync hooks, patient registry, practitioner/capability management, document review, access grants, and audit/search logs |
+| PBB Utility / Vena | `C:\wamp64\www\pbb\utility` | Yes | Laravel 12 utility-operator app with roles, assets/teams/settings, MapLibre config, inbound-only Relay intake for `hotline.incident.upserted` targeted to `utility.vena`, normalized incidents, quarantine/stale handling, and operator/responder missions |
 | PBB Account | `C:\wamp64\www\pbb\account` | Proposal reviewed; no implementation files found | Draft proposal defines planned central identity/SSO service with canonical `pbb_user_id`, central credentials, app-local sessions, and app-local user rows linked by `pbb_user_id` |
 
 ## Most Important Findings
@@ -35,8 +37,10 @@
 12. Relay source heartbeat updates are now operational webhooks (`source.heartbeat.updated`) stored/tracked separately from normal `hub_relay_messages`.
 13. PBB Chat is now a reviewed local/LAN-only community chat app. `release.json` disables public gateway exposure; code confirms Realtime admission/publishing and handoff-only Hotline escalation.
 14. PBB Games is now a reviewed optional local games/learning app. Code confirms mode-based active-incident/emergency behavior and no database.
-15. Helper active loader cache revisions are `0.21.117`, while Helper `package.json` still reports `0.21.83`.
-16. PBB Account is proposal-confirmed but not implemented. The draft recommends central credentials/SSO, one canonical `pbb_user_id`, app-local sessions, app-local domain records, and Chat-to-Hotline auto-login as the first proof point.
+15. PBB Natalium is now reviewed. Code confirms local health registry foundations, Account SSO/admin sync hooks, local document storage, patient/practitioner/capability/access/audit tables, and Relay `public\hub.json` node context.
+16. PBB Utility / Vena is now reviewed. Code confirms inbound-only Relay consumption of Hotline incident snapshots targeted to `utility.vena`, with raw retention, normalized incidents, stale update protection, quarantine handling, and metadata-only media refs.
+17. Helper active loader cache revisions are `0.21.117`, while Helper `package.json` still reports `0.21.83`.
+18. PBB Account is proposal-confirmed but not implemented. The draft recommends central credentials/SSO, one canonical `pbb_user_id`, app-local sessions, app-local domain records, and Chat-to-Hotline auto-login as the first proof point.
 
 ## Confirmed Architecture
 
@@ -82,6 +86,22 @@ PBB Games
   -> Helper-backed UI/game components
   -> no confirmed operational API calls in version 1
 
+PBB Natalium
+  -> custom PHP/Composer app
+  -> PBB Account SSO authorize/callback/logout and Account-admin user sync guard
+  -> local `pbb_natalium` database for users, capabilities, practitioners, patient applications, patients, access grants, documents, audits, and search logs
+  -> local document storage
+  -> Relay `public/hub.json` node context read
+
+PBB Utility / Vena
+  -> Laravel 12 app with admin/operator/command/responder roles
+  -> Relay handler `POST /api/relay/incidents`
+  -> accepts `hotline.incident.upserted` targeted to `utility.vena`
+  -> stores raw inbound records and normalized utility incidents
+  -> rejects/quarantines wrong type, wrong target, missing version, bad identity, stale version, and media refs containing paths/URLs
+  -> operator missions and responder mission acceptance
+  -> MapLibre config through `/vena-map.json`
+
 PBB Account (proposal only)
   -> central canonical `pbb_user_id`
   -> central password/account status/verified contact ownership
@@ -106,6 +126,10 @@ Kit Setup
 - Whether Support System should be deployed only at upper-level/HQ-side support nodes or also on barangay node kits.
 - Whether PBB Chat should remain strictly local/LAN-only or eventually synchronize selected messages/moderation data upstream.
 - Whether PBB Games mode should be controlled only by config or by Kit Setup/Landing/local incident state.
+- Whether Natalium health records should ever sync upstream through Relay or remain strictly local to a node.
+- Natalium local/offline login behavior when PBB Account is unavailable for new SSO sessions.
+- Whether Vena should emit utility mission/status/lifecycle updates back to Hotline/Relay/Support, or remain inbound-only in V1.
+- Whether Vena's web responder mission endpoints should become part of the planned mobile helper workflow.
 - Whether Account Service should be implemented as a new top-level Laravel app under `C:\wamp64\www\pbb\account` or stabilized elsewhere first.
 - Account Service local/offline login behavior when the identity service is unavailable.
 - Whether Account Service V1 should remain PBB-internal OAuth-like SSO or implement full OIDC later.
@@ -123,6 +147,11 @@ Kit Setup
 | PBB Chat stores local community/direct-message/report/block data | PBB Chat | High | `chat\database\migrations`; `chat\routes\web.php` | Define retention, moderation access, backup, and purge policy |
 | PBB Chat public gateway must remain disabled unless a separate security model is designed | PBB Chat, Landing, Kit Setup | Medium | `chat\release.json` | Keep Chat LAN-only and add installer/registry validation for `public_gateway.enabled=false` |
 | PBB Games emergency mode depends on local mode configuration | PBB Games | Medium | `games\config\games.php`; `games\src\ModePolicy.php` | Document or automate mode switching during active incidents |
+| Natalium stores sensitive patient/document/access data locally | PBB Natalium | High | `natalium\database\schema.sql`; `natalium\config\app.php` | Define retention, backup, encryption-at-rest, document access, and audit policy before live health deployment |
+| Natalium Account-admin sync token controls local user provisioning | PBB Natalium, PBB Account | High | `natalium\config\app.php`; `natalium\routes\api.php`; `natalium\bin\test.php` | Keep disabled unless needed, generate per-node token, rotate on compromise |
+| Vena retains raw Relay incident payloads | PBB Utility / Vena, Relay, Hotline | High | `utility\app\Http\Controllers\Api\RelayIncidentHandlerController.php`; `utility\database\migrations` | Define retention, audit access, purge policy, and local backup encryption |
+| Vena incident media refs must remain metadata-only | PBB Utility / Vena, Hotline, Relay | High | `utility\tests\Feature\VenaRelayIncidentIntakeTest.php`; `RelayIncidentHandlerController.php` | Keep rejecting direct URLs/paths and document proper backend media retrieval |
+| Vena Relay handler token controls incident ingestion | PBB Utility / Vena, Relay | High | `utility\.env.example`; `RelayIncidentHandlerController.php` | Generate per-node/per-source token and rotate on compromise |
 | Planned Account Service becomes the central credential authority | PBB Account, Chat, Hotline, Support, Maestro, Landing | High | `PBB_ACCOUNT_SERVICE_PROPOSAL.md` | Hash password/code/client secrets, enforce exact redirect URI matching, audit identity events, and define backup/encryption/retention policy before rollout |
 | Cross-app endpoint metadata not yet confirmed for remote media access | Hotline, Relay, Support System, Landing/Hub context | High | Relay resolver returns topology `domain`; Hotline media SDK requires explicit API base URL | Define app endpoint metadata such as `apps.hotline.base_url` in Hub/Landing/Relay topology |
 | Relay relationship resolver returns shared credentials to backend clients | Relay, backend consumers | High | `relay\routes\api.php`; `RelayRelationshipResolver.php` | Keep resolver backend-only and add tests that browser/frontends never call it |
@@ -149,6 +178,8 @@ Kit Setup
 | Service lifecycle ownership runbook | Maestro, Kit Setup, Relay, Realtime, Hotline | Maestro observes only; Windows services/Kit Setup own recovery |
 | PBB Chat offline/sync boundary | PBB Chat, Realtime, Landing | LAN-only operation is confirmed, but durable offline queues and Relay sync are not |
 | PBB Games emergency-mode operations | PBB Games, Kit Setup/Landing context | Operators need to know how/when games are hidden or disabled |
+| Natalium health privacy and deployment guide | PBB Natalium, PBB Account | Patient/document/access/audit data requires clear local operations, backup, retention, and Account dependency rules |
+| Vena Relay intake and utility mission contract | PBB Utility / Vena, Hotline, Relay | Inbound contract exists in code/tests, but operator docs should define token ownership, idempotency, status handling, and whether outbound lifecycle exists |
 | PBB Account implementation plan | PBB Account, Chat, Hotline, Support, Maestro, Landing | Proposal exists, but no implementation/migrations/routes exist yet |
 
 ## Suggested Immediate Actions
@@ -167,6 +198,9 @@ Kit Setup
 | Document Maestro as observer-only and Windows service recovery as Kit Setup/service-layer responsibility | Avoids expanding Maestro beyond the confirmed design | P2 |
 | Decide/document PBB Chat offline and upstream sync boundary | Prevents over-assuming Relay sync for local community chat | P2 |
 | Add PBB Games emergency-mode runbook or control hook | Ensures optional games do not compete with emergency operations | P2 |
+| Document Natalium patient/document privacy, backup, and Account dependency rules | Health records require stricter deployment guidance before live use | P1 |
+| Publish the Vena inbound Relay incident contract and decide outbound lifecycle scope | Utility operators now have a confirmed inbound app, but return/status behavior is not confirmed | P1 |
+| Decide whether Vena responder routes are part of the future mobile helper workflow | Prevents mixing current web Vena behavior with planned offline mobile responder design | P2 |
 | Decide Account Service placement and scaffold V1 | Proposal recommends central identity/SSO and identifies Chat-to-Hotline as first milestone | P1 |
 | Keep Chatviewer local/private | It is personal development coordination tooling, not an operational app | P3 |
 
@@ -192,6 +226,19 @@ Kit Setup
 - `C:\wamp64\www\pbb\landing\README.md`
 - `C:\wamp64\www\pbb\landing\config\landing.php`
 - `C:\wamp64\www\pbb\landing\src\App.php`
+- `C:\wamp64\www\pbb\natalium\composer.json`
+- `C:\wamp64\www\pbb\natalium\config\app.php`
+- `C:\wamp64\www\pbb\natalium\routes\api.php`
+- `C:\wamp64\www\pbb\natalium\database\schema.sql`
+- `C:\wamp64\www\pbb\natalium\bin\test.php`
+- `C:\wamp64\www\pbb\utility\README.md`
+- `C:\wamp64\www\pbb\utility\.env.example`
+- `C:\wamp64\www\pbb\utility\config\vena.php`
+- `C:\wamp64\www\pbb\utility\routes\web.php`
+- `C:\wamp64\www\pbb\utility\routes\api.php`
+- `C:\wamp64\www\pbb\utility\app\Http\Controllers\Api\RelayIncidentHandlerController.php`
+- `C:\wamp64\www\pbb\utility\database\migrations`
+- `C:\wamp64\www\pbb\utility\tests\Feature\VenaRelayIncidentIntakeTest.php`
 - `C:\wamp64\www\pbb\landing\src\Gateway.php`
 - `C:\wamp64\www\pbb\landing\src\RegistryStore.php`
 - `C:\wamp64\www\pbb\chat\README.md`

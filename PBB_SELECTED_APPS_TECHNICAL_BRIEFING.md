@@ -1,6 +1,6 @@
 # PBB Selected Apps Technical Briefing
 
-Scope: `C:\wamp64\www\pbb\hotline`, `C:\wamp64\www\hotline-helpers`, `C:\wamp64\www\pbb\relay`, `C:\wamp64\www\pbb\hub.ph`, `C:\wamp64\www\pbb\maestro`, `C:\wamp64\www\pbb\realtime`, `C:\wamp64\www\mapserver`, `C:\wamp64\www\pbb\chatviewer`, `C:\wamp64\www\pbb\support`, `C:\wamp64\www\pbb\landing`, `C:\wamp64\www\pbb\chat`, `C:\wamp64\www\pbb\games`, `C:\wamp64\www\pbb\kit-setup`.
+Scope: `C:\wamp64\www\pbb\hotline`, `C:\wamp64\www\hotline-helpers`, `C:\wamp64\www\pbb\relay`, `C:\wamp64\www\pbb\hub.ph`, `C:\wamp64\www\pbb\maestro`, `C:\wamp64\www\pbb\realtime`, `C:\wamp64\www\mapserver`, `C:\wamp64\www\pbb\chatviewer`, `C:\wamp64\www\pbb\support`, `C:\wamp64\www\pbb\landing`, `C:\wamp64\www\pbb\chat`, `C:\wamp64\www\pbb\games`, `C:\wamp64\www\pbb\natalium`, `C:\wamp64\www\pbb\utility`, `C:\wamp64\www\pbb\kit-setup`.
 
 Important evidence rule: code and config were inspected locally. Claims below are limited to what was found in the listed folders. Where a detail was not confirmed from code, it is marked `Unknown / Not confirmed from code`.
 
@@ -11,6 +11,8 @@ Fresh-scan update source: local code under `C:\wamp64\www\pbb`, plus earlier `C:
 Current-state alignment note, 2026-06-22: local code and DB-backed Chatviewer updates confirmed additional changes after the prior briefing. Kit Setup first had the bundled package manifest with `pbb-landing`, `pbb-mapserver`, `pbb-maestro`, `pbb-realtime`, `pbb-relay`, `pbb-hotline`, and `pbb-support`, plus the Cebu MapServer boundary pack; current 2026-06-29 local Kit version is `0.1.164`. The finalized Hotline/Relay/Support Data Prep model uses separate Support role identities: `sitrep.ingestor` for `sitrep.record` and `support.dispatch` for `support.request` / `support.request.cancelled`. Relay now implements operational `source.heartbeat.updated` webhooks through `relay_webhook_subscribers` and `relay_webhook_deliveries`; Kit seeds a Support Source Heartbeats subscriber, and Support receives it at `POST /api/relay/source-heartbeats`, validates a dedicated token, deduplicates by `event_id`, and publishes accepted snapshots to Realtime. Chatviewer now has a DB-backed agent chat API with token-authenticated posting/claiming and `GET /api/chat-entries.php` list queries defaulting newest-first while `order=asc` is available for chronological API reads.
 
 Current-state alignment note, 2026-06-29: local code and recent DB-backed Chatviewer entries confirm two additional local projects. PBB Chat at `C:\wamp64\www\pbb\chat` is a Laravel 12 local barangay chat app with rooms, direct messages, message requests, badges, reports/blocks/moderation, Realtime admission/publishing, and a Hotline escalation handoff stub. PBB Games at `C:\wamp64\www\pbb\games` is a plain PHP optional local engagement/learning app with no database and no operational API integration in version 1. Kit Setup local `package.json` is now `0.1.164`; the bundled package manifest still lists Landing, MapServer, Maestro, Realtime, Relay, Hotline, Support, and the Cebu MapServer boundary pack. Helper `package.json` remains `0.21.83`, but active loader cache revisions in `js\ui\ui.loader.js` are `0.21.117` and recent Helper changes add Chat envelope/block/mute icons, sender presence indicators, `ui.file.input`, login-form media branding options, paste attachments in `ui.chat.composer`, and improved `ui.game.state.chrome.showMilestone(...)`. `C:\wamp64\www\pbb\account` exists but no implementation files were found during this scan; `PBB_ACCOUNT_SERVICE_PROPOSAL.md` now confirms the intended Account Service direction as a draft central identity/SSO proposal.
+
+Current-state alignment note, 2026-07-07: local code and DB-backed Chatviewer updates confirm two additional projects. PBB Natalium at `C:\wamp64\www\pbb\natalium` is a custom PHP/Composer local health-center app for patient registry, practitioner/capability management, PBB Account SSO, document intake/review, patient access grants, and audit events. PBB Utility at `C:\wamp64\www\pbb\utility` is the Laravel 12 Vena utility-operator app with local roles (`admin`, `operator`, `command`, `responder`), assets/teams/settings, MapLibre map config, inbound-only Relay incident intake for `hotline.incident.upserted` targeted to `utility.vena`, quarantine/stale handling, normalized Vena incidents, and operator/responder missions. Chatviewer context confirms Natalium's planning around barangay continuity-of-care health workflows and Utility/Vena's Hotline incident Relay alignment.
 
 ---
 
@@ -2783,6 +2785,525 @@ Evidence:
 - `C:\wamp64\www\pbb\games\src\ModePolicy.php`
 - `C:\wamp64\www\pbb\games\src\GameRegistry.php`
 - `C:\wamp64\www\pbb\games\manifest.json`
+
+---
+
+## App: PBB Natalium
+
+### 1. Executive Technical Summary
+
+PBB Natalium is a local health-center foundation app for patient identity/registry workflows, practitioner and capability management, patient profile applications, document intake/review, patient access grants, and audit events. It runs as a custom PHP/Composer app on a local PBB node with its own MySQL schema. Code confirms PBB Account SSO integration hooks, Account-admin user sync, local user/capability enforcement, local document storage, and use of Relay `public/hub.json` as node context. Chatviewer messages from PBB Natalium describe the broader product direction as barangay-level continuity-of-care health workflows; those broader programs are planning/design context unless implemented in code.
+
+### 2. Repository Overview
+
+| Area | Details |
+|---|---|
+| App Name | PBB Natalium |
+| Local Path | `C:\wamp64\www\pbb\natalium` |
+| Main Language | PHP |
+| Main Framework | Custom PHP app using Composer PSR-4 autoloading |
+| Frontend Framework | Unknown / Not confirmed from code |
+| Backend Framework | Custom PHP router/container/controllers; not Laravel |
+| Database | MySQL `pbb_natalium` via `database\schema.sql` |
+| Realtime Technology | No realtime functionality found / Not confirmed from code |
+| Queue / Worker System | No queue/worker system found / Not confirmed from code |
+| Package Manager | Composer |
+| Runtime Requirements | PHP; config references `C:\wamp64\bin\php\php8.2.29\php.exe`; MySQL |
+| Main Entry Points | `public\index.php`, `routes\api.php`, `bin\migrate.php`, `bin\test.php` |
+| Important Config Files | `composer.json`, `config\app.php`, `database\schema.sql` |
+| Important Environment Variables | `NATALIUM_ACCOUNT_CLIENT_SECRET`, `NATALIUM_ACCOUNT_REDIRECT_URI`, `NATALIUM_ACCOUNT_POST_LOGOUT_REDIRECT_URI`, `NATALIUM_ACCOUNT_ADMIN_API_ENABLED`, `NATALIUM_ACCOUNT_ADMIN_API_TOKEN`, `NATALIUM_ACCOUNT_ADMIN_API_CLIENT` |
+| Deployment Target | Local PBB node health-center/barangay service |
+
+### 3. App Purpose and PBB Role
+
+Natalium solves local health-center identity and patient registry workflow needs. Code confirms local practitioners, users, patient applications, patient records, contacts, addresses, relationships, access grants, documents, audit events, and search logs. It depends on PBB Account for SSO/admin sync and reads local Relay `public\hub.json` for node context. Other PBB apps do not currently depend on Natalium from reviewed code. If Natalium is unavailable, emergency Hotline/Relay/SITREP flows are not directly blocked, but local health registry, profile application, document review, and practitioner access workflows are unavailable.
+
+### 4. User Roles and Permissions
+
+| Role | Purpose | Capabilities | Code Evidence |
+|---|---|---|---|
+| local user | App-local user row linked to Account SSO identity | Login/session identity, status, role, capability grants | `routes\api.php`; `database\schema.sql`; `bin\test.php` |
+| admin / user manager | Manage local users and capabilities | View/update users; grant/revoke capabilities | `routes\api.php`; `bin\test.php` |
+| practitioner | Health worker profile | Practitioner profile and capability grants | `routes\api.php`; `database\schema.sql` |
+| patient / applicant | Patient profile subject or applicant | Submit profile applications, requirements, access grant requests | `routes\api.php`; `database\schema.sql` |
+| Account admin API client | Server-to-server sync client | Sync Account users into Natalium when enabled and token-authenticated | `routes\api.php`; `config\app.php`; `bin\test.php` |
+
+### 5. Main Features and Modules
+
+### Account SSO And Local Session
+
+Purpose: Redirect users to PBB Account, process callback, create/update app-local identity, and logout through Account.
+Main Code: `routes\api.php`; Account SSO classes under `app`.
+Database Tables: `users`, `user_capabilities`, `audit_events`.
+APIs / Routes: `GET /auth/login`, `GET /auth/callback`, `GET|POST /auth/logout`, `GET /api/session/me`.
+Offline Behavior: Requires the configured Account base URL for new SSO login. Existing app-local session behavior beyond code paths was not fully confirmed.
+Sync Behavior: Account-admin user sync endpoint exists.
+Related PBB Apps: PBB Account.
+Evidence: `config\app.php`; `routes\api.php`; `bin\test.php`.
+
+### User, Capability, And Practitioner Management
+
+Purpose: Manage local users, user capabilities, practitioner profiles, and practitioner capabilities.
+Main Code: `routes\api.php`; controllers/services under `app`.
+Database Tables: `users`, `user_capabilities`, `practitioner_profiles`, `practitioner_capabilities`.
+APIs / Routes: `GET /api/users`, `GET /api/users/{id}`, `PATCH /api/users/{id}`, `POST /api/users/{id}/capabilities`, `DELETE /api/users/{id}/capabilities/{code}`, `GET|POST /api/practitioners`, `PATCH /api/practitioners/{id}`, practitioner capability grant/revoke routes.
+Offline Behavior: Local database-backed once app is installed.
+Sync Behavior: Account user sync exists; no broader upstream sync found.
+Related PBB Apps: PBB Account.
+Evidence: `routes\api.php`; `database\schema.sql`; `bin\test.php`.
+
+### Patient Profile Applications And Registry
+
+Purpose: Accept/review patient profile applications and create patient registry records with contacts, addresses, and relationships.
+Main Code: `routes\api.php`; application/review services under `app`.
+Database Tables: `patient_profile_applications`, `patient_profile_application_requirements`, `patients`, `patient_contacts`, `patient_addresses`, `patient_relationships`.
+APIs / Routes: `GET /api/patients/search`; patient profile application create/submit/review requirement/approve routes.
+Offline Behavior: Local database-backed.
+Sync Behavior: No Relay/upstream sync found.
+Related PBB Apps: Unknown / Not confirmed from code.
+Evidence: `routes\api.php`; `database\schema.sql`; `bin\test.php`.
+
+### Documents, Access Grants, Audit, And Search Logs
+
+Purpose: Store document metadata/review events, patient access grants, audit events, and patient search logs.
+Main Code: `routes\api.php`; document/access/audit services under `app`.
+Database Tables: `documents`, `document_review_events`, `patient_access_grants`, `audit_events`, `patient_search_logs`.
+APIs / Routes: patient access grant request/approve routes; document review behavior covered by tests.
+Offline Behavior: Local database and local `storage\documents`.
+Sync Behavior: No Relay/upstream sync found.
+Related PBB Apps: Unknown / Not confirmed from code.
+Evidence: `database\schema.sql`; `config\app.php`; `bin\test.php`.
+
+### 6. Database Schema Summary
+
+| Table | Purpose | Important Columns | Relationships / Notes |
+|---|---|---|---|
+| `settings` | Local app settings | key/value style fields | Exact fields from `schema.sql` |
+| `users` | Local users linked to Account identity | Account/user identity, role/status fields | Capability source for guards/tests |
+| `user_capabilities` | Capability grants | user reference, capability code | Used by management guards |
+| `practitioner_profiles` | Practitioner records | user reference, profile fields | Linked to local users |
+| `practitioner_capabilities` | Practitioner capability grants | practitioner reference, capability code | Health-worker specific capabilities |
+| `patient_profile_applications` | Patient profile application workflow | applicant/patient fields, status | Duplicate and requirement gates covered by tests |
+| `patient_profile_application_requirements` | Application requirement tracking | application reference, requirement/status | Gates approval |
+| `patients` | Patient registry | identity/demographic fields | Root patient record |
+| `patient_contacts` | Patient contact details | patient reference, contact fields | Patient child table |
+| `patient_addresses` | Patient addresses | patient reference, address/location fields | Latitude/longitude presence not fully confirmed from docs excerpt; see schema |
+| `patient_relationships` | Patient relationships | patient references/relationship fields | Patient child/cross-reference table |
+| `patient_access_grants` | Access permission workflow | patient/user/status fields | Request/approve flow |
+| `documents` | Document metadata/storage references | document owner, storage reference, review status | Tests confirm storage path hiding behavior |
+| `audit_events` | Audit trail | actor/action/metadata fields | Used by sensitive workflows |
+| `patient_search_logs` | Search audit | user/search fields | Records patient search activity |
+| `document_review_events` | Document review audit | document reference/reviewer/status | Supports review history |
+
+```text
+users
+  ├── user_capabilities
+  └── practitioner_profiles
+        └── practitioner_capabilities
+
+patient_profile_applications
+  └── patient_profile_application_requirements
+
+patients
+  ├── patient_contacts
+  ├── patient_addresses
+  ├── patient_relationships
+  ├── patient_access_grants
+  └── documents
+        └── document_review_events
+
+audit_events
+patient_search_logs
+```
+
+### 7. API and Route Inventory
+
+| Method | Path / Endpoint | Purpose | Auth | Handler / File | Notes |
+|---|---|---|---|---|---|
+| GET | `/auth/login` | Start Account SSO | Public start | `routes\api.php` | Redirects to Account authorize URL |
+| GET | `/auth/callback` | Complete SSO callback | Account callback state | `routes\api.php` | Creates local session/user link |
+| GET/POST | `/auth/logout` | Logout via Account | Session | `routes\api.php` | Redirects to Account logout |
+| GET | `/api/node-context` | Return local node context | Session/guard not fully confirmed | `routes\api.php` | Uses configured Relay `hub.json` path |
+| GET | `/api/session/me` | Current user/session | Session | `routes\api.php` | Local app identity |
+| POST | `/api/account-admin/users/sync` | Sync Account users | Account admin token/client guard | `routes\api.php` | Disabled by default in config/tests |
+| GET | `/api/users` | List users | Capability guard | `routes\api.php` | Capability behavior covered by tests |
+| GET | `/api/users/{id}` | User details | Capability guard | `routes\api.php` |  |
+| PATCH | `/api/users/{id}` | Update user | Capability guard | `routes\api.php` | Role/status update requires `users.manage` per tests |
+| POST | `/api/users/{id}/capabilities` | Grant user capability | Capability guard | `routes\api.php` |  |
+| DELETE | `/api/users/{id}/capabilities/{code}` | Revoke user capability | Capability guard | `routes\api.php` |  |
+| GET/POST | `/api/practitioners` | List/create practitioners | Capability guard | `routes\api.php` |  |
+| PATCH | `/api/practitioners/{id}` | Update practitioner | Capability guard | `routes\api.php` |  |
+| POST/DELETE | Practitioner capability routes | Grant/revoke practitioner capabilities | Capability guard | `routes\api.php` | Exact path variants in route file |
+| GET | `/api/patients/search` | Search patients | Capability/session guard | `routes\api.php` | Search log table exists |
+| POST/PATCH | Patient application routes | Create/submit/review/approve applications | Capability/session guard | `routes\api.php` | Duplicate/requirements gates tested |
+| POST/PATCH | Patient access grant routes | Request/approve access | Capability/session guard | `routes\api.php` |  |
+
+### 8. Data Flow and Operational Flow
+
+```text
+Browser
+  -> Natalium `/auth/login`
+  -> PBB Account authorize/callback
+  -> Natalium local `users`
+  -> local session
+  -> user/capability/practitioner/patient/document APIs
+  -> MySQL `pbb_natalium`
+  -> `storage/documents` for document files/metadata
+```
+
+```text
+Account admin client
+  -> `POST /api/account-admin/users/sync`
+  -> AccountAdminGuard token/client validation
+  -> Natalium local `users`
+  -> audit/capability-protected local operations
+```
+
+### 9. Offline-First Behavior
+
+Natalium is local database-backed and stores documents locally, so its registered workflows can operate on the node LAN after installation. New Account SSO login depends on the configured Account base URL and client settings. No Relay outbox, retry queue, conflict handling, service worker, or upstream health-data sync was found in code. Node context reads the local Relay `public\hub.json` file path.
+
+### 10. Integration with Other PBB Apps
+
+| Integration | Direction | Protocol / Method | Purpose | Code Evidence |
+|---|---|---|---|---|
+| Natalium to PBB Account | Outbound browser/server SSO | Redirect/callback and token/client config | Central login and account claims | `config\app.php`; `routes\api.php`; `bin\test.php` |
+| PBB Account admin client to Natalium | Inbound HTTP | `POST /api/account-admin/users/sync` | Server-to-server local user sync | `routes\api.php`; `config\app.php`; `bin\test.php` |
+| Natalium to Relay hub JSON | Local file read | `../../relay/public/hub.json` | Node context | `config\app.php`; `routes\api.php` |
+
+### 11. Deployment and Runtime Architecture
+
+Natalium is a Composer PHP app intended for WAMP-style local deployment. `config\app.php` includes MySQL connection defaults, an app path to `database\schema.sql`, local `storage\documents`, and a hardcoded PHP binary path under WAMP PHP 8.2.29. `composer.json` provides `composer test` and `composer migrate` scripts through `bin\test.php` and `bin\migrate.php`. No Docker, PM2, Supervisor, systemd, Laravel scheduler, or queue worker files were confirmed.
+
+### 12. Security and Privacy Notes
+
+| Risk | Severity | Evidence | Suggested Fix |
+|---|---|---|---|
+| Health/patient registry and document data are sensitive local records | High | `database\schema.sql`; `storage\documents` config | Define retention, backup, encryption-at-rest, and access/audit policy before live health deployment |
+| Account admin sync token controls user provisioning | High | `NATALIUM_ACCOUNT_ADMIN_API_TOKEN`; `AccountAdminGuard`; `bin\test.php` | Keep disabled by default, generate per-node secrets, rotate on compromise |
+| Account client secret is required for SSO | High | `NATALIUM_ACCOUNT_CLIENT_SECRET`; `config\app.php` | Store only in local env, never commit real values |
+| Local DB config uses root/empty password defaults | Medium | `config\app.php` | Use installer-generated DB credentials for shared deployments |
+| Document storage path must not leak to clients | Medium | Tests mention document review hides storage path | Keep tests and add download authorization/audit before broad use |
+
+### 13. Realtime Communication
+
+No realtime functionality found / Not confirmed from code.
+
+### 14. Mapping and Geolocation
+
+Patient address storage exists. No map UI, MapServer integration, geocoding, routing, or offline map behavior was confirmed from the scanned Natalium files.
+
+### 15. Background Jobs, Schedulers, and Maintenance Tasks
+
+| Task | Schedule / Trigger | Purpose | Code Evidence |
+|---|---|---|---|
+| Database migration | Manual CLI | Apply `database\schema.sql` | `bin\migrate.php`; `composer.json` |
+| Test runner | Manual CLI | Run custom PHP tests | `bin\test.php`; `composer.json` |
+
+### 16. Configuration and Environment Variables
+
+| Variable / Config | Purpose | Required | Default / Example | Related Module |
+|---|---|---|---|---|
+| `schema_path` | SQL schema path | Yes | `../database/schema.sql` | Migration |
+| `documents_path` | Local document storage path | Yes | `../storage/documents` | Documents |
+| `relay_hub_json_path` | Local node context source | Yes | `../../relay/public/hub.json` | Node context |
+| `account_base_url` | PBB Account base URL | Yes for SSO | `https://account.pbb.ph` | SSO |
+| `account_client_id` | SSO client ID | Yes for SSO | `pbb-natalium` | SSO |
+| `NATALIUM_ACCOUNT_CLIENT_SECRET` | SSO client secret | Yes for SSO | Masked | SSO |
+| `NATALIUM_ACCOUNT_ADMIN_API_ENABLED` | Enables admin sync API | No; default false | `false` | Account admin sync |
+| `NATALIUM_ACCOUNT_ADMIN_API_TOKEN` | Admin sync bearer token | Required if enabled | Masked | Account admin sync |
+| `DB_DATABASE` equivalent config | MySQL database | Yes | `pbb_natalium` | Persistence |
+
+### 17. Known Technical Debt and Gaps
+
+| Area | Issue | Evidence | Recommended Next Step |
+|---|---|---|---|
+| Clinical program engine | Broader health programs are documented/planned, but current reviewed routes focus on identity/registry | `docs\README.md`; `routes\api.php` | Keep program/maternal/child/referral docs marked planned until routes/schema exist |
+| Sync/offline conflict handling | No Relay outbox/upstream sync or conflict strategy found | file inventory; `routes\api.php` | Define whether health data remains node-local or syncs through Relay later |
+| Account dependency | New SSO login depends on Account service availability | `config\app.php`; `routes\api.php` | Define local/offline login fallback or operator procedure |
+| DB credentials | Root/empty local defaults in config | `config\app.php` | Move deployment values to env/installer-generated config |
+
+### 18. Testing Status
+
+Natalium has a custom PHP test runner via `composer test` / `php bin\test.php`. Tests cover SSO/local user linking, Account sync guard behavior, capability enforcement, user/practitioner management, patient application gates, and document review path hiding. Tests were inspected but not run during this documentation update.
+
+### 19. Evidence Summary
+
+Evidence:
+- `C:\wamp64\www\pbb\natalium\composer.json`
+- `C:\wamp64\www\pbb\natalium\config\app.php`
+- `C:\wamp64\www\pbb\natalium\routes\api.php`
+- `C:\wamp64\www\pbb\natalium\database\schema.sql`
+- `C:\wamp64\www\pbb\natalium\docs\README.md`
+- `C:\wamp64\www\pbb\natalium\bin\test.php`
+- Chatviewer DB messages from PBB Natalium on 2026-07-06
+
+---
+
+## App: PBB Utility / Vena
+
+### 1. Executive Technical Summary
+
+PBB Utility is the Laravel 12 Vena utility-operator app. It runs locally as a browser-based utility operations surface with admin/operator/command/responder roles, utility assets and teams, settings, MapLibre map configuration, inbound-only Relay incident intake, normalized incident records, quarantine/stale handling, operator missions, and responder mission acknowledgement. Code confirms it consumes Hotline incident snapshots delivered by Relay as `hotline.incident.upserted` messages targeted to `utility.vena`. Chatviewer messages confirm Vena V1 is inbound-only through Relay and should preserve Hotline incident identity/correlation/location/details/resources/media metadata/raw payload.
+
+### 2. Repository Overview
+
+| Area | Details |
+|---|---|
+| App Name | PBB Utility / Vena |
+| Local Path | `C:\wamp64\www\pbb\utility` |
+| Main Language | PHP, JavaScript |
+| Main Framework | Laravel 12 |
+| Frontend Framework | Vite-built Laravel frontend; exact JS framework not fully confirmed |
+| Backend Framework | Laravel |
+| Database | MySQL `pbb_utility` |
+| Realtime Technology | No Realtime integration found / Not confirmed from code |
+| Queue / Worker System | Laravel database queue configured in `.env.example`; app-specific queued jobs not confirmed |
+| Package Manager | Composer, npm |
+| Runtime Requirements | PHP `^8.2`, Node/npm for assets, MySQL |
+| Main Entry Points | `artisan`, `routes\web.php`, `routes\api.php`, `resources\js`, `database\migrations` |
+| Important Config Files | `.env.example`, `composer.json`, `package.json`, `vite.config.js`, `config\vena.php` |
+| Important Environment Variables | `VENA_RELAY_HANDLER_TOKEN`, `VENA_ALERT_LEVEL`, `VENA_ALERT_LEVEL_DESCRIPTION`, `VENA_MAP_SERVER_URL`, `VENA_MAP_VECTOR_TILES`, `VENA_MAP_TERRAIN_TILES`, `VENA_MAP_GLYPHS`, `VENA_MAP_POI_TILES` |
+| Deployment Target | Local/utility operations PBB node or utility operator workstation/node |
+
+### 3. App Purpose and PBB Role
+
+Vena receives validated Hotline incidents through Relay and gives a utility operator local tools to view reports beside utility assets/teams, manage incident records, create missions, and let responders acknowledge assigned missions. It depends on Relay for inbound incident delivery and MapServer-compatible tile URLs for maps. Hotline/Relay can send incidents to it, but no other selected app currently depends on Vena for core emergency operation. If Vena is unavailable, utility-specific incident handling and mission coordination are unavailable, but Hotline local emergency intake is not directly blocked.
+
+### 4. User Roles and Permissions
+
+| Role | Purpose | Capabilities | Code Evidence |
+|---|---|---|---|
+| admin | Configure Vena and manage users/assets/teams/settings | Admin summary, user CRUD, asset/team category initialization, assets, teams, settings | `config\vena.php`; `routes\web.php`; `EnsureUserHasRole` |
+| operator | Handle inbound incidents and missions | Operator dashboard, incident details, create/view/update missions | `routes\web.php`; operator controllers |
+| command | Command-level web surface | `/command` web surface | `config\vena.php`; `routes\web.php` |
+| responder | Field/helper role inside Vena | View assigned missions and accept mission | `routes\web.php`; `Responder\MissionController` |
+| Relay handler client | Machine client posting incident envelopes | Bearer-token protected `POST /api/relay/incidents` | `routes\api.php`; `RelayIncidentHandlerController.php` |
+
+### 5. Main Features and Modules
+
+### Relay Incident Intake
+
+Purpose: Receive Hotline incident snapshots from Relay, validate target/message type/version/media refs/source identity, store raw inbound payload, normalize current incident state, and quarantine invalid/stale records.
+Main Code: `app\Http\Controllers\Api\RelayIncidentHandlerController.php`.
+Database Tables: `vena_relay_inbound_incidents`, `vena_incidents`, `vena_incident_types`, `vena_incident_type_details`, `vena_incident_resources_needed`, `vena_incident_media_refs`.
+APIs / Routes: `POST /api/relay/incidents`.
+Offline Behavior: Works on local node when Relay can deliver locally; no outbound sync found.
+Sync Behavior: Inbound-only Relay contract; stale versions do not overwrite newer normalized incidents.
+Related PBB Apps: Hotline, Relay.
+Evidence: `routes\api.php`; `config\vena.php`; `tests\Feature\VenaRelayIncidentIntakeTest.php`; Chatviewer Utility/Hotline contract messages.
+
+### Admin Setup, Assets, Teams, And Settings
+
+Purpose: Manage Vena users, utility assets, asset categories, teams, team categories, alert settings, and app setup data.
+Main Code: Admin controllers under `app\Http\Controllers\Api\Admin`.
+Database Tables: `users`, `vena_settings`, `vena_asset_categories`, `vena_assets`, `vena_team_categories`, `vena_teams`, `vena_activity_logs`.
+APIs / Routes: Admin API routes in `routes\web.php`.
+Offline Behavior: Local database-backed.
+Sync Behavior: No upstream sync found.
+Related PBB Apps: MapServer for map context; Helper UI if used by frontend assets.
+Evidence: `routes\web.php`; migrations; admin feature tests.
+
+### Operator Dashboard And Missions
+
+Purpose: Let operators review utility incidents and create/manage missions.
+Main Code: `app\Http\Controllers\Api\Operator\DashboardController.php`; `Operator\MissionController.php`.
+Database Tables: `vena_incidents`, `vena_missions`, `vena_mission_incidents`, `vena_teams`, `vena_activity_logs`.
+APIs / Routes: `/api/operator/dashboard`, `/api/operator/incidents/{incident}`, `/api/operator/missions`, mission show/status routes.
+Offline Behavior: Local database-backed.
+Sync Behavior: No outbound Relay lifecycle sync found in reviewed code.
+Related PBB Apps: Hotline/Relay as incident source.
+Evidence: `routes\web.php`; operator tests.
+
+### Responder Missions
+
+Purpose: Provide responder role mission lists, mission detail, and mission acceptance.
+Main Code: `app\Http\Controllers\Api\Responder\MissionController.php`.
+Database Tables: `vena_missions`, `vena_mission_incidents`, `vena_teams`.
+APIs / Routes: `/api/responder/missions`, `/api/responder/missions/{mission}`, accept route.
+Offline Behavior: Local web app/LAN behavior only; mobile offline sync not implemented in this repo.
+Sync Behavior: No upstream sync found.
+Related PBB Apps: Planned responder/helper mobile workflow is design context, not confirmed implementation here.
+Evidence: `routes\web.php`; responder mission tests.
+
+### Map Configuration
+
+Purpose: Expose MapLibre map configuration and local fallback tile URL settings.
+Main Code: `routes\web.php`.
+Database Tables: Not applicable.
+APIs / Routes: `GET /vena-map.json`.
+Offline Behavior: Depends on local MapServer/tile cache URLs configured through env.
+Sync Behavior: Not applicable.
+Related PBB Apps: PBB MapServer.
+Evidence: `routes\web.php`; `.env.example`.
+
+### 6. Database Schema Summary
+
+| Table | Purpose | Important Columns | Relationships / Notes |
+|---|---|---|---|
+| `users` | Laravel users | name/email/password/role-like fields | Role middleware controls web/API areas |
+| `sessions`, `cache`, `jobs` | Laravel runtime tables | framework fields | DB session/queue/cache support |
+| `vena_settings` | App settings | key/value settings | Alert/settings surfaces |
+| `vena_activity_logs` | Activity/audit log | actor/action/metadata fields | Used by operations/admin flows |
+| `vena_asset_categories` | Utility asset categories | category fields | Parent for assets |
+| `vena_assets` | Utility assets | category/location/status fields | Used on map/operator context |
+| `vena_team_categories` | Team categories | category fields | Parent for teams |
+| `vena_teams` | Utility teams | category/status/contact/location fields | Used by missions |
+| `vena_relay_inbound_incidents` | Raw Relay intake records | message type, target, status, raw envelope/payload | Quarantine/stale/accepted tracking |
+| `vena_incidents` | Normalized current incident records | source identity, status, location, priority, updated/version fields | Upserted from inbound snapshots |
+| `vena_incident_types` | Incident type list per incident | incident reference, type fields | Preserves Hotline many-type incidents |
+| `vena_incident_type_details` | Per-type details | type reference, detail fields | Child of incident types |
+| `vena_incident_resources_needed` | Requested resources | incident reference, resource fields | From Hotline payload |
+| `vena_incident_media_refs` | Media reference metadata | incident reference, metadata fields | URL/path fields are rejected/quarantined |
+| `vena_missions` | Utility missions | status/team/assignment fields | Created by operators |
+| `vena_mission_incidents` | Mission-incident pivot | mission reference, incident reference | Links missions to incidents |
+
+```text
+users
+  └── vena_activity_logs
+
+vena_asset_categories
+  └── vena_assets
+
+vena_team_categories
+  └── vena_teams
+        └── vena_missions
+              └── vena_mission_incidents
+                    └── vena_incidents
+                          ├── vena_incident_types
+                          │     └── vena_incident_type_details
+                          ├── vena_incident_resources_needed
+                          └── vena_incident_media_refs
+
+vena_relay_inbound_incidents
+  └── normalized into vena_incidents
+```
+
+### 7. API and Route Inventory
+
+| Method | Path / Endpoint | Purpose | Auth | Handler / File | Notes |
+|---|---|---|---|---|---|
+| GET | `/api/health` | Health check | Public | `routes\api.php` | Returns app code/status |
+| POST | `/api/relay/incidents` | Relay incident intake | Bearer token `VENA_RELAY_HANDLER_TOKEN` | `RelayIncidentHandlerController@store` | Validates `hotline.incident.upserted`, target `utility.vena` |
+| GET | `/vena-map.json` | MapLibre config | Web | `routes\web.php` | Uses MapServer env URLs/local fallback |
+| GET | `/api/csrf-token` | CSRF token bootstrap | Public | `routes\web.php` |  |
+| POST | `/api/login` | Login | Public throttled | Auth controller |  |
+| GET | `/api/bootstrap` | App bootstrap | Auth | Bootstrap controller |  |
+| GET | `/api/user` | Current user | Auth | User/session controller |  |
+| POST | `/api/logout` | Logout | Auth | Auth controller |  |
+| GET | `/api/operator/dashboard` | Operator dashboard | `operator`/`admin` roles | Operator dashboard controller |  |
+| GET | `/api/operator/incidents/{incident}` | Incident detail | `operator`/`admin` roles | Operator controller |  |
+| POST/GET/PATCH | `/api/operator/missions*` | Mission create/show/status | `operator`/`admin` roles | Operator mission controller |  |
+| GET/POST | `/api/responder/missions*` | Responder mission list/detail/accept | `responder` role | Responder mission controller |  |
+| GET/POST/PATCH/DELETE | `/api/admin/users*` | User administration | `admin` role | Admin user controller |  |
+| GET/POST/PATCH/DELETE | `/api/admin/assets*`, `/api/admin/asset-categories*` | Asset setup | `admin` role | Admin asset controllers | Includes initialize routes |
+| GET/POST/PATCH/DELETE | `/api/admin/teams*`, `/api/admin/team-categories*` | Team setup | `admin` role | Admin team controllers | Includes initialize routes |
+| GET/POST | `/api/admin/settings` | App settings | `admin` role | Admin settings controller |  |
+| GET | `/admin`, `/operator`, `/command`, `/responder` | Web role surfaces | Role/session | `routes\web.php` | Browser app entry surfaces |
+
+### 8. Data Flow and Operational Flow
+
+```text
+PBB Hotline
+  -> Relay envelope `hotline.incident.upserted`
+  -> Relay delivery to Vena `POST /api/relay/incidents`
+  -> bearer token validation
+  -> `vena_relay_inbound_incidents` raw record
+  -> target/type/version/source/media validation
+  -> `vena_incidents` normalized current state
+  -> child type/detail/resource/media metadata rows
+  -> operator dashboard
+  -> operator mission
+  -> responder mission acceptance
+```
+
+### 9. Offline-First Behavior
+
+Vena is a local Laravel app with local MySQL storage and can run on the LAN. It is inbound-only for Relay incident messages in V1. It does not require internet for local operator/responder workflows after incidents are delivered locally. Upstream/cloud connectivity is only needed for whatever Relay topology delivers messages from another node or cloud endpoint. No PWA service worker, client-side offline queue, conflict resolver, or outbound Relay sync was confirmed. Stale inbound incident snapshots are detected using the configured version strategy and do not overwrite newer normalized state.
+
+### 10. Integration with Other PBB Apps
+
+| Integration | Direction | Protocol / Method | Purpose | Code Evidence |
+|---|---|---|---|---|
+| Relay to Vena | Inbound HTTP | `POST /api/relay/incidents` bearer token | Deliver Hotline incident snapshots | `routes\api.php`; `RelayIncidentHandlerController.php`; `config\vena.php` |
+| Hotline to Vena through Relay | Indirect | Relay message type `hotline.incident.upserted`, target `utility.vena` | Utility incident handoff | Chatviewer Hotline/Utility messages; `tests\Feature\VenaRelayIncidentIntakeTest.php` |
+| Vena to MapServer | Browser HTTP map tile URLs | `GET /vena-map.json` returns MapLibre config/env tile URLs | Local utility maps | `routes\web.php`; `.env.example` |
+| Vena to Laravel DB queue/session | Internal DB tables | database session/queue configuration | Runtime state/queue support | `.env.example`; migrations |
+
+### 11. Deployment and Runtime Architecture
+
+Vena is a standard Laravel 12 app. `README.md` documents local development with `php artisan serve --host=127.0.0.1 --port=8016`. `.env.example` configures MySQL database `pbb_utility`, DB sessions, database queue, and `VENA_RELAY_HANDLER_TOKEN`. Composer scripts include setup/dev/test helpers. Frontend assets use Vite/npm. No Docker, PM2, Supervisor, systemd, or Windows service registration was found inside the Utility repo; service lifecycle would be handled externally if installed by Kit Setup later.
+
+### 12. Security and Privacy Notes
+
+| Risk | Severity | Evidence | Suggested Fix |
+|---|---|---|---|
+| Relay handler token controls incident ingestion | High | `VENA_RELAY_HANDLER_TOKEN`; `RelayIncidentHandlerController.php` | Generate per-node/per-source token and rotate on compromise |
+| Raw inbound incident payloads are retained | High | `vena_relay_inbound_incidents`; controller stores raw envelope/payload | Define retention, audit access, and purge policy |
+| Media refs must remain metadata-only | High | Controller/test quarantine URL/path fields | Keep rejecting direct file paths/URLs and document media retrieval via proper backend contracts |
+| Utility incidents may include location/reporter details | High | incident migrations/controller normalization | Apply role-based access, local encryption/backup policy, and log review |
+| DB defaults use local root/empty password placeholders | Medium | `.env.example` | Installer should generate deployment credentials |
+
+### 13. Realtime Communication
+
+No realtime functionality found / Not confirmed from code.
+
+### 14. Mapping and Geolocation
+
+Vena exposes `GET /vena-map.json` for MapLibre configuration. Env variables configure MapServer/base URLs for vector tiles, terrain tiles, glyphs, and POI tiles, with local fallback behavior in the JSON response. Incident, asset, and team tables include map-relevant operational data from migrations/controllers, but exact column-level geolocation details should be read directly from migrations for implementation work.
+
+### 15. Background Jobs, Schedulers, and Maintenance Tasks
+
+| Task | Schedule / Trigger | Purpose | Code Evidence |
+|---|---|---|---|
+| Laravel queue support | Configured; app-specific jobs not confirmed | Database queue runtime support | `.env.example`; Laravel jobs migration |
+| Tests | Manual `php artisan test` / Composer test script | Feature verification | `composer.json`; `tests\Feature` |
+| Dev server | Manual | Local development on port 8016 | `README.md` |
+
+### 16. Configuration and Environment Variables
+
+| Variable / Config | Purpose | Required | Default / Example | Related Module |
+|---|---|---|---|---|
+| `APP_NAME` | Laravel app name | Yes | `Vena` | App |
+| `APP_URL` | Local app URL | Yes | `http://127.0.0.1:8016` | App |
+| `DB_DATABASE` | MySQL database | Yes | `pbb_utility` | Persistence |
+| `QUEUE_CONNECTION` | Queue backend | Yes | `database` | Queue |
+| `SESSION_DRIVER` | Session backend | Yes | `database` | Auth/session |
+| `VENA_RELAY_HANDLER_TOKEN` | Bearer token for Relay intake | Yes in Relay-connected deployment | Masked | Relay intake |
+| `VENA_ALERT_LEVEL` | Local alert level setting | No | env-defined | Settings/bootstrap |
+| `VENA_ALERT_LEVEL_DESCRIPTION` | Alert text | No | env-defined | Settings/bootstrap |
+| `VENA_MAP_SERVER_URL` | Local MapServer/base URL | No | env-defined | Maps |
+| `VENA_MAP_VECTOR_TILES` | Vector tile URL template | No | env-defined | Maps |
+| `VENA_MAP_TERRAIN_TILES` | Terrain tile URL template | No | env-defined | Maps |
+| `VENA_MAP_GLYPHS` | Glyph URL template | No | env-defined | Maps |
+| `VENA_MAP_POI_TILES` | POI tile URL template | No | env-defined | Maps |
+
+### 17. Known Technical Debt and Gaps
+
+| Area | Issue | Evidence | Recommended Next Step |
+|---|---|---|---|
+| Outbound utility lifecycle sync | No outbound Relay status/update contract found | `routes\api.php`; `routes\web.php` | Define if utility mission/status updates should be sent upstream |
+| Mobile offline responder workflow | Web responder mission endpoints exist, but mobile/PWA offline sync not confirmed | `routes\web.php`; responder controller/tests | Keep planned mobile workflow separate until implemented |
+| Realtime responder tracking | No Realtime integration found | file inventory/routes | Define whether live team locations/status should use PBB Realtime |
+| Map preflight | Map config exists, but no local tile coverage preflight in this repo | `GET /vena-map.json`; `.env.example` | Reuse MapServer/Kit Setup preflight for utility deployments |
+
+### 18. Testing Status
+
+Vena has Laravel feature tests. `VenaRelayIncidentIntakeTest` covers unauthorized intake, wrong message type quarantine, wrong target quarantine, valid incident normalization, stale update protection, missing version quarantine, many incident type/detail preservation, and media URL/path quarantine. Other feature tests cover admin setup, baseline behavior, operator dashboard, operator missions, and responder missions. Tests were inspected but not run during this documentation update.
+
+### 19. Evidence Summary
+
+Evidence:
+- `C:\wamp64\www\pbb\utility\README.md`
+- `C:\wamp64\www\pbb\utility\composer.json`
+- `C:\wamp64\www\pbb\utility\.env.example`
+- `C:\wamp64\www\pbb\utility\config\vena.php`
+- `C:\wamp64\www\pbb\utility\routes\web.php`
+- `C:\wamp64\www\pbb\utility\routes\api.php`
+- `C:\wamp64\www\pbb\utility\app\Http\Controllers\Api\RelayIncidentHandlerController.php`
+- `C:\wamp64\www\pbb\utility\database\migrations`
+- `C:\wamp64\www\pbb\utility\tests\Feature\VenaRelayIncidentIntakeTest.php`
+- Chatviewer DB messages from PBB Utility and Hotline Beta on 2026-07-05
 
 ---
 
