@@ -14,6 +14,8 @@ Current-state alignment note, 2026-06-29 / corrected 2026-07-07: local code and 
 
 Current-state alignment note, 2026-07-07: local code and DB-backed Chatviewer updates confirm two additional projects. PBB Natalium at `C:\wamp64\www\pbb\natalium` is a custom PHP/Composer local health-center app for patient registry, practitioner/capability management, PBB Account SSO, document intake/review, patient access grants, and audit events. PBB Utility at `C:\wamp64\www\pbb\utility` is the Laravel 12 Vena utility-operator app with local roles (`admin`, `operator`, `command`, `responder`), assets/teams/settings, MapLibre map config, inbound-only Relay incident intake for `hotline.incident.upserted` targeted to `utility.vena`, quarantine/stale handling, normalized Vena incidents, and operator/responder missions. Chatviewer context confirms Natalium's planning around barangay continuity-of-care health workflows and Utility/Vena's Hotline incident Relay alignment.
 
+Current-state Account integration note, 2026-07-07: a targeted rescan of older apps confirms Account integration in more apps than the prior briefing stated. Hotline, Relay, Chat, Support, Realtime, and Maestro now have Account SSO redirect/callback/logout code and/or Account app-admin APIs using `users.pbb_user_id` links. Landing has Account launcher/session UI behavior and a registry entry for `pbb-account`. Kit Setup app-installer docs now define Account SSO/app-admin environment naming, `X-PBB-Account-Client: pbb-account`, app-admin token requirements, and `users.pbb_user_id` migration expectations. Hub/HQ and MapServer did not show PBB Account SSO/app-admin integration in the targeted scan beyond generic account UI/helper references.
+
 ---
 
 ## App: PBB Hotline
@@ -3335,7 +3337,7 @@ PBB Account is a Laravel 12 local-node identity and SSO service for Project Bant
 
 ### 3. App Purpose and PBB Role
 
-PBB Account is the implemented canonical identity and credential authority for local PBB apps. It centralizes account credentials, status, profile identity, trusted clients, SSO authorization codes, session identity, and audit events. Apps integrate through browser redirects to `/oauth/authorize`, server-side `/oauth/token` exchange, trusted-client identity APIs, and optional app-admin provisioning hooks. Chat, Hotline, Landing, Natalium, and future apps can keep app-local sessions/domain roles while linking users by `pbb_user_id`.
+PBB Account is the implemented canonical identity and credential authority for local PBB apps. It centralizes account credentials, status, profile identity, trusted clients, SSO authorization codes, session identity, and audit events. Apps integrate through browser redirects to `/oauth/authorize`, server-side `/oauth/token` exchange, trusted-client identity APIs, and optional app-admin provisioning hooks. Code now confirms Account adoption points in Chat, Hotline, Landing, Natalium, Relay, Support, Realtime, and Maestro. These apps keep app-local sessions/domain roles while linking users by `pbb_user_id`.
 
 ### 4. User Roles and Permissions
 
@@ -3380,7 +3382,7 @@ Database Tables: `accounts`, `trusted_clients`, `account_audit_events`.
 APIs / Routes: `/api/admin/accounts`, `/api/admin/trusted-clients`, rotate/enable/disable routes, app-admin metadata/user/provision/role/status routes, `/api/admin/audit-events`.
 Offline Behavior: Local Account admin workflow when target app-admin endpoints are reachable locally.
 Sync Behavior: App-admin hooks call trusted client app endpoints over HTTP using configured app-admin base URL/token.
-Related PBB Apps: Chat, Hotline, Landing, Natalium and other apps with account-admin endpoints.
+Related PBB Apps: Chat, Hotline, Landing, Natalium, Relay, Support, Realtime, Maestro, and other apps with account-admin endpoints.
 Evidence: `AdminController.php`; `AppAdminApiClient.php`; `AdminSurfaceApiTest.php`.
 
 ### Session Identity And Realtime Admission
@@ -3487,6 +3489,8 @@ PBB Account is local database-backed and can run on the node/LAN. Apps that depe
 | Account -> app-admin endpoints | HTTP bearer token | Probe app metadata, provision app users, update app role/status | `AdminController.php`; `AppAdminApiClient.php`; `TrustedClient.php`; `AdminSurfaceApiTest.php` |
 | Account -> Realtime | Backend SDK/event publisher when enabled | Account login/logout/profile events and admission tokens | `AccountRealtimeAdmissionService.php`; `AccountRealtimeEventPublisher.php`; `vendor_pbb\realtime-sdk` |
 | Account -> Hub/Relay hub JSON | HTTP configured URL | Node identity lookup/config context | `config\account.php`; `ACCOUNT_NODE_HUB_JSON_URL` |
+| Hotline/Relay/Chat/Support/Realtime/Maestro -> Account | Browser redirect + callback + token exchange | App-local login through canonical Account identity | app `routes\web.php`; app `AccountSsoController`; app Account SSO tests |
+| Account -> Hotline/Relay/Chat/Support/Realtime/Maestro app-admin APIs | HTTP bearer token + `X-PBB-Account-Client` | App-local user provisioning, role/status update, access removal | app `AccountAdminController`; app `VerifyAccountAdminService`; app Account admin tests |
 
 ### 11. Deployment and Runtime Architecture
 
@@ -3547,7 +3551,7 @@ No mapping/geolocation functionality found / Not confirmed from code.
 | Deployment credentials | README documents seeded test account and dev client secrets | `README.md`; `DatabaseSeeder.php` | Rotate or disable seeded credentials before shared deployment |
 | Offline login policy | Account is local, but no durable offline identity cache for consuming apps was confirmed | routes/services scan | Define app behavior when Account is down |
 | Admin middleware | Admin routes rely on controller `assertAdmin` inside authenticated route group | `routes\api.php`; `AdminController.php` | Add/keep explicit non-admin tests or middleware |
-| App adoption | Consuming apps need local `pbb_user_id` linkage and callback implementation | Account routes/SDK; app-specific routes vary | Track per-app integration status |
+| App adoption | Several consuming apps now have Account SSO/app-admin code, but defaults and enablement differ by app | Hotline/Relay/Chat/Support/Realtime/Maestro Account integration routes/config/tests | Track per-app enablement, trusted client registration, callback URLs, and app-admin token rotation |
 | Realtime optionality | Realtime admission/events are optional and disabled by default | `.env.example`; tests | Document enablement and shared secret rotation |
 
 ### 18. Testing Status
