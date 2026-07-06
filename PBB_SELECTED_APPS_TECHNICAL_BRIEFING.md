@@ -10,7 +10,7 @@ Fresh-scan update source: local code under `C:\wamp64\www\pbb`, plus earlier `C:
 
 Current-state alignment note, 2026-06-22: local code and DB-backed Chatviewer updates confirmed additional changes after the prior briefing. Kit Setup first had the bundled package manifest with `pbb-landing`, `pbb-mapserver`, `pbb-maestro`, `pbb-realtime`, `pbb-relay`, `pbb-hotline`, and `pbb-support`, plus the Cebu MapServer boundary pack; current 2026-06-29 local Kit version is `0.1.164`. The finalized Hotline/Relay/Support Data Prep model uses separate Support role identities: `sitrep.ingestor` for `sitrep.record` and `support.dispatch` for `support.request` / `support.request.cancelled`. Relay now implements operational `source.heartbeat.updated` webhooks through `relay_webhook_subscribers` and `relay_webhook_deliveries`; Kit seeds a Support Source Heartbeats subscriber, and Support receives it at `POST /api/relay/source-heartbeats`, validates a dedicated token, deduplicates by `event_id`, and publishes accepted snapshots to Realtime. Chatviewer now has a DB-backed agent chat API with token-authenticated posting/claiming and `GET /api/chat-entries.php` list queries defaulting newest-first while `order=asc` is available for chronological API reads.
 
-Current-state alignment note, 2026-06-29: local code and recent DB-backed Chatviewer entries confirm two additional local projects. PBB Chat at `C:\wamp64\www\pbb\chat` is a Laravel 12 local barangay chat app with rooms, direct messages, message requests, badges, reports/blocks/moderation, Realtime admission/publishing, and a Hotline escalation handoff stub. PBB Games at `C:\wamp64\www\pbb\games` is a plain PHP optional local engagement/learning app with no database and no operational API integration in version 1. Kit Setup local `package.json` is now `0.1.164`; the bundled package manifest still lists Landing, MapServer, Maestro, Realtime, Relay, Hotline, Support, and the Cebu MapServer boundary pack. Helper `package.json` remains `0.21.83`, but active loader cache revisions in `js\ui\ui.loader.js` are `0.21.117` and recent Helper changes add Chat envelope/block/mute icons, sender presence indicators, `ui.file.input`, login-form media branding options, paste attachments in `ui.chat.composer`, and improved `ui.game.state.chrome.showMilestone(...)`. `C:\wamp64\www\pbb\account` exists but no implementation files were found during this scan; `PBB_ACCOUNT_SERVICE_PROPOSAL.md` now confirms the intended Account Service direction as a draft central identity/SSO proposal.
+Current-state alignment note, 2026-06-29 / corrected 2026-07-07: local code and recent DB-backed Chatviewer entries confirm PBB Chat, PBB Games, and PBB Account as local projects. PBB Chat at `C:\wamp64\www\pbb\chat` is a Laravel 12 local barangay chat app with rooms, direct messages, message requests, badges, reports/blocks/moderation, Realtime admission/publishing, and a Hotline escalation handoff stub. PBB Games at `C:\wamp64\www\pbb\games` is a plain PHP optional local engagement/learning app with no database and no operational API integration in version 1. PBB Account at `C:\wamp64\www\pbb\account` is now confirmed as a Laravel 12 local node identity and SSO service with canonical `accounts`, trusted OAuth-style clients, hashed one-time authorization codes, admin surfaces, app-admin provisioning hooks, session identity APIs, optional Realtime admission, and a PHP SDK. Kit Setup local `package.json` is now `0.1.164`; the bundled package manifest still lists Landing, MapServer, Maestro, Realtime, Relay, Hotline, Support, and the Cebu MapServer boundary pack. Helper `package.json` remains `0.21.83`, but active loader cache revisions in `js\ui\ui.loader.js` are `0.21.117` and recent Helper changes add Chat envelope/block/mute icons, sender presence indicators, `ui.file.input`, login-form media branding options, paste attachments in `ui.chat.composer`, and improved `ui.game.state.chrome.showMilestone(...)`.
 
 Current-state alignment note, 2026-07-07: local code and DB-backed Chatviewer updates confirm two additional projects. PBB Natalium at `C:\wamp64\www\pbb\natalium` is a custom PHP/Composer local health-center app for patient registry, practitioner/capability management, PBB Account SSO, document intake/review, patient access grants, and audit events. PBB Utility at `C:\wamp64\www\pbb\utility` is the Laravel 12 Vena utility-operator app with local roles (`admin`, `operator`, `command`, `responder`), assets/teams/settings, MapLibre map config, inbound-only Relay incident intake for `hotline.incident.upserted` targeted to `utility.vena`, quarantine/stale handling, normalized Vena incidents, and operator/responder missions. Chatviewer context confirms Natalium's planning around barangay continuity-of-care health workflows and Utility/Vena's Hotline incident Relay alignment.
 
@@ -2583,7 +2583,7 @@ No mapping/geolocation functionality found / Not confirmed from code.
 | Hotline escalation | Endpoint returns handoff payload only; direct Hotline incident/report creation not confirmed | `HotlineEscalationController.php` | Define whether Chat escalation remains handoff-only or creates Hotline records |
 | Offline behavior | LAN operation confirmed; durable offline compose queue not confirmed | `release.json`; no service worker/outbox found in reviewed evidence | Decide whether PBB Chat needs offline message queueing |
 | Public exposure | Release metadata disables gateway, but installer/policy should enforce it | `release.json` | Add Kit/Landing validation that Chat is not public-gateway exposed |
-| Account/profile ownership | Local user/session model exists; proposal now recommends Account Service as canonical identity owner with app-local sessions and `pbb_user_id` links | `C:\wamp64\www\pbb\account` has no app files found; `PBB_ACCOUNT_SERVICE_PROPOSAL.md` | Implement Account Service and plan Chat local-user migration around `pbb_user_id` |
+| Account/profile ownership | Local user/session model exists; Account Service now implements canonical identity with app-local sessions linked by `pbb_user_id` | `C:\wamp64\www\pbb\account\routes\web.php`; `C:\wamp64\www\pbb\account\routes\api.php`; `C:\wamp64\www\pbb\account\database\migrations` | Complete/verify Chat Account callback, logout, and local-user migration around `pbb_user_id` |
 
 ### 18. Testing Status
 
@@ -3307,103 +3307,115 @@ Evidence:
 
 ---
 
-## App: PBB Account (Proposal / No Implementation Found)
+## App: PBB Account
 
 ### 1. Executive Technical Summary
 
-PBB Account is a draft proposal for a central Account Service / central identity app. The proposal recommends centralizing canonical user identity and credentials while keeping app sessions and app-specific records local. It is intended to support Chat, Hotline, Support, Maestro, Landing, and future apps through app-local user rows linked by a stable `pbb_user_id`. No implementation code, routes, migrations, package files, or config files were found under `C:\wamp64\www\pbb\account` during the scan.
+PBB Account is a Laravel 12 local-node identity and SSO service for Project Bantay Bayan. Code confirms canonical account records keyed by `pbb_user_id`, email/mobile/password login, public registration, account profile/password updates, OAuth-style trusted-client authorization code flow, SSO logout, trusted client administration, app-admin provisioning hooks, account identity resolve/update APIs, session identity APIs for allowed `.pbb.ph` origins, optional Realtime admission, audit events, and a PHP SDK for consuming apps. It is implemented infrastructure-level identity service code.
 
 ### 2. Repository Overview
 
 | Area | Details |
 |---|---|
 | App Name | PBB Account / Account Service |
-| Local Path | Proposed path: `C:\wamp64\www\pbb\account`; implementation files not found |
-| Main Language | Unknown / Not confirmed from code; proposal suggests a new Laravel app or service directory |
-| Main Framework | Proposed Laravel app or service; not implemented in code |
-| Frontend Framework | Unknown / Not confirmed from code |
-| Backend Framework | Proposed central identity/SSO service |
-| Database | Proposed `accounts`, `account_login_identifiers`, `sso_authorization_codes`, `trusted_clients`, `account_audit_events`; no migrations found |
-| Realtime Technology | None proposed for V1 identity flow |
-| Queue / Worker System | Unknown / Not confirmed from code |
-| Package Manager | Unknown / Not confirmed from code |
-| Runtime Requirements | Unknown / Not confirmed from code |
-| Main Entry Points | Proposed `/oauth/authorize`, `/oauth/token`, account profile APIs; no files found |
-| Important Config Files | `PBB_ACCOUNT_SERVICE_PROPOSAL.md` only |
-| Important Environment Variables | Unknown / Not confirmed from code |
-| Deployment Target | Proposed local/node identity service; exact placement not confirmed |
+| Local Path | `C:\wamp64\www\pbb\account` |
+| Main Language | PHP, JavaScript |
+| Main Framework | Laravel 12 |
+| Frontend Framework | Vite/Laravel frontend; Helper assets vendored under `public\vendor\helpers.pbb.ph` |
+| Backend Framework | Laravel |
+| Database | MySQL `pbb_accounts` |
+| Realtime Technology | Optional PBB Realtime admission and account event publishing |
+| Queue / Worker System | Laravel database queue configured; no app-specific queue job inventory confirmed |
+| Package Manager | Composer, npm |
+| Runtime Requirements | PHP `^8.2`, MySQL, Node/npm for assets |
+| Main Entry Points | `artisan`, `routes\web.php`, `routes\api.php`, `public\openapi\account.yaml`, `sdk\php\pbb_account_sdk.php` |
+| Important Config Files | `.env.example`, `composer.json`, `package.json`, `config\account.php`, `config\session.php`, `database\migrations`, `database\seeders\DatabaseSeeder.php` |
+| Important Environment Variables | `ACCOUNT_BASE_URL`, `ACCOUNT_SSO_CODE_TTL_SECONDS`, `ACCOUNT_NODE_HUB_JSON_URL`, `ACCOUNT_SESSION_IDENTITY_ALLOWED_ORIGIN_SUFFIX`, `ACCOUNT_REALTIME_ENABLED`, `ACCOUNT_REALTIME_WEBSOCKET_URL`, `ACCOUNT_REALTIME_TOKEN_SIGNING_SECRET`, `ACCOUNT_APP_ADMIN_VERIFY_TLS` |
+| Deployment Target | Local/node identity service at `https://account.pbb.ph` per README and `.env.example` |
 
 ### 3. App Purpose and PBB Role
 
-The proposal positions PBB Account as the canonical identity and credential authority for PBB users. Apps should not share one mutable `users` table or one shared session cookie. Instead, Account Service should authenticate users, issue short-lived authorization codes, and return identity claims. Each app then creates its own local session and local user/profile row linked by `pbb_user_id`. The first planned milestone is Chat login through Account Service, then Chat-to-Hotline auto-login without a second password prompt.
+PBB Account is the implemented canonical identity and credential authority for local PBB apps. It centralizes account credentials, status, profile identity, trusted clients, SSO authorization codes, session identity, and audit events. Apps integrate through browser redirects to `/oauth/authorize`, server-side `/oauth/token` exchange, trusted-client identity APIs, and optional app-admin provisioning hooks. Chat, Hotline, Landing, Natalium, and future apps can keep app-local sessions/domain roles while linking users by `pbb_user_id`.
 
 ### 4. User Roles and Permissions
 
 | Role | Purpose | Capabilities | Code Evidence |
 |---|---|---|---|
-| canonical account user | Proposed global identity holder | Owns `pbb_user_id`, login identifiers, password hash, account status, verified contacts | `PBB_ACCOUNT_SERVICE_PROPOSAL.md` |
-| trusted client app | Proposed registered app client | Exchanges SSO authorization codes and refreshes identity claims through authenticated server-to-server calls | `PBB_ACCOUNT_SERVICE_PROPOSAL.md` |
-| app-local user | Existing/proposed local app profile | Keeps app-local session, role, permissions, preferences, and domain records linked to `pbb_user_id` | `PBB_ACCOUNT_SERVICE_PROPOSAL.md` |
+| account user | Canonical PBB identity holder | Login/register, view/update profile, change password, use SSO with trusted clients | `Account.php`; `AuthController.php`; `UserController.php`; `routes\api.php` |
+| account admin | Account service administrator | Manage accounts, trusted clients, client secrets, app-admin provisioning hooks, audit events, account settings | `Account.php`; `AdminController.php`; `routes\api.php`; `AdminSurfaceApiTest.php` |
+| trusted client app | Registered PBB consuming app | OAuth-style code exchange, account identity resolve/update, app-local session creation | `TrustedClient.php`; `OAuthController.php`; `AccountIdentityController.php` |
+| app-admin API target | External app admin surface linked to trusted client | Metadata/user lookup/provision/role/status operations through Account admin surface | `AdminController.php`; `AppAdminApiClient.php`; `TrustedClient.php` |
 
-The proposal explicitly recommends not centralizing all app roles on day one. Account Service owns global account status; apps continue owning operational permissions.
+Account roles are `admin` and `user`. Account status values found in the model are `active`, `pending`, `suspended`, and `disabled`; login/SSO rejects non-active accounts.
 
 ### 5. Main Features and Modules
 
 ### Central Identity And Credentials
 
-Purpose: Own canonical `pbb_user_id`, login identifiers, password hash, account status, verification state, display name, optional avatar, and audit events.
-Main Code: No implementation found.
-Database Tables: Proposed `accounts`, optional `account_login_identifiers`, `account_audit_events`.
-APIs / Routes: Proposed account profile/update APIs and lookup/sync endpoints.
-Offline Behavior: Unknown / Not confirmed from code.
-Sync Behavior: Proposed profile refresh, SSO claims, webhook, or scheduled sync for app-local cached fields.
-Related PBB Apps: Chat, Hotline, Support, Maestro, Landing, future apps.
-Evidence: `PBB_ACCOUNT_SERVICE_PROPOSAL.md`.
+Purpose: Own canonical `pbb_user_id`, name, email, mobile, password hash, status, role, avatar URL, verification timestamps, login time, and audit events.
+Main Code: `Account.php`; `AuthController.php`; `UserController.php`; `AccountIdentityController.php`.
+Database Tables: `accounts`, `account_audit_events`, `account_settings`.
+APIs / Routes: `/api/login`, `/api/register`, `/api/logout`, `/api/user`, `/api/account/me`, `/api/user/password`, `/api/account-identities/resolve`, `/api/account-identities/{pbbUserId}`.
+Offline Behavior: Local database-backed when Account is running on the node.
+Sync Behavior: Trusted clients can resolve and update Account-owned identity fields; no Relay sync found.
+Related PBB Apps: Chat, Hotline, Landing, Natalium, future apps.
+Evidence: `routes\api.php`; `AuthController.php`; `AccountIdentityController.php`; migrations; tests.
 
 ### Browser SSO
 
 Purpose: Let apps redirect users to Account Service, exchange short-lived one-time authorization codes server-to-server, and create app-local sessions.
-Main Code: No implementation found.
-Database Tables: Proposed `sso_authorization_codes`, `trusted_clients`.
-APIs / Routes: Proposed `GET /oauth/authorize`, `POST /oauth/token`.
-Offline Behavior: Unknown / Not confirmed from code.
-Sync Behavior: App-local sessions remain separate; identity claims come from Account Service.
-Related PBB Apps: Chat first, then Hotline.
-Evidence: `PBB_ACCOUNT_SERVICE_PROPOSAL.md`.
+Main Code: `OAuthController.php`; `TrustedClient.php`; `SsoAuthorizationCode.php`.
+Database Tables: `sso_authorization_codes`, `trusted_clients`, `account_audit_events`.
+APIs / Routes: `GET /oauth/authorize`, `POST /oauth/token`, `GET /oauth/logout`.
+Offline Behavior: Works locally when Account and consuming app endpoints are reachable on the node/LAN.
+Sync Behavior: App-local sessions remain separate; identity claims come from Account Service token exchange.
+Related PBB Apps: Seeded clients include `pbb-chat`, `pbb-hotline`, and `pbb-landing`.
+Evidence: `routes\web.php`; `OAuthController.php`; `DatabaseSeeder.php`; `OAuthClientUsageTest.php`.
 
-### Chat To Hotline Auto-Login
+### Admin Surface And Trusted Clients
 
-Purpose: Evolve Chat's current Hotline handoff into an Account Service authorization flow for Hotline.
-Main Code: Current Chat handoff exists; Account SSO implementation not found.
-Database Tables: Proposed app-local `pbb_user_id` mappings in Chat and Hotline users tables.
-APIs / Routes: Existing `POST /api/chat/escalate-to-hotline`; proposed Account `/oauth/authorize?client_id=hotline...`; proposed Hotline `/auth/account/callback`.
-Offline Behavior: Unknown / Not confirmed from code.
-Sync Behavior: Local app sessions remain separate; same `pbb_user_id` links Chat and Hotline local users.
-Related PBB Apps: PBB Chat, PBB Hotline.
-Evidence: `PBB_ACCOUNT_SERVICE_PROPOSAL.md`; `C:\wamp64\www\pbb\chat\app\Http\Controllers\Api\HotlineEscalationController.php`.
+Purpose: Let Account admins manage accounts, trusted clients, client secret rotation, client enable/disable, app-admin metadata, app user provisioning, app user role/status, and audit logs.
+Main Code: `AdminController.php`; `AppAdminApiClient.php`; `TrustedClient.php`.
+Database Tables: `accounts`, `trusted_clients`, `account_audit_events`.
+APIs / Routes: `/api/admin/accounts`, `/api/admin/trusted-clients`, rotate/enable/disable routes, app-admin metadata/user/provision/role/status routes, `/api/admin/audit-events`.
+Offline Behavior: Local Account admin workflow when target app-admin endpoints are reachable locally.
+Sync Behavior: App-admin hooks call trusted client app endpoints over HTTP using configured app-admin base URL/token.
+Related PBB Apps: Chat, Hotline, Landing, Natalium and other apps with account-admin endpoints.
+Evidence: `AdminController.php`; `AppAdminApiClient.php`; `AdminSurfaceApiTest.php`.
+
+### Session Identity And Realtime Admission
+
+Purpose: Expose current Account session identity to allowed `.pbb.ph` origins and optionally provide Realtime admission tokens for account/browser sessions.
+Main Code: `SessionIdentityController.php`; `RealtimeAdmissionController.php`; `AccountRealtimeAdmissionService.php`; `AccountRealtimeEventPublisher.php`.
+Database Tables: `account_settings`; Realtime events use configured Realtime path when enabled.
+APIs / Routes: `GET|OPTIONS /api/session/identity`, `GET|OPTIONS /api/session/realtime-admission`.
+Offline Behavior: Local/LAN when Account and Realtime are local and configured.
+Sync Behavior: No Relay sync found.
+Related PBB Apps: Landing, Chat, Realtime, apps needing shared session identity.
+Evidence: `config\account.php`; `routes\api.php`; `AccountIdentityApiTest.php`; `OAuthClientUsageTest.php`.
 
 ### 6. Database Schema Summary
 
-No implemented database usage found / Not confirmed from code.
-
-Proposed schema:
-
 | Table | Purpose | Important Columns | Relationships / Notes |
 |---|---|---|---|
-| `accounts` | Canonical account | `pbb_user_id`, `name`, `email`, `mobile`, `password_hash`, `status`, verification timestamps, `avatar_url`, `last_login_at` | Proposed central identity table |
-| `account_login_identifiers` | Multiple identifiers per user | `pbb_user_id`, `type`, `value`, `normalized_value`, `verified_at` | Optional proposal |
-| `sso_authorization_codes` | One-time app authorization codes | `code_hash`, `pbb_user_id`, `client_id`, `redirect_uri`, `scopes_json`, `expires_at`, `consumed_at` | Store only hashed code |
-| `trusted_clients` | Registered PBB apps | `client_id`, `client_secret_hash`, allowed redirect URIs/scopes, status | Store only hashed secrets |
-| `account_audit_events` | Identity/security audit | `pbb_user_id`, `event_type`, `actor_pbb_user_id`, `client_id`, IP/user-agent, metadata | Proposed audit trail |
+| `accounts` | Canonical Account users | `pbb_user_id`, `name`, `email`, `mobile`, `status`, `role`, verification timestamps, `avatar_url`, `password_hash`, `last_login_at`, `remember_token` | Auth model is `Account`; status/role checked in code |
+| `trusted_clients` | Registered SSO/client apps | `client_id`, `client_secret_hash`, allowed redirect/logout URIs, scopes, `status`, `last_used_at`, app-admin config fields | Client secrets are hashed; app-admin API token is encrypted cast |
+| `sso_authorization_codes` | One-time authorization code records | `code_hash`, `pbb_user_id`, `account_session_id`, `client_id`, `redirect_uri`, scopes, expiry, consumed timestamp | Codes are stored hashed and consumed under DB transaction |
+| `account_audit_events` | Identity/security audit | `pbb_user_id`, `actor_pbb_user_id`, `client_id`, `event_type`, IP, user-agent, metadata, created time | Used by login/logout/SSO/admin/identity events |
+| `account_settings` | Runtime settings | `key`, JSON `value` | Includes Realtime settings and configurable Account behavior |
+| `sessions` | Laravel DB sessions | session id, user id, IP, user agent, payload, last activity | `SESSION_DRIVER=database` |
+| `password_reset_tokens` | Laravel password reset token storage | email, token, created time | No reset routes confirmed in current route scan |
+| `cache`, `cache_locks` | Laravel cache tables | framework fields | Runtime cache |
+| `jobs`, `job_batches`, `failed_jobs` | Laravel queue tables | framework fields | Queue configured; app-specific jobs not confirmed |
 
 ```text
 accounts
-  ├── account_login_identifiers
   ├── sso_authorization_codes
   └── account_audit_events
 
 trusted_clients
   └── sso_authorization_codes
+  └── app-admin HTTP calls to app-local admin APIs
 
 app-local users
   └── pbb_user_id -> accounts.pbb_user_id
@@ -3413,71 +3425,89 @@ app-local users
 
 | Method | Path / Endpoint | Purpose | Auth | Handler / File | Notes |
 |---|---|---|---|---|---|
-| GET | `/oauth/authorize` | Proposed browser SSO authorization start | Account session / login | No implementation found | Query: `client_id`, `redirect_uri`, `response_type=code`, `scope`, `state` |
-| POST | `/oauth/token` | Proposed authorization code exchange | Trusted client secret | No implementation found | Returns identity claims; code must be one-time and short-lived |
-| GET | `/api/me` | Proposed current account profile | Account session/API auth | No implementation found | Identity profile |
-| PATCH | `/api/me/profile` | Proposed central profile update | Account session/API auth | No implementation found | Name/mobile/email/avatar fields |
-| GET | `/api/accounts/{pbb_user_id}` | Proposed trusted app lookup | App authentication | No implementation found | Server-to-server only |
-| POST | `/api/accounts/lookup` | Proposed controlled account lookup | App authentication | No implementation found | Server-to-server only |
-| POST | `/api/accounts/sync` | Proposed local cached profile refresh | App authentication | No implementation found | Server-to-server only |
+| GET | `/` `/profile` `/accounts` `/clients` `/audit` `/sdk` | SPA/app surfaces | Browser/session | `routes\web.php` | Returns `resources\views\app.blade.php` |
+| GET | `/up` | Health check | Public | `routes\web.php` | Returns app/status/local_only |
+| GET | `/api/docs` | OpenAPI YAML | Public | `routes\web.php` | Serves `public\openapi\account.yaml` |
+| GET | `/oauth/authorize` | Browser SSO authorization start | Account session; unauthenticated users see login app | `OAuthController@authorize` | Validates active trusted client and exact redirect URI |
+| POST | `/oauth/token` | Authorization code exchange | Trusted client ID/secret | `OAuthController@token` | Code is hashed, one-time, expiring, redirect-bound |
+| GET | `/oauth/logout` | SSO logout redirect | Account session/client/logout URI | `OAuthController@logout` | Validates post-logout redirect URI |
+| GET | `/api/bootstrap` | App bootstrap | Public/session-aware | `BootstrapController` | Returns auth/config data |
+| POST | `/api/login` | Login | Public, throttled | `AuthController@login` | Email/mobile/identifier plus password |
+| POST | `/api/register` | Public registration | Public, throttled | `AuthController@register` | Supports avatar upload |
+| POST | `/api/logout` | API logout | Auth | `AuthController@logout` | Clears Account session |
+| GET | `/api/session/ping` | Session heartbeat | Auth | `SessionController` |  |
+| GET/OPTIONS | `/api/session/identity` | Cross-app session identity | CORS-limited origin | `SessionIdentityController` | Allows `.pbb.ph` origin suffix by config |
+| GET/OPTIONS | `/api/session/realtime-admission` | Account Realtime admission | CORS-limited origin | `RealtimeAdmissionController` | Guest/authenticated admission; disabled when not configured |
+| GET/POST | `/api/user`, `/api/account/me` | Current account profile get/update | Auth | `UserController` | `/api/account/me` aliases current user |
+| POST | `/api/user/password` | Change password | Auth | `UserController@password` |  |
+| POST | `/api/settings` | Update Account settings | Auth | `AccountSettingController@update` | Admin checks should be reviewed in controller |
+| POST | `/api/account-identities/resolve` | Trusted client identity lookup | Client ID/secret | `AccountIdentityController@resolve` | Up to 100 `pbb_user_ids` |
+| PATCH | `/api/account-identities/{pbbUserId}` | Trusted client updates Account-owned identity fields | Client ID/secret | `AccountIdentityController@update` | Only name/email/mobile accepted; optional Realtime broadcast |
+| GET/POST | `/api/admin/accounts*` | Account admin CRUD/update | Auth + admin assertion | `AdminController` |  |
+| GET/POST | `/api/admin/trusted-clients*` | Trusted client CRUD/lifecycle | Auth + admin assertion | `AdminController` | Includes rotate-secret/enable/disable |
+| GET/PUT/DELETE/PATCH | `/api/admin/trusted-clients/{client}/app-admin/*` | App-local admin provisioning bridge | Auth + admin assertion | `AdminController`; `AppAdminApiClient` | Calls configured app admin base URL/token |
+| GET | `/api/admin/audit-events` | Recent audit events | Auth + admin assertion | `AdminController@auditEvents` | Latest 50 |
 
 ### 8. Data Flow and Operational Flow
 
-Proposed Chat first-login flow:
+SSO login flow:
 
 ```text
-Citizen
--> Chat
--> Account Service /oauth/authorize
--> Account login/password verification
--> short-lived authorization code
--> Chat server-side /oauth/token exchange
--> Chat local user linked by pbb_user_id
--> Chat local session
+Consuming app
+-> Account `/oauth/authorize?client_id=...&redirect_uri=...&response_type=code`
+-> Account login/register surface if no session
+-> Account validates trusted client + exact redirect URI
+-> Account creates hashed `sso_authorization_codes` row
+-> browser redirects to consuming app callback with one-time code
+-> consuming app server posts `/oauth/token` with client secret
+-> Account locks/consumes code and returns identity payload + account_session_id
+-> consuming app creates app-local session/user linked by `pbb_user_id`
 ```
 
-Proposed Chat-to-Hotline flow:
+Trusted identity flow:
 
 ```text
-Chat Hotline icon
--> Account Service /oauth/authorize?client_id=hotline...
--> Hotline /auth/account/callback?code=...
--> Hotline server-side /oauth/token exchange
--> Hotline local citizen linked by same pbb_user_id
--> Hotline local session
--> /citizen
+Trusted app backend
+-> `/api/account-identities/resolve` with client id/secret
+-> Account returns canonical profile/status for requested `pbb_user_ids`
+-> trusted app can update Account-owned identity fields through PATCH
+-> optional Realtime account-session broadcast on profile update
 ```
 
 ### 9. Offline-First Behavior
 
-Unknown / Not confirmed from code. The proposal does not define a durable offline SSO mode. Because Account Service is proposed as the credential authority, local node deployment and local availability would likely be important, but this is an inference and not confirmed from implementation.
+PBB Account is local database-backed and can run on the node/LAN. Apps that depend on Account for new SSO login require Account availability. Existing app-local sessions in consuming apps are separate and depend on each app's implementation. No Relay sync, durable offline login cache, conflict handling, or browser service-worker/PWA behavior was confirmed in Account code.
 
 ### 10. Integration with Other PBB Apps
 
 | Integration | Direction | Protocol / Method | Purpose | Code Evidence |
 |---|---|---|---|---|
-| Chat -> Account Service | Proposed browser redirect + server-side token exchange | SSO login and local Chat session creation | `PBB_ACCOUNT_SERVICE_PROPOSAL.md` |
-| Chat -> Hotline via Account Service | Proposed browser redirect + Hotline callback | Auto-login Hotline from active Chat session | `PBB_ACCOUNT_SERVICE_PROPOSAL.md`; current Chat handoff controller |
-| Hotline -> Account Service | Proposed server-side token exchange and profile update API | Create local citizen session and update central identity fields | `PBB_ACCOUNT_SERVICE_PROPOSAL.md` |
-| Support/Maestro/Landing -> Account Service | Proposed later adoption | Central login/identity for additional apps | `PBB_ACCOUNT_SERVICE_PROPOSAL.md` |
+| Chat/Hotline/Landing and other trusted apps -> Account | Browser redirect + server-side token exchange | SSO login and app-local session creation | `routes\web.php`; `OAuthController.php`; `DatabaseSeeder.php`; `OAuthClientUsageTest.php` |
+| Trusted apps -> Account | HTTP with `X-PBB-Account-Client-Id` and `X-PBB-Account-Client-Secret` | Resolve/update canonical account identity fields | `AccountIdentityController.php`; `AccountIdentityApiTest.php` |
+| Account -> app-admin endpoints | HTTP bearer token | Probe app metadata, provision app users, update app role/status | `AdminController.php`; `AppAdminApiClient.php`; `TrustedClient.php`; `AdminSurfaceApiTest.php` |
+| Account -> Realtime | Backend SDK/event publisher when enabled | Account login/logout/profile events and admission tokens | `AccountRealtimeAdmissionService.php`; `AccountRealtimeEventPublisher.php`; `vendor_pbb\realtime-sdk` |
+| Account -> Hub/Relay hub JSON | HTTP configured URL | Node identity lookup/config context | `config\account.php`; `ACCOUNT_NODE_HUB_JSON_URL` |
 
 ### 11. Deployment and Runtime Architecture
 
-No implementation found. Proposal asks whether Account Service should live as a new top-level app under `C:\wamp64\www\pbb\account` or inside an existing workspace until stabilized. The recommended V1 is a central credential and identity authority using SSO token exchange, separate app sessions, and app-local `pbb_user_id` links.
+Account is a Laravel 12 app under WAMP. README instructs using `C:\wamp64\bin\php\php8.2.29\php.exe` for `artisan migrate`, `artisan db:seed`, and `artisan test` because default `php` may point to PHP 5.6. `.env.example` uses `APP_URL=https://account.pbb.ph`, MySQL database `pbb_accounts`, DB sessions, DB queue, and `SESSION_COOKIE=pbb_account_session`. Composer scripts include setup/dev/test; npm/Vite build frontend assets. No Docker/systemd/PM2 files were found.
 
 ### 12. Security and Privacy Notes
 
 | Risk | Severity | Evidence | Suggested Fix |
 |---|---|---|---|
-| Central credential store becomes high-value target | High | Proposal centralizes password hashes and account status | Implement strict hashing, secret handling, audit logs, backup/encryption policy |
-| Authorization-code misuse | High | Proposal uses authorization codes | Make codes short-lived, one-time, stored hashed, and bound to exact client/redirect URI |
-| Client secret leakage | High | Proposal uses trusted clients | Store only hashed client secrets; rotate per app |
-| Redirect URI abuse | High | Proposal requires redirect URIs | Exact-match pre-registered redirects |
-| App-local role confusion | Medium | Proposal keeps roles app-owned initially | Document global account status versus app-local permissions |
+| Central credential store is high-value target | High | `accounts.password_hash`; login/register routes | Define backup/encryption/retention policy; restrict admin access; monitor audit events |
+| Seeded development credentials and client secrets exist | High if reused outside dev | `README.md`; `DatabaseSeeder.php` | Rotate seeded test account password and `*-dev-secret` client secrets before shared deployment |
+| Authorization-code misuse | High | `OAuthController.php`; `sso_authorization_codes` migration | Keep codes short-lived, one-time, hashed, and exact client/redirect-bound |
+| Client secret leakage | High | `trusted_clients.client_secret_hash`; `rotateTrustedClientSecret` | Continue hashing client secrets and rotating through admin surface |
+| App-admin API token exposure | High | `TrustedClient` encrypted cast; `AdminController` masks token in tests | Keep token encrypted/masked and rotate per app |
+| Redirect URI abuse | High | `TrustedClient::allowsRedirectUri`; `allowsPostLogoutRedirectUri` | Keep exact pre-registered redirect/logout URI checks |
+| Admin route authorization depends on controller assertion | Medium | Admin routes are inside `auth`; `AdminController::assertAdmin` | Keep tests for non-admin denial and consider explicit middleware |
+| Realtime signing secret controls admission tokens | High when Realtime enabled | `config\account.php`; `ACCOUNT_REALTIME_TOKEN_SIGNING_SECRET` | Generate strong per-node secret and rotate on compromise |
 
 ### 13. Realtime Communication
 
-No realtime functionality found / Not confirmed from code.
+Account has optional Realtime integration. `GET /api/session/realtime-admission` returns disabled/not configured when Realtime is off, and guest or authenticated admission payloads when enabled. Services publish login/logout/profile update events to Realtime when configured. Code evidence: `RealtimeAdmissionController.php`, `AccountRealtimeAdmissionService.php`, `AccountRealtimeEventPublisher.php`, `config\account.php`, and `OAuthClientUsageTest.php`.
 
 ### 14. Mapping and Geolocation
 
@@ -3487,31 +3517,65 @@ No mapping/geolocation functionality found / Not confirmed from code.
 
 | Task | Schedule / Trigger | Purpose | Code Evidence |
 |---|---|---|---|
-| None implemented | Not applicable | No Account Service code found | `C:\wamp64\www\pbb\account` scan |
+| Database migration | Manual / install | Create Account, trusted client, SSO, audit, settings, session/cache/queue tables | `database\migrations`; README |
+| Database seed | Manual / dev install | Seed test admin account and trusted clients `pbb-chat`, `pbb-hotline`, `pbb-landing` | `database\seeders\DatabaseSeeder.php`; README |
+| Laravel queue listener | Dev script | Database queue listener in development | `composer.json` `dev` script |
+| Tests | Manual | Feature/unit verification | `composer.json`; `tests\Feature`; `tests\Unit` |
 
 ### 16. Configuration and Environment Variables
 
-Unknown / Not confirmed from code.
+| Variable / Config | Purpose | Required | Default / Example | Related Module |
+|---|---|---|---|---|
+| `APP_URL` | Account base URL | Yes | `https://account.pbb.ph` | SSO |
+| `DB_DATABASE` | MySQL database | Yes | `pbb_accounts` | Persistence |
+| `SESSION_DRIVER` | Session backend | Yes | `database` | Auth/session |
+| `SESSION_COOKIE` | Account session cookie | Yes | `pbb_account_session` | Auth/session |
+| `ACCOUNT_BASE_URL` | Account service base URL | Yes | `https://account.pbb.ph` | SDK/SSO |
+| `ACCOUNT_SSO_CODE_TTL_SECONDS` | Authorization code TTL | Yes | `300` | OAuth |
+| `ACCOUNT_NODE_HUB_JSON_URL` | Node identity hub JSON URL | No | `http://relay.pbb.ph/hub.json` | Node context |
+| `ACCOUNT_SESSION_IDENTITY_ALLOWED_ORIGIN_SUFFIX` | CORS origin suffix for session identity | Yes | `.pbb.ph` | Session identity |
+| `ACCOUNT_APP_ADMIN_VERIFY_TLS` | Verify TLS for app-admin calls | Yes | false in local env | App-admin bridge |
+| `ACCOUNT_REALTIME_ENABLED` | Enable Account Realtime admission/events | No | `false` | Realtime |
+| `ACCOUNT_REALTIME_WEBSOCKET_URL` | Realtime WebSocket URL | If enabled | `wss://realtime.pbb.ph/realtime` | Realtime |
+| `ACCOUNT_REALTIME_TOKEN_SIGNING_SECRET` | Realtime token signing secret | If enabled | Masked/empty | Realtime |
+| `ACCOUNT_REALTIME_ALLOWED_ORIGIN_SUFFIX` | Realtime CORS origin suffix | If enabled | `.pbb.ph` | Realtime |
 
 ### 17. Known Technical Debt and Gaps
 
 | Area | Issue | Evidence | Recommended Next Step |
 |---|---|---|---|
-| No implementation | Proposal exists, but `C:\wamp64\www\pbb\account` has no app files | folder scan; `PBB_ACCOUNT_SERVICE_PROPOSAL.md` | Scaffold Account Service or decide interim workspace |
-| App user migrations | Chat/Hotline/Support/Maestro/Landing local users need `pbb_user_id` migration plan | proposal | Inventory current user schemas and define mapping strategy |
-| SSO contract | OAuth-like endpoints are proposed, not implemented | proposal | Implement and test `/oauth/authorize` and `/oauth/token` |
-| Offline identity behavior | Local/offline SSO behavior not defined | proposal | Decide whether Account runs per node and how unavailable Account affects app login |
+| Deployment credentials | README documents seeded test account and dev client secrets | `README.md`; `DatabaseSeeder.php` | Rotate or disable seeded credentials before shared deployment |
+| Offline login policy | Account is local, but no durable offline identity cache for consuming apps was confirmed | routes/services scan | Define app behavior when Account is down |
+| Admin middleware | Admin routes rely on controller `assertAdmin` inside authenticated route group | `routes\api.php`; `AdminController.php` | Add/keep explicit non-admin tests or middleware |
+| App adoption | Consuming apps need local `pbb_user_id` linkage and callback implementation | Account routes/SDK; app-specific routes vary | Track per-app integration status |
+| Realtime optionality | Realtime admission/events are optional and disabled by default | `.env.example`; tests | Document enablement and shared secret rotation |
 
 ### 18. Testing Status
 
-No tests found because no Account Service implementation was found. Proposal recommends first proving Chat login through Account Service, Chat local user/session creation, Chat-to-Hotline auto-login, Hotline local session creation, central profile update behavior, separate app sessions, and disabled-account rejection.
+Account has PHPUnit/Laravel tests. Feature tests cover OAuth client usage, token exchange, authorize login resume, remembered login/bootstrap, public registration/avatar upload, SSO logout, API logout, session identity CORS, Realtime admission disabled/guest behavior, account identity resolve/update, Landing trusted client seeding, admin trusted-client lifecycle, app-admin metadata calls, and admin audit surface. Unit tests cover the PHP Account SDK. Tests were inspected but not run during this documentation correction.
 
 ### 19. Evidence Summary
 
 Evidence:
-- `C:\wamp64\www\pbb\documentations\PBB_ACCOUNT_SERVICE_PROPOSAL.md`
-- `C:\wamp64\www\pbb\account`
-- `C:\wamp64\www\pbb\chat\app\Http\Controllers\Api\HotlineEscalationController.php`
+- `C:\wamp64\www\pbb\account\README.md`
+- `C:\wamp64\www\pbb\account\composer.json`
+- `C:\wamp64\www\pbb\account\.env.example`
+- `C:\wamp64\www\pbb\account\config\account.php`
+- `C:\wamp64\www\pbb\account\routes\web.php`
+- `C:\wamp64\www\pbb\account\routes\api.php`
+- `C:\wamp64\www\pbb\account\app\Http\Controllers\OAuthController.php`
+- `C:\wamp64\www\pbb\account\app\Http\Controllers\Api\AuthController.php`
+- `C:\wamp64\www\pbb\account\app\Http\Controllers\Api\AdminController.php`
+- `C:\wamp64\www\pbb\account\app\Http\Controllers\Api\AccountIdentityController.php`
+- `C:\wamp64\www\pbb\account\app\Http\Controllers\Api\RealtimeAdmissionController.php`
+- `C:\wamp64\www\pbb\account\app\Models\Account.php`
+- `C:\wamp64\www\pbb\account\app\Models\TrustedClient.php`
+- `C:\wamp64\www\pbb\account\database\migrations`
+- `C:\wamp64\www\pbb\account\database\seeders\DatabaseSeeder.php`
+- `C:\wamp64\www\pbb\account\sdk\php`
+- `C:\wamp64\www\pbb\account\tests\Feature\OAuthClientUsageTest.php`
+- `C:\wamp64\www\pbb\account\tests\Feature\AccountIdentityApiTest.php`
+- `C:\wamp64\www\pbb\account\tests\Feature\AdminSurfaceApiTest.php`
 
 ---
 
