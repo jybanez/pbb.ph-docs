@@ -19,6 +19,9 @@ The selected codebase is a local-node-oriented PBB stack built around Laravel/PH
 - Games is an optional local citizen engagement and preparedness-learning app with no confirmed operational API dependency.
 - Natalium is a custom PHP local health-center foundation for patient registry, practitioner/capability management, Account SSO, document intake/review, access grants, and audit events.
 - Utility / Vena is a Laravel utility-operator app that consumes Hotline incident snapshots through Relay, normalizes utility incidents, supports assets/teams/settings, and coordinates operator/responder missions.
+- Salus is an in-progress Laravel 12 Auxilus Mos local evacuation-center and relief-distribution module with implemented routes/controllers/models/migrations for multiple center activations, registration, movement/occupancy, relief-batch receipt tracking, citizen QR status, Realtime updates, and Hotline aggregate-summary access.
+- Library is proposal/specification-only in the current local scan. The docs define PBB Library Cloud and PBB Library Node for governed reference-content ingestion, signed offline releases, node-local catalog/search/resource serving, and Learning integration.
+- Learning / Lumaria is proposal/specification-only in the current local scan. The docs define an LMS-agnostic local learning gateway/control plane, with Moodle as first adapter and PBB Library as a reference provider.
 
 Fresh-scan updates verified in selected repositories:
 
@@ -41,6 +44,8 @@ Fresh-scan updates verified in selected repositories:
 - 2026-07-07 alignment: PBB Natalium at `C:\wamp64\www\pbb\natalium` is reviewed as a custom PHP/Composer app using MySQL `pbb_natalium`, PBB Account SSO/admin sync hooks, local patient/practitioner/capability/document/audit tables, and Relay `public\hub.json` node context.
 - 2026-07-07 alignment: PBB Utility / Vena at `C:\wamp64\www\pbb\utility` is reviewed as a Laravel 12 app using MySQL `pbb_utility`, roles `admin`, `operator`, `command`, and `responder`, MapLibre map config, and inbound-only Relay intake for `hotline.incident.upserted` targeted to `utility.vena`.
 - 2026-07-07 older-app Account rescan: Hotline, Relay, Chat, Support, Realtime, and Maestro now have Account SSO redirect/callback/logout code and/or Account app-admin APIs using local `users.pbb_user_id` links. Landing has Account launcher/session UI behavior and registry metadata for `pbb-account`. Kit Setup app-installer docs now codify Account SSO/app-admin environment names, app-admin token requirements, the `X-PBB-Account-Client: pbb-account` header, and `users.pbb_user_id` migration expectations. Hub/HQ and MapServer did not show PBB Account SSO/app-admin integration in this targeted scan.
+- 2026-07-12 Salus implementation alignment: PBB Salus at `C:\wamp64\www\pbb\salus` is now reviewed as an in-progress Laravel 12 app, not only a design document set. Local files confirm `artisan`, `composer.json`, `package.json`, `app`, `routes`, `database`, `public`, `resources`, `tests`, and `vendor` are present. `docs\implementation-checklist.md` reports implementation through milestone 19, 87 implemented API paths documented, Laravel foundation complete, operational modules implemented, Account/Realtime/Hotline contracts implemented, and release/installation not started. Local `npm run openapi:check` passed and confirmed OpenAPI coverage for 87 implemented API paths. V1 still explicitly has no direct Relay, Support/Imperium, MapServer, Maestro, full inventory, native mobile, continuous geofencing, or cross-node private evacuee sync.
+- 2026-07-17 Library/Learning alignment: `C:\wamp64\www\pbb\library` and `C:\wamp64\www\pbb\learning` contain proposal docs only. No executable app code, package files, migrations, routes, runtime config, or tests were found. The local proposal docs should be treated as product/architecture direction, not implemented behavior.
 
 Owner clarifications added after code review:
 
@@ -76,6 +81,9 @@ Owner clarifications added after code review:
 | PBB Natalium | Citizen Apps, Operator Apps, Barangay Node Services, Health / Continuity-of-Care Apps | Local health-center/barangay node | Health workers, practitioners, patient applicants, admins | Patient registry, practitioner capabilities, profile applications, documents, access grants, audit events |
 | PBB Utility / Vena | Utility Company Services, Operator Apps, Responder / Helper Apps | Utility operator node / local PBB node | Utility admins, operators, command users, responders/helpers | Inbound Hotline incident utility handling, assets/teams, maps, missions, responder acknowledgement |
 | PBB Account | Core Infrastructure Services, Identity / SSO | Local node identity service | Citizens/users, Account admins, trusted PBB apps | Canonical account credentials, SSO authorization code flow, trusted clients, app-admin provisioning bridge, session identity |
+| PBB Salus | Citizen Apps, Operator Apps, Barangay Node Services, Evacuation / Relief Operations | Local barangay node / LAN-only app | Admins, operators, workers, command users, citizens | Evacuation center activation, registration, movement/occupancy, relief-batch receipt tracking, citizen QR status, Hotline aggregate summaries |
+| PBB Library | Citizen Apps, Core Infrastructure Services, Education / Reference Services | Proposed Library Cloud plus local Library Node | Citizens, students, teachers, responders, health workers, Learning, content admins | Governed reference catalog, signed content releases, offline node search/resource serving, Library-to-Learning reference provider |
+| PBB Learning / Lumaria | Citizen Apps, Education / Learning Services, Operator/Admin Apps | Proposed local node learning gateway and optional dedicated learning server | Learners, teachers/facilitators, barangay staff, responders, admins, institutional partners | LMS-agnostic catalog/control plane, Moodle-first adapter, local learning launch, emergency-safe learning surface, Library reference integration |
 
 ## 3. High-Level Architecture Diagram
 
@@ -135,6 +143,32 @@ PBB Utility / Vena
   -> operator dashboard and mission creation
   -> responder mission list/detail/acceptance
   -> MapLibre config from `/vena-map.json` using local MapServer URL env
+
+PBB Salus
+  -> implemented local `pbb_salus` Laravel domain/migration model
+  -> multiple evacuation centers per barangay operation
+  -> express/regular registration, validation, tags/QRs, optional individual movement or aggregate gate counts
+  -> relief distribution batches and receipt/correction workflow, not full V1 inventory
+  -> PBB Account SSO/app-admin and Salus-local roles/capabilities
+  -> PBB Realtime change notifications followed by authorized REST refetch
+  -> Hotline/Vox pulls privacy-safe aggregate summary through bearer-protected internal API
+  -> Landing local launcher registration; public gateway disabled
+
+PBB Library (proposal-only in current scan)
+  -> Library Cloud ingests/normalizes governed reference sources
+  -> Library Cloud builds signed manifests and release packages
+  -> Library Node verifies, stages, activates, rolls back, indexes, and serves offline content
+  -> local public catalog/search/resource URLs such as `https://library.pbb.ph`
+  -> Learning uses Library Node as a reference provider API
+  -> routine multi-terabyte content transfer should not use PBB Relay
+
+PBB Learning / Lumaria (proposal-only in current scan)
+  -> LMS-agnostic local learning gateway/control plane
+  -> Moodle is the first proposed LMS adapter/runtime
+  -> local public/admin surface such as `https://learning.pbb.ph`
+  -> PBB Account is preferred identity
+  -> PBB Library is a reference provider, not an LMS provider
+  -> continues local learning flows when Library is unavailable where possible
 
 PBB Account
   -> central canonical `pbb_user_id`
@@ -198,6 +232,21 @@ PBB Kit Setup
 | PBB Natalium | PBB Account | Browser/server SSO | Authorize/callback/logout flow and Account claims | User login/logout | `natalium\config\app.php`; `natalium\routes\api.php`; `natalium\bin\test.php` |
 | PBB Account admin client | PBB Natalium | HTTP bearer/client guarded API | User sync payload | Account-admin provisioning/sync | `natalium\routes\api.php`; `natalium\config\app.php`; `natalium\bin\test.php` |
 | PBB Natalium | Relay hub JSON | Local file read | Node identity/context | Node context API | `natalium\config\app.php`; `natalium\routes\api.php` |
+| PBB Salus | PBB Account | Browser/server SSO | Authorize/callback/logout flow and Account claims; local `pbb_user_id` link | User login and express registration context | `salus\docs\integration-design.md`; `salus\docs\v1-scope.md` |
+| PBB Account admin client | PBB Salus | HTTP bearer/client guarded API | App-local user provision, role/status update, access removal | Account-admin provisioning/sync | `salus\docs\integration-design.md`; `salus\docs\api-contract-design.md` |
+| PBB Salus | PBB Realtime | Admission + backend event publish | Privacy-safe change notifications for center/public/operations/command rooms | Live UI update followed by REST refetch | `salus\docs\integration-design.md`; `salus\docs\resilience-design.md` |
+| Hotline/Vox | PBB Salus | HTTP bearer-protected internal API | Aggregate evacuation/relief summary, freshness/completeness metadata | Hotline SITREP/support decision support | `salus\docs\integration-design.md`; `salus\docs\operational-summary-design.md`; `salus\docs\openapi\salus-v1.yaml` |
+| Kit Setup | PBB Salus | App installer/Data Prep/health checks | Install config, Account/Realtime/Hotline summary settings, Landing metadata | Node installation/update/repair | `salus\docs\integration-design.md`; `salus\docs\pbb-app-standards-compliance.md` |
+| Landing | PBB Salus | Local launcher registry | Local `https://salus.pbb.ph` launch and health metadata; public gateway disabled | User launcher visibility | `salus\docs\integration-design.md` |
+| PBB Library Cloud | PBB Library Node | Proposed node-pull release/offers/object download/report flow | Signed manifests, release packages, node assignment, deployment reports | Content release and node update | `library\cloud\docs\PBB_LIBRARY_CLOUD_DEVELOPMENT_PROPOSAL.md`; `library\node\docs\PBB_LIBRARY_NODE_DEVELOPMENT_PROPOSAL.md` |
+| PBB Library Node | PBB Library Cloud | Proposed deployment reporting API | Package install state, health, activation/rollback status | Release install/update | `library\cloud\docs\PBB_LIBRARY_CLOUD_DEVELOPMENT_PROPOSAL.md`; `library\node\docs\PBB_LIBRARY_NODE_DEVELOPMENT_PROPOSAL.md` |
+| PBB Learning / Lumaria | PBB Library Node | Proposed local reference-provider API | Search/resource/collections/citation/related calls | Learning contextual research and reference launch | `learning\docs\PBB_LEARNING_PBB_LIBRARY_INTEGRATION_ADDENDUM.md`; `library\node\docs\PBB_LIBRARY_NODE_DEVELOPMENT_PROPOSAL.md` |
+| Kit Setup | PBB Library Node | Proposed installer/Data Prep/smoke checks | Library HDD/storage, trusted Cloud release settings, package staging, health/readiness | Node commissioning and content preload | `library\node\docs\PBB_LIBRARY_NODE_DEVELOPMENT_PROPOSAL.md`; `learning\docs\PBB_LEARNING_PBB_LIBRARY_INTEGRATION_ADDENDUM.md` |
+| Kit Setup | PBB Learning / Lumaria | Proposed installer/config wiring | LMS adapter settings, Library base URL/token, Landing registration | Node commissioning | `learning\docs\PBB_LEARNING_DEVELOPMENT_PROPOSAL_UPDATED.md`; `learning\docs\PBB_LEARNING_PBB_LIBRARY_INTEGRATION_ADDENDUM.md` |
+| Landing | PBB Library Node | Proposed local launcher and public-gateway metadata | Local launch URL and Cloud-to-Node release gateway metadata; public browsing stays local/LAN | App launch and Library release operations | `library\node\docs\PBB_LIBRARY_NODE_DEVELOPMENT_PROPOSAL.md`; `learning\docs\PBB_LEARNING_PBB_LIBRARY_INTEGRATION_ADDENDUM.md` |
+| Landing | PBB Learning / Lumaria | Proposed local launcher registration | Local `https://learning.pbb.ph` launch and health metadata | User launcher visibility | `learning\docs\PBB_LEARNING_DEVELOPMENT_PROPOSAL_UPDATED.md`; `learning\docs\PBB_LEARNING_PBB_LIBRARY_INTEGRATION_ADDENDUM.md` |
+| PBB Account | PBB Learning / Lumaria | Proposed preferred SSO/account identity | Future `pbb_user_id` link, learner/admin identity | Login and admin operation | `learning\docs\PBB_LEARNING_DEVELOPMENT_PROPOSAL_UPDATED.md` |
+| PBB Account | PBB Library Node | Proposed optional admin identity | Optional Account-linked Library admins; public reading/search without login | Library administration | `library\node\docs\PBB_LIBRARY_NODE_DEVELOPMENT_PROPOSAL.md` |
 | PBB Chat / Hotline / Landing trusted clients | PBB Account | Browser redirect + server-side token exchange | SSO authorization code and identity payload | App login | `account\routes\web.php`; `account\app\Http\Controllers\OAuthController.php`; `account\database\seeders\DatabaseSeeder.php`; `account\tests\Feature\OAuthClientUsageTest.php` |
 | Hotline / Relay / Chat / Support / Realtime / Maestro | PBB Account | Browser redirect + callback + token exchange | Account SSO login and app-local user/session linked by `pbb_user_id` | App login | app `routes\web.php`; app `AccountSsoController`; app Account SSO tests |
 | PBB Account | Hotline / Relay / Chat / Support / Realtime / Maestro app-admin APIs | HTTP bearer token + `X-PBB-Account-Client` | App-local user provision, lookup, role/status update, access removal | app `AccountAdminController`; app `VerifyAccountAdminService`; app Account admin tests |
@@ -253,6 +302,9 @@ PBB Kit Setup
 | `pbb_accounts` MySQL database | PBB Account | Accounts, trusted clients, SSO codes, audit events, settings, sessions/cache/queue | `account\.env.example`; `account\database\migrations` |
 | `account\sdk\php` | Consuming PBB apps | PHP SDK for SSO/account client integration | `account\sdk\php\README.md`; `account\sdk\php\src` |
 | `PBB_ACCOUNT_SERVICE_PROPOSAL.md` | PBB Account, Chat, Hotline, future apps | Historical proposal and migration rationale; implementation now exists in `account` | `documentations\PBB_ACCOUNT_SERVICE_PROPOSAL.md`; `account\routes` |
+| Library proposal docs | PBB Library Cloud, PBB Library Node, Learning, Kit Setup, Landing | Proposed content governance, signed releases, offline catalog/search/object store, Learning adapter, Landing registration | `library\docs\PBB_LIBRARY_DEVELOPMENT_PROPOSAL.md`; `library\node\docs\PBB_LIBRARY_NODE_DEVELOPMENT_PROPOSAL.md`; `library\cloud\docs\PBB_LIBRARY_CLOUD_DEVELOPMENT_PROPOSAL.md` |
+| Learning proposal docs | PBB Learning / Lumaria, PBB Library, PBB Account, Landing, Kit Setup | Proposed LMS gateway/control plane, Moodle adapter, Library reference provider, Account identity, emergency-safe behavior | `learning\docs\PBB_LEARNING_DEVELOPMENT_PROPOSAL_UPDATED.md`; `learning\docs\PBB_LEARNING_PBB_LIBRARY_INTEGRATION_ADDENDUM.md` |
+| Dedicated Library HDD / content store | PBB Library Node | Proposed large offline reference package storage, staging, activation, rollback, and indexes | `library\node\docs\PBB_LIBRARY_NODE_DEVELOPMENT_PROPOSAL.md` |
 
 ## 6. Offline-First Architecture Summary
 
@@ -272,6 +324,8 @@ Confirmed local/LAN-capable parts:
 - PBB Natalium can run local database/document workflows on the LAN after installation; new SSO login depends on the configured PBB Account service.
 - PBB Utility / Vena can run local operator/responder workflows on the LAN after Relay has delivered incidents; it has no confirmed outbound sync dependency.
 - PBB Account runs locally with MySQL and DB sessions. New SSO login for consuming apps requires Account availability; no durable offline identity cache in consuming apps was confirmed from Account code.
+- PBB Library Node is proposed to work after commissioning without internet, Library Cloud, Learning, Account, Realtime, or Relay, serving local catalog/search/resource content from node storage.
+- PBB Learning / Lumaria is proposed as a local learning gateway that can continue local learning flows and Library-backed references where local services exist. External LMS links, cloud LMSs, or remote institutional systems would require their own connectivity.
 - Kit Setup can install bundled ZIPs locally.
 - Owner clarification: Setup Data Prep populates MapServer tiles for the Hub HQ-defined boundary during node installation.
 
@@ -288,6 +342,8 @@ Requires upstream/internet/cloud connectivity:
 - PBB Natalium SSO and Account-admin sync require the configured PBB Account endpoint. No cloud dependency was confirmed beyond that configured endpoint.
 - PBB Utility / Vena depends on Relay reachability for inbound cross-node/cloud incident delivery and MapServer/tile URL reachability for map display.
 - PBB Account external dependency is not required for local login/SSO when deployed locally; optional Realtime admission/events require PBB Realtime and configured signing secret.
+- PBB Library Cloud is required for new governed source ingestion, normalization, release construction, node assignment, and release offers. Library Node routine reading/searching should not require Cloud after content is installed.
+- PBB Learning external provider launches depend on the selected LMS/provider. Moodle is the first proposed adapter, but no implementation code was found.
 - Kit Setup validates local WampServer and Technitium DNS prerequisites. DNS apply/verify can use Technitium locally; SSL/remote-check/provider-specific steps may still need network depending on configuration.
 
 Confirmed retry/queue behavior:
@@ -302,6 +358,8 @@ Confirmed retry/queue behavior:
 - PBB Natalium has no confirmed queue/retry layer or Relay outbox.
 - PBB Utility / Vena has Laravel database queue tables/config, but its confirmed Relay incident intake is synchronous HTTP handler logic with quarantine/stale handling; app-specific queued jobs were not confirmed.
 - PBB Account has Laravel database queue tables/config and Composer dev script queue listener, but app-specific queued jobs were not confirmed.
+- PBB Library Node is proposed to have package verification, staging, activation, rollback, and deployment reporting, but no implementation code exists in the local scan.
+- PBB Learning retry/queue behavior is unknown because no implementation code exists in the local scan.
 
 Conflict handling:
 
@@ -335,6 +393,8 @@ What is synced:
 - Utility / Vena receives `hotline.incident.upserted` snapshots from Relay targeted to `utility.vena`. Code confirms inbound-only behavior, raw inbound retention, normalized incident upsert, stale update rejection, bad message/target quarantine, and media URL/path quarantine.
 - Relay emits `source.heartbeat.updated` operational webhooks outside the normal `hub_relay_messages` app-to-app path.
 - Landing can expose a public `/relay/api/v1/*` gateway to the registered local Relay target, but it does not implement the store-and-forward queue itself.
+- PBB Library proposal docs explicitly separate routine multi-terabyte Library release transfer from PBB Relay. Library Node should pull large content releases through Library-specific release/object download flows, not Relay messages.
+- PBB Learning proposal docs do not put Learning in the Library content-update path. Learning consumes Library Node as a local reference provider after Library content is installed.
 
 Known gaps:
 
@@ -421,6 +481,8 @@ Known behavior:
 - PBB Natalium has no realtime functionality confirmed.
 - PBB Utility / Vena has no realtime functionality confirmed.
 - PBB Account has optional Realtime admission and event publishing for account browser/session login, logout, and profile update behavior; Realtime is disabled by default in `.env.example`.
+- PBB Library has no Realtime dependency in the proposal docs. Library Node should operate without Realtime after commissioning.
+- PBB Learning has no mandatory Realtime dependency confirmed from proposal docs.
 
 ## 9. Mapping Architecture Summary
 
@@ -451,6 +513,8 @@ No mapping/geolocation functionality was confirmed in PBB Chat or PBB Games.
 
 PBB Utility / Vena exposes `GET /vena-map.json` with MapLibre configuration and env-driven MapServer/vector/terrain/glyph/POI tile URLs. Natalium stores patient addresses, but no MapServer integration, map UI, geocoding, or routing was confirmed from reviewed code.
 
+PBB Library and PBB Learning do not define MapServer integration in the proposal docs reviewed. Library has proposed offline content packages, but those are reference-library packages, not map tile packages.
+
 ## 10. Kit Setup / Provisioning Flow
 
 Confirmed from code:
@@ -475,6 +539,20 @@ Kit Setup desktop UI / config builder
 Bundled packages in `package.json` include MapServer, MapServer boundary pack, Maestro, Realtime, Relay, and Hotline. Kit Setup delegates app-specific database initialization and `.env` writing to app installers where those installers exist.
 
 Owner clarification: during node installation, all PBB processes are registered as Windows services. Maestro observes these processes; it is not the service recovery controller.
+
+Proposal-only Library/Learning commissioning expectations:
+
+```text
+Kit Setup
+-> configure Library Node storage/package trust/release source
+-> preload or verify Library content packages
+-> register Library and Learning with Landing
+-> configure Learning provider/adapters
+-> configure Learning-to-Library URL/token where needed
+-> run smoke checks for local launch/search/resource access
+```
+
+No implemented Library/Learning installer code was found in the current local scan.
 
 ## 11. Monitoring and Maintenance Flow
 
@@ -514,8 +592,15 @@ Maestro computes worker status as starting/idle/busy/stale/stopped. Owner clarif
 | Utility incident raw payload retention | Vena stores raw Relay inbound envelopes/payloads, including incident/location/report details | PBB Utility / Vena, Relay, Hotline | High | `utility\app\Http\Controllers\Api\RelayIncidentHandlerController.php`; `utility\database\migrations` | Define raw payload retention, audit access, purge policy, and local backup encryption |
 | Utility media refs must stay metadata-only | Vena quarantines direct URL/path media refs | PBB Utility / Vena, Hotline, Relay | High | `utility\tests\Feature\VenaRelayIncidentIntakeTest.php`; `RelayIncidentHandlerController.php` | Keep media payload contract metadata-only and use backend media access contracts for retrieval |
 | Utility Relay handler token controls incident ingestion | Vena accepts Relay incident intake only with configured bearer token | PBB Utility / Vena, Relay | High | `utility\.env.example`; `RelayIncidentHandlerController.php` | Generate per-node/per-source token and rotate on compromise |
+| Salus evacuee records are sensitive local disaster-response data | Salus stores proposed person, photo, movement, registration, missing-person, and relief receipt records locally | PBB Salus, PBB Account, Hotline | High | `salus\docs\privacy-access-design.md`; `salus\docs\domain-database-design.md` | Keep person-level records local, store photos outside public web root, enforce role/capability checks, and test summary privacy exclusions |
+| Salus citizen QR possession grants limited local access | Issued evacuee QR tokens expose limited applicable relief schedules, received marks, and announcements | PBB Salus | High | `salus\docs\tagging-design.md`; `salus\docs\privacy-access-design.md` | Use opaque high-entropy hashed tokens and avoid embedding personal data in QR payloads |
+| Salus Hotline summary shared secret controls aggregate access | Hotline/Vox pulls Salus aggregate summaries with a static per-node shared bearer secret | PBB Salus, Hotline | Medium | `salus\docs\integration-design.md`; `salus\docs\operational-summary-design.md` | Generate per-node server-side secret through Kit/Data Prep and rotate on compromise |
 | Account credential store is high-value target | PBB Account, Chat, Hotline, Landing, Natalium, future apps | High | `account\database\migrations`; `account\app\Http\Controllers\OAuthController.php`; `account\app\Models\TrustedClient.php` | Rotate seeded dev credentials, restrict admin access, keep hashed secrets/codes, and define backup/encryption/retention policy |
 | Account seeded development credentials exist | PBB Account | High if reused outside dev | `account\README.md`; `account\database\seeders\DatabaseSeeder.php` | Rotate/remove seeded test account and `*-dev-secret` clients before shared deployment |
+| Library package trust is not implemented yet | Proposed Library Cloud/Node | High | `library\node\docs\PBB_LIBRARY_NODE_DEVELOPMENT_PROPOSAL.md`; `library\cloud\docs\PBB_LIBRARY_CLOUD_DEVELOPMENT_PROPOSAL.md` | Define signed manifest format, verification rules, rollback metadata, and failure behavior before implementation |
+| Library public APIs must not expose local paths or credentials | Proposed Library Node, Learning | High | `library\node\docs\PBB_LIBRARY_NODE_DEVELOPMENT_PROPOSAL.md` | Keep public search/resource APIs path-opaque and server-side; restrict admin/package endpoints with machine credentials |
+| Learning identity and LMS adapter boundaries are not implemented | Proposed Learning, PBB Account, LMS providers | High | `learning\docs\PBB_LEARNING_DEVELOPMENT_PROPOSAL_UPDATED.md` | Define Account SSO mapping, provider credentials, learner record ownership, and adapter auth before implementation |
+| Library search privacy | Proposed Library Cloud/Node | Medium | `library\node\docs\PBB_LIBRARY_NODE_DEVELOPMENT_PROPOSAL.md` | Do not upload raw citizen search queries to Cloud in V1; aggregate or omit analytics unless consented |
 | Hub tokens | Hub machine endpoints use token auth | Hub/HQ, Relay | High | `hub.ph\routes\api.php`; `hub_tokens` migration | Rotate tokens and scope access |
 | Map provider keys | MapServer requires provider API keys for defaults | MapServer | Medium | `mapserver\config.php` | Keep keys out of source and mask diagnostics |
 | Admin surface role gaps | Hub geodata coordinate updates are auth-only; Maestro management APIs auth-only | Hub/HQ, Maestro | Medium | `hub.ph\routes\api.php`; `maestro\routes\api.php` | Confirm intended permissions and add roles where needed |
@@ -545,6 +630,12 @@ Maestro computes worker status as starting/idle/busy/stale/stopped. Owner clarif
 | Utility outbound lifecycle contract is not defined | PBB Utility / Vena, Hotline, Relay, Support System | Vena consumes Hotline incidents but no outbound utility status/mission update sync was confirmed | Medium |
 | Utility mobile/offline responder workflow is not implemented in code | PBB Utility / Vena, planned responder app, Relay, Realtime | Vena has web responder mission endpoints, but mobile-first offline helper workflow remains design/planning | High |
 | Account consuming-app adoption is active but uneven | Account, Chat, Hotline, Landing, Natalium, Relay, Support, Realtime, Maestro | Several apps have Account SSO/app-admin code, but defaults, enablement, trusted-client registration, callback URLs, and app-admin tokens vary by app | High |
+| Salus release/installation is not started | PBB Salus, Hotline, Account, Realtime, Landing, Kit Setup | Runtime Laravel implementation has advanced, but release metadata, installer, package, Data Prep, and Kit Setup integration remain open | High |
+| Salus V1 relief operations are batch/receipt-only | PBB Salus, Hotline, Support/Imperium | Product interest includes relief receiving/inventory, but V1 explicitly defers inventory, storage, stock lots, transfers, spoilage, and loss | Medium |
+| Hotline-side Salus summary behavior is not defined here | Hotline, PBB Salus | Salus exposes an aggregate summary API, but Hotline's display/storage/SITREP usage remains a Hotline-owned design item | High |
+| Library is proposal-only | PBB Library Cloud, PBB Library Node, Kit Setup, Landing, Learning | No implementation code, package manifests, route contracts, DB schema, worker code, or tests were found | High |
+| Learning / Lumaria is proposal-only | PBB Learning, PBB Account, PBB Library, Landing, Kit Setup | No implementation code, package manifests, route contracts, DB schema, LMS adapter code, or tests were found | High |
+| Library/Learning contracts need concrete schemas | PBB Library, PBB Learning, Kit Setup, Landing, Account | Proposal docs describe APIs and roles, but no OpenAPI/schema/migration implementation exists | High |
 | Documentation mixes proposals and implemented code | Helper, Realtime, Relay, Hotline | Future readers may over-assume features | Medium |
 
 ## 14. Recommended Next Technical Priorities
@@ -566,6 +657,11 @@ Maestro computes worker status as starting/idle/busy/stale/stopped. Owner clarif
 | 13 | Define Natalium live-health privacy, Account dependency, and local/offline operating rules | Natalium stores patient/document/access data and currently depends on Account for new SSO login | PBB Natalium, PBB Account |
 | 14 | Decide Vena outbound lifecycle and responder mobile sync scope | Vena inbound Relay intake is implemented, but outbound utility statuses and mobile offline sync are not confirmed | PBB Utility / Vena, Hotline, Relay, Realtime |
 | 15 | Complete and document Account consuming-app integration status | Account now exists and older apps are adopting it; the next risk is app-by-app enablement, callback behavior, seeded secret rotation, and app-admin token lifecycle | PBB Account, Chat, Hotline, Landing, Natalium, Relay, Support, Realtime, Maestro |
+| 16 | Finish Salus release packaging and Kit Setup integration | Salus runtime implementation is in progress, but release/installation remains not started in the checklist | PBB Salus, Account, Realtime, Hotline, Landing, Kit Setup |
+| 17 | Define Hotline's Salus aggregate-summary ingestion and SITREP behavior | Salus V1 intentionally makes Hotline the active caller and downstream owner of usage | Hotline, PBB Salus |
+| 18 | Decide whether full relief inventory should remain deferred or become a phased Salus slice | V1 relief is scheduled batches and receipts only, while operational planning may require receiving/storage/lots later | PBB Salus |
+| 19 | Convert Library proposal into concrete Node/Cloud contracts | Library is proposal-only but introduces high-impact signed releases, large local storage, public search, and Learning dependency | PBB Library, Kit Setup, Landing, Learning |
+| 20 | Define Learning V1 implementation slice and adapter contracts | Learning is proposal-only; the first build needs hard boundaries for Account, Moodle/provider adapters, Library reference calls, and emergency-safe behavior | PBB Learning, PBB Account, PBB Library, Landing |
 
 ## 15. Questions for Project Owner
 
@@ -587,6 +683,15 @@ Maestro computes worker status as starting/idle/busy/stale/stopped. Owner clarif
 | Should Natalium health data ever sync upstream, or remain strictly local to a health/barangay node? | Code confirms local registry/documents but no Relay health-data sync. |
 | Should Vena emit utility mission/status updates back to Hotline/Relay/Support, or remain inbound-only in V1? | Code confirms inbound-only incident intake and local mission handling. |
 | Should Vena web responder endpoints become the basis of the planned mobile helper workflow, or stay as a separate utility-operator surface? | Code has responder mission endpoints, while owner-described mobile workflow is broader and offline-capable. |
+| Should Salus V1 remain relief-batch/receipt-only, or should receiving/inventory be pulled into the first implemented release? | Current Salus docs explicitly defer full inventory, but the product need may require revisiting scope before implementation. |
+| How should Hotline store, refresh, display, revise, and submit Salus aggregate summaries in its SITREP flow? | Salus owns the summary API; Hotline owns downstream operational use. |
+| What pilot privacy/retention policy should govern Salus evacuee photos, movement records, QR access, backups, and purge approvals? | Salus stores sensitive local disaster-response identity data. |
+| Should Library Cloud and Library Node be separate deployable repositories/apps, or remain submodules under `library`? | Current local folders are proposal-only; implementation packaging affects Kit Setup and Landing registration. |
+| What exact signed Library package manifest fields, hash/signature algorithms, and rollback semantics should V1 use? | Library depends on package trust and large offline content updates. |
+| Which Library content sources, licenses, and provenance fields are mandatory for V1? | Library Cloud is proposed to govern ingestion, licensing, provenance, and release construction. |
+| Should Learning V1 launch only local Moodle first, or include remote/external LMS provider links in the first release? | Proposal docs are LMS-agnostic but Moodle-first; deployment and offline behavior differ by provider. |
+| Which Learning records are owned locally versus by external LMS providers? | Avoiding merged institutional LMS databases is a stated proposal boundary. |
+| What minimum Learning-to-Library API should be implemented first: search only, search/resource, or search/resource/citation/related? | The addendum defines a broader adapter shape, but the first build can be smaller if documented. |
 
 ## 16. Evidence Addendum For 2026-06-29 Alignment
 
@@ -645,3 +750,14 @@ Maestro computes worker status as starting/idle/busy/stale/stopped. Owner clarif
 - `C:\wamp64\www\pbb\utility\app\Http\Controllers\Api\RelayIncidentHandlerController.php`
 - `C:\wamp64\www\pbb\utility\database\migrations`
 - `C:\wamp64\www\pbb\utility\tests\Feature\VenaRelayIncidentIntakeTest.php`
+- `C:\wamp64\www\pbb\salus\docs\development-proposal.md`
+- `C:\wamp64\www\pbb\salus\docs\v1-scope.md`
+- `C:\wamp64\www\pbb\salus\docs\domain-database-design.md`
+- `C:\wamp64\www\pbb\salus\docs\api-contract-design.md`
+- `C:\wamp64\www\pbb\salus\docs\integration-design.md`
+- `C:\wamp64\www\pbb\salus\docs\operational-summary-design.md`
+- `C:\wamp64\www\pbb\salus\docs\privacy-access-design.md`
+- `C:\wamp64\www\pbb\salus\docs\resilience-design.md`
+- `C:\wamp64\www\pbb\salus\docs\retention-backup-design.md`
+- `C:\wamp64\www\pbb\salus\docs\implementation-checklist.md`
+- `C:\wamp64\www\pbb\salus\docs\openapi\salus-v1.yaml`

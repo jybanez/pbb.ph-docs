@@ -1,8 +1,8 @@
 # PBB Selected Apps Technical Briefing
 
-Scope: `C:\wamp64\www\pbb\hotline`, `C:\wamp64\www\hotline-helpers`, `C:\wamp64\www\pbb\relay`, `C:\wamp64\www\pbb\hub.ph`, `C:\wamp64\www\pbb\maestro`, `C:\wamp64\www\pbb\realtime`, `C:\wamp64\www\mapserver`, `C:\wamp64\www\pbb\chatviewer`, `C:\wamp64\www\pbb\support`, `C:\wamp64\www\pbb\landing`, `C:\wamp64\www\pbb\chat`, `C:\wamp64\www\pbb\games`, `C:\wamp64\www\pbb\natalium`, `C:\wamp64\www\pbb\utility`, `C:\wamp64\www\pbb\kit-setup`.
+Scope: `C:\wamp64\www\pbb\hotline`, `C:\wamp64\www\hotline-helpers`, `C:\wamp64\www\pbb\relay`, `C:\wamp64\www\pbb\hub.ph`, `C:\wamp64\www\pbb\maestro`, `C:\wamp64\www\pbb\realtime`, `C:\wamp64\www\mapserver`, `C:\wamp64\www\pbb\chatviewer`, `C:\wamp64\www\pbb\support`, `C:\wamp64\www\pbb\landing`, `C:\wamp64\www\pbb\chat`, `C:\wamp64\www\pbb\games`, `C:\wamp64\www\pbb\library`, `C:\wamp64\www\pbb\learning`, `C:\wamp64\www\pbb\natalium`, `C:\wamp64\www\pbb\utility`, `C:\wamp64\www\pbb\salus`, `C:\wamp64\www\pbb\kit-setup`.
 
-Important evidence rule: code and config were inspected locally. Claims below are limited to what was found in the listed folders. Where a detail was not confirmed from code, it is marked `Unknown / Not confirmed from code`.
+Important evidence rule: code and config were inspected locally. PBB Salus now has a Laravel 12 scaffold and implemented routes/controllers/models/migrations under `C:\wamp64\www\pbb\salus`, plus proposal/design/OpenAPI/checklist documents under `docs`. Salus claims below are limited to the inspected local files. Where a detail was not confirmed from code, it is marked `Unknown / Not confirmed from code`.
 
 Owner clarification added after the local code review: Hub HQ provides node identity details, with `https://relay.pbb.ph/hub.json` identified by the project owner as a sample hub information endpoint; Kit Setup validates installation from an admin-provided hub ID and hub token; production topology is currently barangay -> city/municipality -> province -> cloud PBB HQ; incidents are not intended to sync as editable records across different nodes, and nodes instead send periodic consolidated SITREPs upstream; Realtime is expected to run as one shared gateway instance per node; Setup Data Prep populates MapServer tiles for the Hub HQ-defined boundary; Maestro is strictly observer-only while Windows services registered by Kit Setup own process lifecycle; Chatviewer is personal development coordination tooling; Kit Setup requires WampServer and Technitium DNS for node installation; PBB-managed FRP is the planned tunnel model, with Hub HQ as control plane, FRPS as tunnel server, and FRPC on each local node to expose each Relay node without static IPs, port forwarding, Cloudflare, or an external tunnel provider; the planned responder/helper mobile workflow is a field-ready, offline-capable companion app for responders/helpers, but implementation was not found in the reviewed repositories.
 
@@ -16,7 +16,11 @@ Current-state alignment note, 2026-07-07: local code and DB-backed Chatviewer up
 
 Current-state Account integration note, 2026-07-07: a targeted rescan of older apps confirms Account integration in more apps than the prior briefing stated. Hotline, Relay, Chat, Support, Realtime, and Maestro now have Account SSO redirect/callback/logout code and/or Account app-admin APIs using `users.pbb_user_id` links. Landing has Account launcher/session UI behavior and a registry entry for `pbb-account`. Kit Setup app-installer docs now define Account SSO/app-admin environment naming, `X-PBB-Account-Client: pbb-account`, app-admin token requirements, and `users.pbb_user_id` migration expectations. Hub/HQ and MapServer did not show PBB Account SSO/app-admin integration in the targeted scan beyond generic account UI/helper references.
 
+Current-state Salus implementation note, 2026-07-12: PBB Salus at `C:\wamp64\www\pbb\salus` now has a Laravel 12 implementation foundation, not only design docs. Local files confirm `artisan`, `composer.json`, `package.json`, `app`, `routes`, `database`, `public`, `resources`, `tests`, and `vendor` are present. Routes/controllers/models/migrations cover Account SSO/app-admin, bootstrap/session, centers, operations, activations, registration, tags/printing, missing reports, zones, movement/occupancy, relief batches/receipts/corrections, citizen QR sessions, diagnostics, maintenance, Realtime admission/publish support, and Hotline/Vox aggregate summary access. `docs\implementation-checklist.md` reports implementation through milestone 19, 87 implemented API paths documented, Laravel foundation complete, operational modules implemented, Account/Realtime/Hotline contracts implemented, and release/installation not started. Salus V1 still explicitly defers full relief inventory/receiving/storage/lots, direct Relay/Support/MapServer/Maestro integration, native mobile apps, continuous geofencing, and cross-node private evacuee sync.
+
 ---
+
+Current-state Library/Learning note, 2026-07-17: `C:\wamp64\www\pbb\library` and `C:\wamp64\www\pbb\learning` are proposal/specification folders only in the local scan. No executable app code, package files, routes, migrations, or runtime config were found. Library docs define PBB Library Cloud and PBB Library Node as separate proposed deployables for centrally governed general-reference content, signed releases, offline node search, and Learning integration. Learning docs define PBB Learning/Lumaria as an LMS-agnostic local education gateway and control plane with Moodle as the first adapter, PBB Account as preferred identity, PBB Landing registration, emergency-safe behavior, and a dedicated reference-provider adapter to PBB Library.
 
 ## App: PBB Hotline
 
@@ -2790,6 +2794,410 @@ Evidence:
 
 ---
 
+## App: PBB Library (Proposal / No Implementation Found)
+
+### 1. Executive Technical Summary
+
+PBB Library is a proposal-stage general-knowledge and reference infrastructure project. The local folder contains only Markdown proposal/specification files. No executable app code, routes, migrations, package manifests, or runtime configuration were found. The proposal defines two future deployables: PBB Library Cloud for content ingestion/governance/release construction, and PBB Library Node for offline local catalog/search/resource serving and release activation at `https://library.pbb.ph`. It is intended to support citizens, students, teachers, responders, health workers, and PBB Learning as a reference provider. It is not intended to own formal courses, assignments, grades, learner progress, or institutional LMS records.
+
+### 2. Repository Overview
+
+| Area | Details |
+|---|---|
+| App Name | PBB Library |
+| Local Path | `C:\wamp64\www\pbb\library` |
+| Main Language | Unknown / Not confirmed from code |
+| Main Framework | Unknown / Not confirmed from code |
+| Frontend Framework | Unknown / Not confirmed from code |
+| Backend Framework | Unknown / Not confirmed from code |
+| Database | Proposed only; no migrations/schema found |
+| Realtime Technology | Deferred/optional; no implementation found |
+| Queue / Worker System | Proposed Cloud/Node jobs; no implementation found |
+| Package Manager | None found |
+| Runtime Requirements | Proposal mentions web/API app, relational DB, search engine, deployment worker, scheduler, dedicated Library HDD, Kit Setup/WinSW services |
+| Main Entry Points | No executable entry points found |
+| Important Config Files | Proposal docs only |
+| Important Environment Variables | Proposed `PBB_LIBRARY_BASE_URL`, `PBB_LIBRARY_API_TOKEN` in Learning addendum; no implementation config found |
+| Deployment Target | Proposed Library Cloud and local Library Node |
+
+### 3. App Purpose and PBB Role
+
+PBB Library is proposed to provide centrally governed general-reference content, offline node search, content package verification, release activation, rollback, and local resource serving. Library Cloud would govern sources, provenance, licensing, signed releases, node profiles, and fleet deployment reports. Library Node would serve approved immutable releases locally and expose read-only APIs for Learning and approved clients. If unavailable, PBB Learning should continue operating but research-library features should degrade gracefully.
+
+### 4. User Roles and Permissions
+
+| Role | Purpose | Capabilities | Code Evidence |
+|---|---|---|---|
+| anonymous public user | Proposed local Library reader | Search/browse/view public Library content | `library\node\docs\PBB_LIBRARY_NODE_DEVELOPMENT_PROPOSAL.md` |
+| Library Node administrator | Proposed local admin | View release/storage/search/integration health; no canonical content editing in V1 | `library\node\docs\PBB_LIBRARY_NODE_DEVELOPMENT_PROPOSAL.md` |
+| Library Cloud administrator | Proposed cloud admin | Source ingestion, review, releases, signing, node assignment, audit | `library\cloud\docs\PBB_LIBRARY_CLOUD_DEVELOPMENT_PROPOSAL.md` |
+| PBB Learning client | Proposed local API client | Search resources, retrieve metadata/citations, link to resources | `learning\docs\PBB_LEARNING_PBB_LIBRARY_INTEGRATION_ADDENDUM.md` |
+| machine client | Proposed Cloud/Node release client | Authenticated offer/download/reporting APIs | `library\cloud\docs\PBB_LIBRARY_CLOUD_DEVELOPMENT_PROPOSAL.md`; `library\node\docs\PBB_LIBRARY_NODE_DEVELOPMENT_PROPOSAL.md` |
+
+### 5. Main Features and Modules
+
+### Library Cloud
+
+Purpose: Proposed content governance, ingestion, normalization, licensing, review, object storage, release building, manifest signing, node assignment, and fleet reporting.
+Main Code: No implementation found.
+Database Tables: Proposed only.
+APIs / Routes: Proposed node offer/object download/report APIs.
+Offline Behavior: Cloud is not the public offline portal; offline behavior belongs to Node.
+Sync Behavior: Node-pull release distribution; large content transfer should not use Relay.
+Related PBB Apps: Library Node, Kit Setup, Landing, Learning.
+Evidence: `library\cloud\docs\PBB_LIBRARY_CLOUD_DEVELOPMENT_PROPOSAL.md`.
+
+### Library Node
+
+Purpose: Proposed local offline portal, catalog/search, resource viewing, release verification, staging, activation, rollback, storage health, and Learning integration API.
+Main Code: No implementation found.
+Database Tables: Proposed only.
+APIs / Routes: Proposed public routes `/`, `/search`, `/collections`, `/resources/{id}`, `/health`; proposed versioned API `/api/v1/search`, `/api/v1/resources/{id}`, `/api/v1/collections`, `/api/v1/citations/{id}`.
+Offline Behavior: Intended to work without internet, Cloud, Learning, Account, or Realtime after commissioning.
+Sync Behavior: Node initiates authenticated Cloud offer/download/report flow.
+Related PBB Apps: PBB Learning, Landing, Kit Setup, Account-ready admin, possible Maestro observation later.
+Evidence: `library\node\docs\PBB_LIBRARY_NODE_DEVELOPMENT_PROPOSAL.md`.
+
+### Learning Reference Provider Integration
+
+Purpose: Let PBB Learning use Library as a reference provider without copying Library content or treating Library as an LMS.
+Main Code: No implementation found.
+Database Tables: Proposed Learning-side reference provider tables.
+APIs / Routes: Proposed adapter methods `search`, `resource`, `collections`, `citation`, `related`.
+Offline Behavior: Learning should degrade gracefully when Library is unavailable.
+Sync Behavior: Learning is not in Library release-update path.
+Related PBB Apps: PBB Learning.
+Evidence: `learning\docs\PBB_LEARNING_PBB_LIBRARY_INTEGRATION_ADDENDUM.md`.
+
+### 6. Database Schema Summary
+
+No implemented database usage found / Not confirmed from code.
+
+Proposal documents suggest Cloud database groups for sources, canonical resources, files/renditions, collections, node profiles, releases, signing/audit, deployment reports, and operations. Node proposal suggests local groups for releases, objects, catalog resources, search/index state, deployment sessions, settings, health, and integration state.
+
+```text
+Library Cloud proposal
+  ├── sources / imported records
+  ├── canonical resources / collections
+  ├── content-addressed objects
+  ├── signed releases / node profiles
+  └── deployment reports / audit
+
+Library Node proposal
+  ├── active/staged releases
+  ├── immutable object inventory
+  ├── local catalog/search indexes
+  ├── deployment sessions
+  └── Learning integration health
+```
+
+### 7. API and Route Inventory
+
+No implemented routes found.
+
+| Method | Path / Endpoint | Purpose | Auth | Handler / File | Notes |
+|---|---|---|---|---|---|
+| GET | `/` | Proposed Library home | Public | No implementation found | Node proposal |
+| GET | `/search` | Proposed public search | Public | No implementation found | Node proposal |
+| GET | `/collections` | Proposed collection browse | Public | No implementation found | Node proposal |
+| GET | `/resources/{id}` | Proposed resource viewer | Public / collection policy | No implementation found | Node proposal |
+| GET | `/api/v1/search` | Proposed Learning/public search API | Public or app credential depending route | No implementation found | Addendum |
+| GET | `/api/v1/resources/{id}` | Proposed metadata/resource API | Public or app credential depending route | No implementation found | Addendum |
+| GET | `/api/v1/citations/{id}` | Proposed citation API | Public or app credential depending route | No implementation found | Addendum |
+| POST/GET | Cloud offer/object/report APIs | Proposed node-pull release distribution | Machine credential | No implementation found | Cloud/Node proposals |
+
+### 8. Data Flow and Operational Flow
+
+```text
+Approved upstream sources
+-> PBB Library Cloud ingestion/review
+-> canonical metadata + object store
+-> signed release manifest
+-> Library Node authenticated pull
+-> object verification + catalog import + search index
+-> atomic activation
+-> local public search/resource access
+-> PBB Learning reference-provider adapter
+```
+
+### 9. Offline-First Behavior
+
+Library Node is explicitly proposed as offline-first after commissioning. Public search, browsing, viewing, and citations should work without internet, Cloud, Learning, Account, or Realtime. Library Cloud is required for new approved releases, but Node should continue serving the active release when Cloud is unreachable. Large routine release transfer should not use PBB Relay.
+
+### 10. Integration with Other PBB Apps
+
+| Integration | Direction | Protocol / Method | Purpose | Code Evidence |
+|---|---|---|---|---|
+| Library Node -> Library Cloud | Outbound authenticated pull | Offer API, object download, deployment report | Signed release distribution | Proposal docs |
+| PBB Learning -> Library Node | Local API/reference adapter | Search/resource/citation/collections | Research Library integration | Learning addendum |
+| Kit Setup -> Library Node | Installer/Data Prep | Install, trust keys, dedicated HDD, physical release import, smoke tests | Commissioning | Library proposals; Learning addendum |
+| Library Node -> Landing | Registry/launcher | Local launcher; public gateway disabled for browsing | App discovery | Library Node proposal |
+| Cloud -> Landing -> Library Node | Controlled machine gateway concept | Release operations only, not bulk browsing | Periodic update reachability | Library proposal |
+| Account -> Library admin | Proposed/ready | `pbb_user_id` linked local admins | Admin identity | Library Node proposal |
+
+### 11. Deployment and Runtime Architecture
+
+No implementation found. Proposal recommends separate Cloud and Node deployables, local Library Node under `https://library.pbb.ph`, a dedicated Library HDD for content objects, SSD for app/database/search indexes, deployment worker/scheduler, Windows services installed by Kit Setup/WinSW, and physical initial release import during Kit Setup Data Prep.
+
+### 12. Security and Privacy Notes
+
+| Risk | Severity | Evidence | Suggested Fix |
+|---|---|---|---|
+| Large content release pipeline requires strong signing/trust model | High | Library Cloud/Node proposal Ed25519 signed manifest requirements | Implement manifest signing, trust store, downgrade protection, and test vectors before release |
+| License/provenance mistakes could create redistribution risk | High | Cloud proposal provenance/licensing sections | Require policy decisions and review before content is deployable |
+| Public search API must not expose filesystem paths or deployment controls | High | Node proposal security/acceptance criteria | Separate public read APIs from admin/machine APIs |
+| Library updates must not degrade emergency apps | High | Emergency-safe design sections | Enforce update eligibility, alert-level gates, bandwidth throttles, and service isolation |
+| User privacy should be minimal in V1 | Medium | Library privacy sections | Avoid mandatory login and do not upload raw citizen search queries to Cloud |
+
+### 13. Realtime Communication
+
+No realtime functionality found / Not confirmed from code. Realtime is listed as optional/deferred for non-essential UI refresh in proposals.
+
+### 14. Mapping and Geolocation
+
+No mapping/geolocation functionality found / Not confirmed from code.
+
+### 15. Background Jobs, Schedulers, and Maintenance Tasks
+
+| Task | Schedule / Trigger | Purpose | Code Evidence |
+|---|---|---|---|
+| Cloud import/review/release jobs | Proposed | Source ingestion, malware scan, normalization, release build/signing | Cloud proposal |
+| Node deployment worker | Proposed | Offer check, download, verify, import, index, activate, smoke test | Node proposal |
+| Node scheduler | Proposed | Emergency-safe update windows and health checks | Node proposal |
+| Garbage collection | Proposed | Remove unreferenced content objects safely | Node proposal |
+
+### 16. Configuration and Environment Variables
+
+No implemented config found.
+
+| Variable / Config | Purpose | Required | Default / Example | Related Module |
+|---|---|---|---|---|
+| `PBB_LIBRARY_BASE_URL` | Proposed Learning-to-Library base URL | If integrated | `https://library.pbb.ph` | Learning addendum |
+| `PBB_LIBRARY_API_TOKEN` | Proposed app-scoped integration token | If protected routes used | Masked | Learning addendum |
+| dedicated Library volume identity | Proposed content HDD binding | Yes for Node | Unknown / Not confirmed from code | Kit Setup/Data Prep |
+| Cloud machine credentials/trust keys | Proposed node-pull auth and manifest verification | Yes for release updates | Unknown / Not confirmed from code | Cloud/Node |
+
+### 17. Known Technical Debt and Gaps
+
+| Area | Issue | Evidence | Recommended Next Step |
+|---|---|---|---|
+| Implementation | Only proposal docs found | Folder scan | Scaffold separate Cloud and Node apps or create contract package first |
+| Release contract | Manifest/API schemas are proposed, not implemented | Library proposals | Define versioned JSON Schema/OpenAPI and signature test vectors |
+| Storage sizing | 10 TB drive assumptions need prototype measurements | Library proposal | Run target-hardware benchmarks and capacity tests |
+| Emergency gating | Node-state source is an open question | Library proposal open questions | Define approved local node-state API |
+| Learning adapter | Integration is proposed, not implemented | Learning addendum | Implement direct link/health check before integrated search |
+
+### 18. Testing Status
+
+No test framework or executable tests found. Proposal documents require tests for ingestion, release signing, object verification, offline operation, Learning integration, emergency mode, storage failure, rollback, and security.
+
+### 19. Evidence Summary
+
+Evidence:
+- `C:\wamp64\www\pbb\library\docs\PBB_LIBRARY_DEVELOPMENT_PROPOSAL.md`
+- `C:\wamp64\www\pbb\library\node\docs\PBB_LIBRARY_NODE_DEVELOPMENT_PROPOSAL.md`
+- `C:\wamp64\www\pbb\library\cloud\docs\PBB_LIBRARY_CLOUD_DEVELOPMENT_PROPOSAL.md`
+- `C:\wamp64\www\pbb\learning\docs\PBB_LEARNING_PBB_LIBRARY_INTEGRATION_ADDENDUM.md`
+
+---
+
+## App: PBB Learning / Lumaria (Proposal / No Implementation Found)
+
+### 1. Executive Technical Summary
+
+PBB Learning, product name Lumaria, is a proposal-stage LMS-agnostic local learning gateway and control plane. The local folder contains only Markdown proposal/addendum files. No executable app code, routes, migrations, package manifests, or runtime configuration were found. The proposal positions Moodle as the first supported LMS adapter, not the whole product. Learning should provide `https://learning.pbb.ph`, an admin surface, provider/platform/instance/server/catalog/package registries, local/offline availability labels, emergency-mode rules, health checks, diagnostics, PBB Account as preferred identity, PBB Landing integration, and PBB Library as a separate reference provider.
+
+### 2. Repository Overview
+
+| Area | Details |
+|---|---|
+| App Name | PBB Learning / Lumaria |
+| Local Path | `C:\wamp64\www\pbb\learning` |
+| Main Language | Unknown / Not confirmed from code |
+| Main Framework | Unknown / Not confirmed from code |
+| Frontend Framework | Unknown / Not confirmed from code |
+| Backend Framework | Unknown / Not confirmed from code |
+| Database | Proposed only; no migrations/schema found |
+| Realtime Technology | Unknown / Not confirmed from code |
+| Queue / Worker System | Proposed job tracking/provisioning; no implementation found |
+| Package Manager | None found |
+| Runtime Requirements | Proposal suggests web/API app, admin UI, health checks, Moodle/external LMS adapters, optional dedicated learning server/machine |
+| Main Entry Points | No executable entry points found |
+| Important Config Files | Proposal docs only |
+| Important Environment Variables | Proposed Library integration vars in addendum; no implementation config found |
+| Deployment Target | Local PBB node or dedicated learning server; public surface `https://learning.pbb.ph` |
+
+### 3. App Purpose and PBB Role
+
+PBB Learning is proposed to organize learning access without replacing institutional LMS systems. It should manage providers, platforms, instances, servers, catalog items, packages, health checks, diagnostics, emergency visibility, and links/local availability. It should not merge institutional LMS databases or own general-reference Library content. If unavailable, Library and core emergency apps should remain unaffected; LMS links/content may be unavailable through the unified Learning portal.
+
+### 4. User Roles and Permissions
+
+| Role | Purpose | Capabilities | Code Evidence |
+|---|---|---|---|
+| public learner/user | Proposed local learning user | Browse catalog, offline content, emergency learning, provider pages | Learning proposal |
+| learning administrator | Proposed admin | Manage providers, platforms, instances, servers, catalog, packages, health/diagnostics | Learning proposal |
+| provider/institution admin | Proposed partner-facing operator | Manage institution-linked learning records according to policy | Learning proposal |
+| PBB Account user/admin | Preferred identity model | Portal/admin authentication; future `pbb_user_id` support | Learning proposal |
+| Library reference provider client | Learning server-side integration | Search/reference/citation through Library Node | Learning addendum |
+
+### 5. Main Features and Modules
+
+### Learning Gateway And Catalog
+
+Purpose: Unified local public portal for learning providers, courses/packages, local/offline availability, external links, and emergency-prioritized content.
+Main Code: No implementation found.
+Database Tables: Proposed providers/platforms/instances/servers/catalog/package/job tables.
+APIs / Routes: Proposed public routes `/`, `/providers`, `/catalog`, `/offline`, `/emergency`, `/research`.
+Offline Behavior: Proposed local catalog and local links/content should work without cloud.
+Sync Behavior: No implemented sync; proposal rejects full LMS database sync in V1.
+Related PBB Apps: Landing, Account, Library, core emergency apps through emergency-safe policy.
+Evidence: `learning\docs\PBB_LEARNING_DEVELOPMENT_PROPOSAL_UPDATED.md`.
+
+### LMS Adapter Layer
+
+Purpose: Support Moodle first while keeping the architecture LMS-agnostic for Canvas, Open edX, external links, static packages, and future adapters.
+Main Code: No implementation found.
+Database Tables: Proposed platform/instance/server/package/job tables.
+APIs / Routes: Proposed admin/API route structures.
+Offline Behavior: Depends on local LMS/content instance availability.
+Sync Behavior: No deep Moodle DB sync in V1.
+Related PBB Apps: Kit Setup, Landing, Account.
+Evidence: Learning proposal.
+
+### PBB Library Reference Provider
+
+Purpose: Integrate Library as a research/reference provider, not as an LMS.
+Main Code: No implementation found.
+Database Tables: Proposed Learning-side provider/reference/link tables.
+APIs / Routes: Proposed direct launch, integrated search, contextual research, and citation/resource calls.
+Offline Behavior: Learning should continue if Library is unavailable and show a graceful unavailable state.
+Sync Behavior: Learning does not participate in Library release updates.
+Related PBB Apps: PBB Library Node/Cloud, Kit Setup, Landing.
+Evidence: `learning\docs\PBB_LEARNING_PBB_LIBRARY_INTEGRATION_ADDENDUM.md`.
+
+### 6. Database Schema Summary
+
+No implemented database usage found / Not confirmed from code.
+
+Proposal documents suggest tables for providers, platforms, instances, servers, catalog items, packages, jobs, health checks, emergency policies, Library reference providers, Library resource links, integration health, and audit logs.
+
+```text
+learning_providers
+  └── learning_instances
+        ├── learning_catalog_items
+        ├── learning_packages
+        └── learning_jobs
+
+learning_reference_providers
+  └── course_to_library_reference_links
+```
+
+### 7. API and Route Inventory
+
+No implemented routes found.
+
+| Method | Path / Endpoint | Purpose | Auth | Handler / File | Notes |
+|---|---|---|---|---|---|
+| GET | `/` | Proposed learning home | Public | No implementation found | Proposal |
+| GET | `/providers` | Proposed providers page | Public | No implementation found | Proposal |
+| GET | `/catalog` | Proposed learning catalog | Public | No implementation found | Proposal |
+| GET | `/offline` | Proposed offline-available learning | Public | No implementation found | Proposal |
+| GET | `/emergency` | Proposed emergency/prioritized learning | Public | No implementation found | Proposal |
+| GET | `/research` | Proposed Library research entry | Public | No implementation found | Addendum |
+| Admin/API routes | `/admin/*`, `/api/*` | Proposed provider/platform/instance/package/health/job management | Account/admin | No implementation found | Proposal |
+
+### 8. Data Flow and Operational Flow
+
+```text
+User
+-> learning.pbb.ph
+-> Learning catalog/provider/instance registry
+-> local LMS/content instance or external LMS link
+-> optional Research Library action
+-> PBB Library Node search/resource/citation API
+-> return to LMS/course workflow
+```
+
+### 9. Offline-First Behavior
+
+Learning is proposed as local-node-first. Local catalog browsing, provider pages, local/offline availability labels, links to local LMS/content instances, diagnostics, and emergency filtering should work locally. External partner LMS links require internet or reachable partner infrastructure. Learning workloads must be throttled/disabled if they risk core emergency apps.
+
+### 10. Integration with Other PBB Apps
+
+| Integration | Direction | Protocol / Method | Purpose | Code Evidence |
+|---|---|---|---|---|
+| Learning -> PBB Library Node | Proposed local API/reference adapter | Search/resources/citations/collections | Research Library | Learning addendum |
+| Learning -> PBB Account | Proposed SSO/preferred identity | Portal/admin authentication, future `pbb_user_id` support | Identity | Learning proposal |
+| Learning -> PBB Landing | Proposed registration metadata | Launcher/catalog visibility | App discovery | Learning proposal/addendum |
+| Kit Setup -> Learning/Library | Proposed install/config/smoke tests | Configure Learning-Library trust and Library URL/token | Commissioning | Learning addendum |
+| Learning -> Moodle/external LMS | Proposed adapter/link/health check | Course access and local/external LMS management | Learning runtime | Learning proposal |
+
+### 11. Deployment and Runtime Architecture
+
+No implementation found. Proposal suggests `https://learning.pbb.ph`, admin surface `/admin`, possible shared node deployment for low-risk content, dedicated LMS instances, and dedicated LMS machines for heavier workloads. V2/V3 propose Moodle provisioning, DNS/Apache/Technitium/Kit Setup integration, backups, diagnostics, and remote learning agents.
+
+### 12. Security and Privacy Notes
+
+| Risk | Severity | Evidence | Suggested Fix |
+|---|---|---|---|
+| Learning workload could degrade emergency apps | High | Learning emergency-safe design sections | Enforce emergency mode, resource limits, and dedicated learning machines for heavy LMS |
+| Institutional LMS records are sensitive | High | Proposal rejects full LMS DB sync | Keep grade/submission/enrollment records under institution/LMS authority |
+| Account/identity integration not implemented | Medium | Proposal only | Define Account SSO/admin roles before implementation |
+| Library credentials must be separated from Learning | High | Addendum security boundaries | Do not give Learning Library Cloud deployment credentials |
+| LMS admin credentials must not leak to Library | High | Addendum security boundaries | Keep LMS admin credentials inside Learning/adapter layer |
+
+### 13. Realtime Communication
+
+No realtime functionality found / Not confirmed from code.
+
+### 14. Mapping and Geolocation
+
+No mapping/geolocation functionality found / Not confirmed from code.
+
+### 15. Background Jobs, Schedulers, and Maintenance Tasks
+
+| Task | Schedule / Trigger | Purpose | Code Evidence |
+|---|---|---|---|
+| Health checks | Proposed | Check LMS/external/local availability | Learning proposal |
+| Provisioning jobs | Proposed V2/V3 | Moodle instance/server/package operations | Learning proposal |
+| Backup/diagnostic jobs | Proposed | LMS backups and diagnostics | Learning proposal |
+| Library integration smoke tests | Proposed | Verify Library health/search/citation | Learning addendum |
+
+### 16. Configuration and Environment Variables
+
+No implemented config found.
+
+| Variable / Config | Purpose | Required | Default / Example | Related Module |
+|---|---|---|---|---|
+| `PBB_LIBRARY_BASE_URL` | Proposed local Library URL | If Library integration enabled | `https://library.pbb.ph` | Library adapter |
+| `PBB_LIBRARY_API_TOKEN` | Proposed app-scoped Library API token | If protected routes used | Masked | Library adapter |
+| Account SSO config | Proposed preferred identity | If Account enabled | Unknown / Not confirmed from code | Auth |
+| Moodle/external LMS settings | Proposed adapter config | Per provider/instance | Unknown / Not confirmed from code | LMS adapters |
+
+### 17. Known Technical Debt and Gaps
+
+| Area | Issue | Evidence | Recommended Next Step |
+|---|---|---|---|
+| Implementation | Only proposal docs found | Folder scan | Scaffold app or create contract docs first |
+| LMS adapter boundary | Moodle-first but LMS-agnostic design is not implemented | Learning proposal | Define platform-neutral schema/routes before Moodle-specific work |
+| Account integration | Preferred identity only proposed | Learning proposal | Reuse Account SDK/conventions from Chat/Hotline/Support/etc. |
+| Library adapter | Addendum proposes adapter/API but no code | Learning addendum | Implement direct link and health check before integrated search |
+| Emergency mode | Policy proposed but not wired to node state | Learning proposal | Define shared emergency/node-state signal |
+
+### 18. Testing Status
+
+No test framework or executable tests found. Proposal documents call for Learning catalog, provider/instance, health, emergency mode, LMS adapter, Library integration, and unavailable-state tests.
+
+### 19. Evidence Summary
+
+Evidence:
+- `C:\wamp64\www\pbb\learning\docs\PBB_LEARNING_DEVELOPMENT_PROPOSAL_UPDATED.md`
+- `C:\wamp64\www\pbb\learning\docs\PBB_LEARNING_PBB_LIBRARY_INTEGRATION_ADDENDUM.md`
+- `C:\wamp64\www\pbb\library\docs\PBB_LIBRARY_DEVELOPMENT_PROPOSAL.md`
+
+---
+
 ## App: PBB Natalium
 
 ### 1. Executive Technical Summary
@@ -3580,6 +3988,222 @@ Evidence:
 - `C:\wamp64\www\pbb\account\tests\Feature\OAuthClientUsageTest.php`
 - `C:\wamp64\www\pbb\account\tests\Feature\AccountIdentityApiTest.php`
 - `C:\wamp64\www\pbb\account\tests\Feature\AdminSurfaceApiTest.php`
+
+---
+
+## App: PBB Salus
+
+### 1. Executive Technical Summary
+
+PBB Salus is an in-progress Laravel 12 implementation of the Auxilus Mos module for local evacuation-center and relief-distribution operations. Local code now confirms a Laravel scaffold with routes, controllers, models, migrations, services, middleware, tests, frontend assets, and OpenAPI tooling. Implemented surfaces cover the V1 local barangay-node model: multiple evacuation centers per barangay, center activations, express and regular evacuee registration, individual and family recipient units, worker validation, tag/QR issuance, optional individual entry/exit tracking or aggregate gate counting, occupancy/capacity reporting, scheduled relief batches, receipt tracking, citizen QR surfaces, Realtime change notifications, Account SSO/app-admin integration, Landing launcher metadata, Kit Setup-facing health/readiness expectations, and Hotline/Vox aggregate-summary access.
+
+### 2. Repository Overview
+
+| Area | Details |
+|---|---|
+| App Name | PBB Salus |
+| Local Path | `C:\wamp64\www\pbb\salus` |
+| Product Family | Auxilus Mos |
+| Product Role | Evacuation-center and relief-distribution operations |
+| Implementation Status | In progress; Laravel foundation and operational APIs implemented through milestone 19 per checklist; release/installation not started |
+| Target Main Framework | Laravel / PBB app standards baseline |
+| Target Database | MySQL/MariaDB, proposed `pbb_salus` |
+| Realtime Technology | PBB Realtime change notifications; database/REST remains authoritative |
+| Queue / Worker System | V1 declares no persistent Salus queue worker, scheduler, or Maestro telemetry |
+| Primary Docs | `docs\development-proposal.md`, `docs\v1-scope.md`, `docs\domain-database-design.md`, `docs\api-contract-design.md`, `docs\integration-design.md`, `docs\openapi\salus-v1.yaml` |
+| Deployment Target | Local barangay PBB node over wired Ethernet / barangay Wi-Fi |
+
+### 3. App Purpose and PBB Role
+
+Salus fills the evacuation-center operations gap between emergency intake and operational reporting. It is intended to run locally at a barangay PBB node and remain usable without internet connectivity. Its V1 boundary keeps person-level evacuation records local while exposing privacy-safe aggregate operational summaries to Hotline/Vox on demand for SITREP use.
+
+The design explicitly avoids direct V1 Relay, Support/Imperium, MapServer, and Maestro dependencies. Hotline remains the caller for aggregate Salus summaries and decides how those metrics are displayed, refreshed, revised, or included in Hotline SITREPs/support workflows.
+
+### 4. User Roles and Permissions
+
+| Role | Purpose | Capabilities |
+|---|---|---|
+| admin | App configuration and controls | Reference data, access eligibility, templates, archive/backup/purge controls |
+| operator | Center and relief operations coordination | Center activation/closure, zones, capacity, worker assignment, relief-batch lifecycle, monitoring |
+| worker | Field/center station work | Capability-scoped registration, validation, printing, gate tracking, relief release, corrections |
+| command | Situational awareness | Primarily read-only dashboards and aggregate reporting |
+| citizen | Limited self-service | Express registration and QR-based center announcements / relief status |
+
+Worker capabilities are center-activation-scoped by default. Seeded station bundles include registration encoder, registration validator, tagging/printing, entrance/exit tracking, aggregate gate counter, relief release, receipt-correction approval, and occupancy reconciliation.
+
+### 5. Main Features and Modules
+
+### Multiple Evacuation Centers
+
+Purpose: Manage one barangay-wide evacuation operation with multiple reusable center activations.
+Main Design: `docs\v1-scope.md`, `docs\domain-database-design.md`, `docs\movement-design.md`, `docs\occupancy-capacity-design.md`.
+Database Tables: `evacuation_operations`, `evacuation_centers`, `center_activations`, `center_zone_templates`, `activation_zones`, `activation_capacity_versions`.
+Offline Behavior: Local LAN operation over the barangay node; internet loss should not interrupt core operations.
+Integration: Account, Realtime, Landing, Kit Setup; Hotline aggregate summary pull.
+
+### Registration, Validation, and Tagging
+
+Purpose: Register individual or family/household recipient units through express QR or worker-encoded regular lanes.
+Main Design: `docs\registration-design.md`, `docs\tagging-design.md`, `docs\domain-database-design.md`.
+Database Tables: `people`, `person_photos`, `registrations`, `registration_members`, `registration_versions`, `evacuee_tags`, `print_jobs`.
+Offline Behavior: Local operation with network printer diagnostics where available; handwritten evacuee ID fallback when printing fails.
+Privacy Boundary: QR values are opaque and contain no personal information.
+
+### Entry, Exit, Occupancy, and Capacity
+
+Purpose: Track official center presence either by individual `in`/`out` boundary events or aggregate gate counts.
+Main Design: `docs\movement-design.md`, `docs\occupancy-capacity-design.md`.
+Database Tables: `tracking_periods`, `boundary_events`, `aggregate_movement_events`, `occupancy_reconciliations`.
+Offline Behavior: Local server timestamps are authoritative; workstation disconnects must not claim uncommitted success.
+Notes: Capacity is advisory and must not block entry. Geofencing and MapServer-based map rendering are deferred beyond V1.
+
+### Relief Scheduling and Receipt
+
+Purpose: Coordinate simple first-come, first-served relief-distribution batches and track receipt by individual or household recipient unit.
+Main Design: `docs\relief-release-design.md`, `docs\v1-scope.md`.
+Database Tables: `relief_batches`, `relief_receipts`, `relief_receipt_corrections`.
+Offline Behavior: Local transactions protect receipt confirmation and package counter decrement.
+V1 Boundary: Detailed relief-goods inventory, receiving, stock lots, storage locations, reservations, transfers, spoilage, loss, procurement, and accounting are deferred beyond V1.
+
+### Citizen Surface
+
+Purpose: Provide public center status/announcements and limited possession-based QR access for applicable relief schedules and received marks.
+Main Design: `docs\privacy-access-design.md`, `docs\api-contract-design.md`.
+Privacy Boundary: Citizen QR access does not expose registration details, household lists, photos, assistance information, movement history, missing-person information, or worker notes.
+Integration: Account can support express registration, but the issued evacuee QR limited surface remains independent of Account after validation.
+
+### Aggregate Operational Summary for Hotline/Vox
+
+Purpose: Let Hotline request a privacy-safe Salus aggregate summary for SITREP use.
+Main Design: `docs\operational-summary-design.md`, `docs\integration-design.md`, `docs\openapi\salus-v1.yaml`.
+API: Candidate `GET /api/internal/sitrep-summary` with static per-node bearer secret.
+Summary Includes: Center status/capacity/occupancy/tracking mode, registration counts, local/non-local counts, missing/located/unresolved counts, reportable assistance-category counts, relief distribution totals, freshness/completeness metadata.
+Summary Excludes: Names, identifiers, photos, birthdates, household membership, individual movement history, assistance notes, missing-person identity, and worker notes.
+
+### 6. Database Schema Summary
+
+The design proposes ULID primary keys and append-only/versioned history for operational facts. Major groups:
+
+| Group | Tables / Concepts |
+|---|---|
+| Node and centers | `nodes`, `evacuation_centers`, `evacuation_operations`, `center_activations`, zone templates/versions |
+| People and registration | `people`, `person_photos`, `registrations`, `registration_members`, `registration_versions`, assistance/cancellation/reference tables |
+| Missing persons | `missing_reports` |
+| Tags and printing | `evacuee_tags`, `network_printers`, `print_templates`, `print_jobs` |
+| Movement and occupancy | `tracking_periods`, `boundary_events`, `aggregate_movement_events`, `occupancy_reconciliations`, capacity history |
+| Relief receipt | `relief_batches`, `relief_receipts`, `relief_receipt_corrections` |
+| Authorization and audit | `users`, roles/capabilities/grants, `audit_events` |
+| Integration and maintenance | `integration_settings`, `hotline_api_clients`, `summary_snapshots`, `manual_backups`, `purge_requests`, diagnostics |
+
+### 7. API and Route Inventory
+
+The detailed API inventory is version-controlled in `docs\api-contract-design.md` and `docs\openapi\salus-v1.yaml`. Local `route:list` confirms 113 routes, and `npm run openapi:check` synchronized and validated 87 implemented API paths. Confirmed implemented/contract surfaces include:
+
+| Surface | Purpose |
+|---|---|
+| `/api/bootstrap` | Standard PBB app bootstrap/session/data contract |
+| `/api/realtime/session` | Salus-authorized Realtime browser admission |
+| `/api/internal/sitrep-summary` | Hotline/Vox aggregate summary pull |
+| `/api/account-admin/*` | Account app-admin metadata, provision, role/status, and access-removal contract |
+| `/up`, `/api/health`, `/api/ready` | Liveness, health, and readiness for Kit Setup/Landing |
+
+### 8. Data Flow and Operational Flow
+
+```text
+Center devices / worker stations / citizen QR scans
+-> PBB Salus on the local barangay node
+-> local Salus database and protected photo storage
+-> optional LAN printers / scanners / cameras
+-> PBB Realtime change notifications
+-> surfaces refetch authorized Salus REST state
+
+Hotline/Vox
+-> authenticated on-demand request to Salus aggregate summary API
+-> Hotline decides SITREP/support use of returned aggregate metrics
+```
+
+### 9. Offline-First Behavior
+
+Salus V1 is designed for LAN/local-node operation. Internet loss should have no operational effect. Existing Salus-local sessions continue until normal expiration during temporary Account outage, while new SSO sessions are unavailable until Account recovers. Realtime outage degrades live updates but does not block core HTTP operations. Printer failure falls back to handwritten IDs, scanner failure to manual ID entry, and camera failure requires another capture device before validation.
+
+### 10. Integration with Other PBB Apps
+
+| Integration | Direction | Protocol / Method | Purpose | Evidence |
+|---|---|---|---|---|
+| Salus -> Account | Browser/server SSO | OAuth-style authorize/callback/token exchange | App login and `pbb_user_id` linking | `docs\integration-design.md` |
+| Account -> Salus | HTTP app-admin API | Bearer token + `X-PBB-Account-Client: pbb-account` | App-local user provision/role/status/access management | `docs\integration-design.md` |
+| Salus -> Realtime | HTTP backend publish + browser admission | Dedicated Salus client/projects/rooms | Live change notifications followed by REST refetch | `docs\integration-design.md` |
+| Hotline/Vox -> Salus | HTTP internal API | Bearer-protected summary pull | Aggregate evacuation/relief metrics for Hotline SITREP use | `docs\integration-design.md`; `docs\operational-summary-design.md` |
+| Kit Setup -> Salus | App installer/Data Prep contracts | Bundle install, config, checks, Account/Realtime/Hotline settings | Local deployment and repair/update support | `docs\integration-design.md` |
+| Landing -> Salus | Local launcher registry | `pbb.ph` local launcher record | App launch and health badge | `docs\integration-design.md` |
+
+### 11. Deployment and Runtime Architecture
+
+Salus V1 targets a production-pruned offline Laravel bundle with prebuilt frontend assets and production Composer dependencies included. Kit Setup is expected to handle WAMP/PHP/MySQL prerequisites, DNS/vhost/HTTPS/cert setup, database credentials, Account trusted-client seeding, Realtime Data Prep, Landing registry sync, and smoke checks. Salus V1 declares no persistent app-owned queue worker, scheduler, or automatic scheduled task.
+
+### 12. Security and Privacy Notes
+
+| Risk | Severity | Evidence | Suggested Fix |
+|---|---|---|---|
+| Person-level evacuee records/photos/movement history are sensitive | High | `privacy-access-design.md`; `domain-database-design.md` | Keep local-only by default, store photos outside public web root, enforce role/capability checks |
+| Citizen QR possession grants limited access | High | `tagging-design.md`; `privacy-access-design.md` | Use opaque high-entropy hashed tokens, expose only schedules/received marks/announcements |
+| Account app-admin token controls local user access | High | `integration-design.md` | Separate OAuth secret and app-admin token; runtime auth reads Salus DB settings only |
+| Hotline summary secret controls aggregate metric access | Medium | `integration-design.md` | Generate per-node secret in Kit Setup, keep server-side only, rotate when needed |
+| Purge can permanently remove person-level activation data | High | `retention-backup-design.md`; `domain-database-design.md` | Require archived activation, valid backup, request/approval by distinct authorized users, and audit trail |
+
+### 13. Realtime Communication
+
+Salus Realtime events are contract-defined change notifications only. Rooms are separated into public center, center operations, and node command scopes. Event payloads contain resource references, change version, and change time, not sensitive evacuee records. Business state is committed in Salus before Realtime publish; publish failure must not roll back committed work.
+
+### 14. Mapping and Geolocation
+
+MapServer, map rendering, and geofencing are deferred beyond V2 in the current Salus V1 scope. Center records should not require MapServer geometry in V1.
+
+### 15. Background Jobs, Schedulers, and Maintenance Tasks
+
+Salus V1 declares no persistent queue worker, scheduler service, automatic scheduled task, or Maestro integration. Printing, Realtime publish, summary generation, backup, purge, and restore are request-time or explicit administrator-invoked operations according to the current design.
+
+### 16. Configuration and Environment Variables
+
+Design-stage configuration includes:
+
+| Variable / Config | Purpose | Required | Related Module |
+|---|---|---|---|
+| `SALUS_HOTLINE_SHARED_SECRET` | Verify Hotline/Vox summary requests | Yes for Hotline integration | Aggregate summary |
+| `SALUS_BASE_URL` / `SALUS_SHARED_SECRET` in Hotline | Let Hotline call Salus | Yes in Hotline when enabled | Hotline integration |
+| Account SSO settings | Trusted client, callback, logout, secret state | Yes for SSO | Account |
+| Account app-admin DB settings | Runtime app-admin enablement/token/client | Optional/enabled by Data Prep | Account admin |
+| Realtime settings | URL, client/project codes, signing/backend ingress secrets | Yes for live updates | Realtime |
+| `PBB_CA_BUNDLE` | Verified local HTTPS calls | Yes | Cross-app HTTPS |
+
+### 17. Known Technical Debt and Gaps
+
+| Area | Issue | Evidence | Recommended Next Step |
+|---|---|---|---|
+| Release/installation | Runtime app implementation has advanced, but release packaging/installer integration is not started | `salus\docs\implementation-checklist.md`; `salus\docs\integration-design.md` | Build release metadata, installer, Data Prep, package, and Kit Setup checks |
+| Relief inventory | Full inventory/receiving/storage/lots are explicitly deferred despite product interest in relief operations | `v1-scope.md`; `development-proposal.md` | Decide whether V1 remains batch/receipt-only or adds a phased inventory slice |
+| Hotline ownership | Hotline's storage/display/SITREP behavior after receiving Salus summary is outside Salus design | `integration-design.md` | Add a Hotline-side Salus summary ingestion/display proposal |
+| Geofencing/maps | MapServer/geofencing are deferred | `v1-scope.md` | Keep V1 UI free of map/geofence assumptions |
+| Privacy operations | Retention, backup, purge, and access controls are high-stakes | `retention-backup-design.md`; `privacy-access-design.md` | Turn designs into implementation tests before pilot use |
+
+### 18. Testing Status
+
+Salus has feature/unit test files under `tests`, and `docs\implementation-checklist.md` reports 13 tests / 76 assertions passing plus MariaDB migrations/idempotent seeds passing. In this local recheck, `npm run openapi:check` passed and confirmed OpenAPI coverage for 87 implemented API paths. `php artisan test` was not available in the local Artisan command list, and `vendor\bin\phpunit` was not present in the current vendor install, so the PHP test suite was not rerun during this recheck.
+
+### 19. Evidence Summary
+
+Evidence:
+- `C:\wamp64\www\pbb\salus\docs\development-proposal.md`
+- `C:\wamp64\www\pbb\salus\docs\v1-scope.md`
+- `C:\wamp64\www\pbb\salus\docs\domain-database-design.md`
+- `C:\wamp64\www\pbb\salus\docs\api-contract-design.md`
+- `C:\wamp64\www\pbb\salus\docs\integration-design.md`
+- `C:\wamp64\www\pbb\salus\docs\operational-summary-design.md`
+- `C:\wamp64\www\pbb\salus\docs\privacy-access-design.md`
+- `C:\wamp64\www\pbb\salus\docs\resilience-design.md`
+- `C:\wamp64\www\pbb\salus\docs\retention-backup-design.md`
+- `C:\wamp64\www\pbb\salus\docs\implementation-checklist.md`
+- `C:\wamp64\www\pbb\salus\docs\openapi\salus-v1.yaml`
 
 ---
 
