@@ -42,9 +42,9 @@ Owner-provided naming clarification, 2026-07-24:
 | Wizaya Server Suite - Core Services | PBB Realtime | PBB Realtime |
 | Wizaya Server Suite - Core Services | PBB Maestro | PBB Maestro |
 | Wizaya Server Suite - Core Services | PBB MapServer | PBB MapServer |
-| Auxilos Mos bundle system | PBB Hotline | Vox |
-| Auxilos Mos bundle system | PBB Support System | Imperium |
-| Auxilos Mos bundle system | PBB Utility | Vena |
+| Auxilus Mos bundle system | PBB Hotline | Vox |
+| Auxilus Mos bundle system | PBB Support System | Imperium |
+| Auxilus Mos bundle system | PBB Utility | Vena |
 | Development Tools | PBB Helper | PBB Helper |
 | Development Tools | PBB Chatviewer | Syndicatum |
 

@@ -33,9 +33,9 @@ Owner-provided naming clarification, 2026-07-24: these names are product/brand a
 | PBB Chat | Civitas | Citizen Facing Apps |
 | PBB Healthcare / PBB Natalium | Natalium | Citizen Facing Apps |
 | PBB Learning | Lumaria | Citizen Facing Apps / Learning |
-| PBB Hotline | Vox | Auxilos Mos bundle system |
-| PBB Support System | Imperium | Auxilos Mos bundle system |
-| PBB Utility | Vena | Auxilos Mos bundle system |
+| PBB Hotline | Vox | Auxilus Mos bundle system |
+| PBB Support System | Imperium | Auxilus Mos bundle system |
+| PBB Utility | Vena | Auxilus Mos bundle system |
 | PBB Salus | Salus | Local evacuation/relief module; current local docs also reference Auxilus Mos spelling |
 | PBB Kit Setup | Kit Setup | Wizaya Server Suite deployment module |
 | PBB Landing | PBB Landing | Wizaya Server Suite deployment module |
