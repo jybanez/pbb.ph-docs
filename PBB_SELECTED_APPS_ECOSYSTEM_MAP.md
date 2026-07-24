@@ -61,29 +61,55 @@ Owner clarifications added after code review:
 - Kit Setup requires WampServer and Technitium DNS for node installs; code confirms WAMP probes and Technitium DNS apply/verify actions.
 - PBB does not depend on an external tunnel provider by design. Owner clarification: planned tunnel exposure uses PBB-managed FRP, with Hub HQ as the control plane, FRPS as the tunnel server, and FRPC on each local node so each PBB Relay node can receive a secure cloud-visible endpoint without static IPs, router port forwarding, or Cloudflare.
 
+### Product Names, Aliases, and Suite Grouping
+
+Owner-provided naming clarification, 2026-07-24:
+
+| Repository / App Name | Product Name / Alias | Product Group |
+|---|---|---|
+| PBB Library | Libria | Citizen Facing Apps |
+| PBB Games | Tabulus | Citizen Facing Apps |
+| PBB Chat | Civitas | Citizen Facing Apps |
+| PBB Healthcare / PBB Natalium | Natalium | Citizen Facing Apps |
+| PBB Learning | Lumaria | Citizen Facing Apps / Learning |
+| PBB Hotline | Vox | Auxilos Mos bundle system |
+| PBB Support System | Imperium | Auxilos Mos bundle system |
+| PBB Utility | Vena | Auxilos Mos bundle system |
+| PBB Salus | Salus | Local evacuation/relief module; current local docs also reference Auxilus Mos spelling |
+| PBB Kit Setup | Kit Setup | Wizaya Server Suite deployment module |
+| PBB Landing | PBB Landing | Wizaya Server Suite deployment module |
+| PBB Account | PBB Account | Wizaya Server Suite core service |
+| PBB Relay | PBB Relay | Wizaya Server Suite core service |
+| PBB Realtime | PBB Realtime | Wizaya Server Suite core service |
+| PBB Maestro | PBB Maestro | Wizaya Server Suite core service |
+| PBB MapServer | PBB MapServer | Wizaya Server Suite core service |
+| PBB Helper | PBB Helper | Development Tools |
+| PBB Chatviewer | Syndicatum | Development Tools |
+| PBB Hub / Hub HQ | Hub HQ | HQ/control-plane app |
+
 ## 2. App Classification
 
-| App | Category | Deployment Level | Primary Users | Primary Purpose |
-|---|---|---|---|---|
-| PBB Hotline | Citizen Apps, Operator Apps, Barangay Node Services | Local node / barangay or command-center style node | Citizens, operators, command users, admins | Emergency reporting, calls, incident handling, assignments, SITREPs |
-| PBB Helper | Core UI library | Vendored into apps | Developers, consuming app frontends | Shared UI components for incident/admin/chat/media/map surfaces |
-| PBB Relay | Core Infrastructure Services | Local node and hub-to-hub relay nodes | Local apps, relay operators, hub peers | Store-and-forward messaging, delivery retries, inbox/handler dispatch, attachments |
-| PBB Hub / Hub HQ | HQ / Cloud Services, City/Municipality/Province Services | HQ/cloud or upper-level local node | Admins, hub machine clients | Hub registry, heartbeat, tokens, geodata, recovery |
-| PBB Maestro | Monitoring / Maintenance Tools | Local node | Operators/admins, monitored workers | Worker heartbeat/event monitoring and stale status computation |
-| PBB Realtime Server | Realtime Communication Services | Local node | Product apps, browsers, realtime admins | WebSocket gateway, admission, rooms, presence, chat, calls, media events |
-| PBB MapServer | Mapping Services | Local node | Client apps, setup operators | Tile cache/proxy, boundary overlays, offline map prep |
-| PBB Chatviewer | Monitoring / Maintenance Tools | Local development/PBB workspace | Project owner, PBB agents / development coordination | DB-backed agent chat, Markdown fallback, timeline/search, token-auth posting |
-| PBB Kit Setup | Setup / Provisioning Tools | Windows setup machine / PBB Node Kit | Installer operator | Install/update/configure bundled PBB apps and services |
-| PBB Support System | Operator Apps, HQ / Cloud Services, Support Operations | Support node / upper-level node / HQ-side support deployment | Support operators, receiving agencies, admins | SITREP consolidation and support request lifecycle handling |
-| PBB Landing | Core Infrastructure Services, Setup / Provisioning Tools | Local node and hub public domain surface | Local users, Kit Setup, peer nodes/backend clients | LAN app launcher, public hub metadata projection, Kit-managed app registry, Relay gateway |
-| PBB Chat | Citizen Apps, Barangay Node Services, Realtime Communication Services | Local barangay node / LAN-only app | Citizens/local chat users, admins/moderators | Local rooms, direct messages, reports/blocks/moderation, badges, Hotline handoff |
-| PBB Games | Citizen Apps, Setup / Provisioning-adjacent local content | Local node / LAN-only optional app | Citizens/local visitors | Optional local games and emergency-preparedness learning activities |
-| PBB Natalium | Citizen Apps, Operator Apps, Barangay Node Services, Health / Continuity-of-Care Apps | Local health-center/barangay node | Health workers, practitioners, patient applicants/citizens, admins/management | Patient registry, health programs, care workflow, maternal/child health, birth defects, referrals, prescriptions, citizen/staff workflows, reporting/export, operations |
-| PBB Utility / Vena | Utility Company Services, Operator Apps, Responder / Helper Apps | Utility operator node / local PBB node | Utility admins, operators, command users, responders/helpers | Inbound Hotline incident utility handling, assets/teams, maps, missions, responder acknowledgement |
-| PBB Account | Core Infrastructure Services, Identity / SSO | Local node identity service | Citizens/users, Account admins, trusted PBB apps | Canonical account credentials, SSO authorization code flow, trusted clients, app-admin provisioning bridge, session identity |
-| PBB Salus | Citizen Apps, Operator Apps, Barangay Node Services, Evacuation / Relief Operations | Local barangay node / LAN-only app | Admins, operators, workers, command users, citizens | Evacuation center activation, registration, movement/occupancy, relief-batch receipt tracking, citizen QR status, Hotline aggregate summaries |
-| PBB Library | Citizen Apps, Core Infrastructure Services, Education / Reference Services | Library Cloud plus local Library Node | Citizens, students, teachers, responders, health workers, Learning, content admins | Governed reference catalog, signed content releases, offline node search/resource/content serving, SDK/embed, Library-to-Learning reference provider |
-| PBB Learning / Lumaria | Citizen Apps, Education / Learning Services, Operator/Admin Apps | Local node learning gateway and optional dedicated learning server | Learners, teachers/facilitators, barangay staff, responders, admins, institutional partners | LMS-agnostic provider/catalog/instance gateway, Account SSO, emergency-safe learning surface, diagnostics/settings, Library reference integration |
+| App | Product / Alias | Category | Deployment Level | Primary Users | Primary Purpose |
+|---|---|---|---|---|---|
+| PBB Hotline | Vox | Citizen Apps, Operator Apps, Barangay Node Services, Auxilos Mos | Local node / barangay or command-center style node | Citizens, operators, command users, admins | Emergency reporting, calls, incident handling, assignments, SITREPs |
+| PBB Helper | PBB Helper | Development Tools, Core UI library | Vendored into apps | Developers, consuming app frontends | Shared UI components for incident/admin/chat/media/map surfaces |
+| PBB Relay | PBB Relay | Wizaya Server Suite Core Services | Local node and hub-to-hub relay nodes | Local apps, relay operators, hub peers | Store-and-forward messaging, delivery retries, inbox/handler dispatch, attachments |
+| PBB Hub / Hub HQ | Hub HQ | HQ / Cloud Services, City/Municipality/Province Services | HQ/cloud or upper-level local node | Admins, hub machine clients | Hub registry, heartbeat, tokens, geodata, recovery |
+| PBB Maestro | PBB Maestro | Wizaya Server Suite Core Services, Monitoring / Maintenance Tools | Local node | Operators/admins, monitored workers | Worker heartbeat/event monitoring and stale status computation |
+| PBB Realtime Server | PBB Realtime | Wizaya Server Suite Core Services, Realtime Communication Services | Local node | Product apps, browsers, realtime admins | WebSocket gateway, admission, rooms, presence, chat, calls, media events |
+| PBB MapServer | PBB MapServer | Wizaya Server Suite Core Services, Mapping Services | Local node | Client apps, setup operators | Tile cache/proxy, boundary overlays, offline map prep |
+| PBB Chatviewer | Syndicatum | Development Tools, Monitoring / Maintenance Tools | Local development/PBB workspace | Project owner, PBB agents / development coordination | DB-backed agent chat, Markdown fallback, timeline/search, token-auth posting |
+| PBB Kit Setup | Kit Setup | Wizaya Server Suite Deployment Modules | Windows setup machine / PBB Node Kit | Installer operator | Install/update/configure bundled PBB apps and services |
+| PBB Support System | Imperium | Operator Apps, HQ / Cloud Services, Auxilos Mos | Support node / upper-level node / HQ-side support deployment | Support operators, receiving agencies, admins | SITREP consolidation and support request lifecycle handling |
+| PBB Landing | PBB Landing | Wizaya Server Suite Deployment Modules | Local node and hub public domain surface | Local users, Kit Setup, peer nodes/backend clients | LAN app launcher, public hub metadata projection, Kit-managed app registry, Relay gateway |
+| PBB Chat | Civitas | Citizen Facing Apps, Barangay Node Services, Realtime Communication Services | Local barangay node / LAN-only app | Citizens/local chat users, admins/moderators | Local rooms, direct messages, reports/blocks/moderation, badges, Hotline handoff |
+| PBB Games | Tabulus | Citizen Facing Apps, Setup / Provisioning-adjacent local content | Local node / LAN-only optional app | Citizens/local visitors | Optional local games and emergency-preparedness learning activities |
+| PBB Healthcare / PBB Natalium | Natalium | Citizen Facing Apps, Operator Apps, Barangay Node Services, Health / Continuity-of-Care Apps | Local health-center/barangay node | Health workers, practitioners, patient applicants/citizens, admins/management | Patient registry, health programs, care workflow, maternal/child health, birth defects, referrals, prescriptions, citizen/staff workflows, reporting/export, operations |
+| PBB Utility | Vena | Utility Company Services, Operator Apps, Responder / Helper Apps, Auxilos Mos | Utility operator node / local PBB node | Utility admins, operators, command users, responders/helpers | Inbound Hotline incident utility handling, assets/teams, maps, missions, responder acknowledgement |
+| PBB Account | PBB Account | Wizaya Server Suite Core Services, Identity / SSO | Local node identity service | Citizens/users, Account admins, trusted PBB apps | Canonical account credentials, SSO authorization code flow, trusted clients, app-admin provisioning bridge, session identity |
+| PBB Salus | Salus | Citizen Apps, Operator Apps, Barangay Node Services, Evacuation / Relief Operations | Local barangay node / LAN-only app | Admins, operators, workers, command users, citizens | Evacuation center activation, registration, movement/occupancy, relief-batch receipt tracking, citizen QR status, Hotline aggregate summaries |
+| PBB Library | Libria | Citizen Facing Apps, Core Infrastructure Services, Education / Reference Services | Library Cloud plus local Library Node | Citizens, students, teachers, responders, health workers, Learning, content admins | Governed reference catalog, signed content releases, offline node search/resource/content serving, SDK/embed, Library-to-Learning reference provider |
+| PBB Learning | Lumaria | Citizen Apps, Education / Learning Services, Operator/Admin Apps | Local node learning gateway and optional dedicated learning server | Learners, teachers/facilitators, barangay staff, responders, admins, institutional partners | LMS-agnostic provider/catalog/instance gateway, Account SSO, emergency-safe learning surface, diagnostics/settings, Library reference integration |
 
 ## 3. High-Level Architecture Diagram
 

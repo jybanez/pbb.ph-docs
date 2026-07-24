@@ -22,6 +22,32 @@ Current-state Salus implementation note, 2026-07-12: PBB Salus at `C:\wamp64\www
 
 Current-state Library/Learning/Natalium note, 2026-07-24: `C:\wamp64\www\pbb\library`, `C:\wamp64\www\pbb\learning`, and `C:\wamp64\www\pbb\natalium` now contain Laravel implementations. Library is split into `library\cloud` and `library\node`, both Laravel 12/PHP 8.2 apps with Vite frontends, MySQL migrations, routes, tests, and shared packages under `library\shared`. Library Cloud implements content governance, ingestion, normalized content, signing/release construction, authenticated node distribution, and patron/admin surfaces; Library Node implements offline public catalog/search/resource serving, SDK/embed access, Account SSO/app-admin hooks, local release/storage/trust state, content delivery, and admin health/settings. Learning/Lumaria is a Laravel 12 LMS-agnostic local learning gateway with Account SSO/app-admin integration, provider/catalog/instance/admin APIs, emergency state, diagnostics, OpenAPI docs, Vite assets, and `pbb_learning` migrations. Natalium has moved from the earlier legacy PHP foundation into a Laravel 12 health app with patient registry, program engine, care workflow, maternal/child health, birth-defect surveillance, referrals, prescriptions, citizen surface, reporting/export, operations, Account SSO/app-admin sync, and many automated tests.
 
+## Product Names, Aliases, and Suite Grouping
+
+Owner-provided naming clarification, 2026-07-24: these names are product/brand aliases and suite groupings. They do not replace the repository names or change the implementation evidence in each app section.
+
+| Repository / App Name | Product Name / Alias | Product Group |
+|---|---|---|
+| PBB Library | Libria | Citizen Facing Apps |
+| PBB Games | Tabulus | Citizen Facing Apps |
+| PBB Chat | Civitas | Citizen Facing Apps |
+| PBB Healthcare / PBB Natalium | Natalium | Citizen Facing Apps |
+| PBB Learning | Lumaria | Citizen Facing Apps / Learning |
+| PBB Hotline | Vox | Auxilos Mos bundle system |
+| PBB Support System | Imperium | Auxilos Mos bundle system |
+| PBB Utility | Vena | Auxilos Mos bundle system |
+| PBB Salus | Salus | Local evacuation/relief module; current local docs also reference Auxilus Mos spelling |
+| PBB Kit Setup | Kit Setup | Wizaya Server Suite deployment module |
+| PBB Landing | PBB Landing | Wizaya Server Suite deployment module |
+| PBB Account | PBB Account | Wizaya Server Suite core service |
+| PBB Relay | PBB Relay | Wizaya Server Suite core service |
+| PBB Realtime | PBB Realtime | Wizaya Server Suite core service |
+| PBB Maestro | PBB Maestro | Wizaya Server Suite core service |
+| PBB MapServer | PBB MapServer | Wizaya Server Suite core service |
+| PBB Helper | PBB Helper | Development Tools |
+| PBB Chatviewer | Syndicatum | Development Tools |
+| PBB Hub / Hub HQ | Hub HQ | HQ/control-plane app |
+
 ## App: PBB Hotline
 
 ### 1. Executive Technical Summary

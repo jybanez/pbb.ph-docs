@@ -4,25 +4,49 @@
 
 | App | Path | Reviewed? | Notes |
 |---|---|---|---|
-| PBB Hotline | `C:\wamp64\www\pbb\hotline` | Yes | Laravel emergency/call/incident app with citizen/operator/command/admin roles, SITREP Relay handoff, Support Request services, and Realtime/MapServer integration |
+| PBB Hotline / Vox | `C:\wamp64\www\pbb\hotline` | Yes | Laravel emergency/call/incident app with citizen/operator/command/admin roles, SITREP Relay handoff, Support Request services, and Realtime/MapServer integration |
 | PBB Helper | `C:\wamp64\www\hotline-helpers` | Yes | Static JS/CSS UI helper library, not a responder backend |
 | PBB Relay | `C:\wamp64\www\pbb\relay` | Yes | Laravel store-and-forward relay with outbox/delivery/inbox/uploads/handlers and relationship resolver |
 | PBB Hub / Hub HQ | `C:\wamp64\www\pbb\hub.ph` | Yes | Laravel hub registry, heartbeat, tokens, geodata, recovery |
 | PBB Maestro | `C:\wamp64\www\pbb\maestro` | Yes | Laravel worker telemetry monitor; owner clarified observer-only scope |
 | PBB Realtime Server | `C:\wamp64\www\pbb\realtime` | Yes | Laravel/Ratchet WebSocket gateway shared by node apps |
 | PBB MapServer | `C:\wamp64\www\mapserver` | Yes | Plain PHP tile proxy/cache and boundary overlay server |
-| PBB Chatviewer | `C:\wamp64\www\pbb\chatviewer` | Yes | Plain PHP/JS DB-backed agent chat with Markdown fallback, token-authenticated posting/claiming, and newest-first entry query API |
+| PBB Chatviewer / Syndicatum | `C:\wamp64\www\pbb\chatviewer` | Yes | Plain PHP/JS DB-backed agent chat with Markdown fallback, token-authenticated posting/claiming, and newest-first entry query API |
 | PBB Kit Setup | `C:\wamp64\www\pbb\kit-setup` | Yes | Electron/PHP/PowerShell setup tool; current local version `0.1.164` bundles Landing, MapServer, Maestro, Realtime, Relay, Hotline, and Support |
-| PBB Support System | `C:\wamp64\www\pbb\support` | Yes | Laravel SITREP/support operations app for Relay SITREP intake, support requests, source heartbeat webhooks, Realtime heartbeat publish, and lifecycle updates |
+| PBB Support System / Imperium | `C:\wamp64\www\pbb\support` | Yes | Laravel SITREP/support operations app for Relay SITREP intake, support requests, source heartbeat webhooks, Realtime heartbeat publish, and lifecycle updates |
 | PBB Landing | `C:\wamp64\www\pbb\landing` | Yes | Lightweight PHP LAN launcher, public hub metadata projection, Kit-managed app registry, and Relay gateway surface |
-| PBB Chat | `C:\wamp64\www\pbb\chat` | Yes | Laravel 12 local barangay chat app with rooms, direct conversations, message requests, reports/blocks/moderation, badges, Realtime admission/publishing, and Hotline handoff |
-| PBB Games | `C:\wamp64\www\pbb\games` | Yes | Plain PHP optional local citizen engagement/preparedness-learning app with no database and no confirmed operational API calls in version 1 |
-| PBB Natalium | `C:\wamp64\www\pbb\natalium` | Yes | Laravel 12 local health app with Account SSO/admin sync, patient registry, health programs, care workflow, maternal/child health, birth-defect surveillance, referrals, prescriptions, citizen/staff surfaces, reporting/export, operations, and tests |
+| PBB Chat / Civitas | `C:\wamp64\www\pbb\chat` | Yes | Laravel 12 local barangay chat app with rooms, direct conversations, message requests, reports/blocks/moderation, badges, Realtime admission/publishing, and Hotline handoff |
+| PBB Games / Tabulus | `C:\wamp64\www\pbb\games` | Yes | Plain PHP optional local citizen engagement/preparedness-learning app with no database and no confirmed operational API calls in version 1 |
+| PBB Healthcare / PBB Natalium | `C:\wamp64\www\pbb\natalium` | Yes | Laravel 12 local health app with product name Natalium; Account SSO/admin sync, patient registry, health programs, care workflow, maternal/child health, birth-defect surveillance, referrals, prescriptions, citizen/staff surfaces, reporting/export, operations, and tests |
 | PBB Utility / Vena | `C:\wamp64\www\pbb\utility` | Yes | Laravel 12 utility-operator app with roles, assets/teams/settings, MapLibre config, inbound-only Relay intake for `hotline.incident.upserted` targeted to `utility.vena`, normalized incidents, quarantine/stale handling, and operator/responder missions |
 | PBB Account | `C:\wamp64\www\pbb\account` | Yes | Laravel 12 local node identity and SSO service with canonical accounts, trusted clients, hashed one-time authorization codes, admin surface, app-admin provisioning hooks, session identity APIs, optional Realtime admission, and PHP SDK |
 | PBB Salus | `C:\wamp64\www\pbb\salus` | Implementation in progress | Laravel 12 Auxilus Mos evacuation-center and relief-distribution app with routes/controllers/models/migrations for multiple centers, registration, movement/occupancy, relief-batch receipts, citizen QR status, Account, Realtime, Landing, Kit Setup-facing health/readiness, and Hotline aggregate-summary access |
-| PBB Library | `C:\wamp64\www\pbb\library` | Yes | Laravel 12 Library Cloud and Library Node implementations plus shared PHP/JS packages. Cloud handles content governance/ingestion/canonical storage/signing/releases/node distribution/fleet reports; Node handles offline catalog/search/resource serving, SDK/embed, Account hooks, trust/release/storage state, and local content delivery |
+| PBB Library / Libria | `C:\wamp64\www\pbb\library` | Yes | Laravel 12 Library Cloud and Library Node implementations plus shared PHP/JS packages. Cloud handles content governance/ingestion/canonical storage/signing/releases/node distribution/fleet reports; Node handles offline catalog/search/resource serving, SDK/embed, Account hooks, trust/release/storage state, and local content delivery |
 | PBB Learning / Lumaria | `C:\wamp64\www\pbb\learning` | Yes | Laravel 12 local LMS-agnostic learning gateway with Account SSO/app-admin, provider/catalog/instance APIs, admin diagnostics/settings, emergency-state APIs, OpenAPI/docs routes, Vite assets, `pbb_learning` migrations, and V1 implementation status docs |
+
+## Product Names and Suite Grouping
+
+Owner-provided naming clarification, 2026-07-24:
+
+| Product Group | App / Repository | Product Name / Alias |
+|---|---|---|
+| Citizen Facing Apps | PBB Library | Libria |
+| Citizen Facing Apps | PBB Games | Tabulus |
+| Citizen Facing Apps | PBB Chat | Civitas |
+| Citizen Facing Apps | PBB Healthcare / PBB Natalium | Natalium |
+| Citizen Facing Apps / Learning | PBB Learning | Lumaria |
+| Wizaya Server Suite - Deployment Modules | Kit Setup | Kit Setup |
+| Wizaya Server Suite - Deployment Modules | PBB Landing | PBB Landing |
+| Wizaya Server Suite - Core Services | PBB Account | PBB Account |
+| Wizaya Server Suite - Core Services | PBB Relay | PBB Relay |
+| Wizaya Server Suite - Core Services | PBB Realtime | PBB Realtime |
+| Wizaya Server Suite - Core Services | PBB Maestro | PBB Maestro |
+| Wizaya Server Suite - Core Services | PBB MapServer | PBB MapServer |
+| Auxilos Mos bundle system | PBB Hotline | Vox |
+| Auxilos Mos bundle system | PBB Support System | Imperium |
+| Auxilos Mos bundle system | PBB Utility | Vena |
+| Development Tools | PBB Helper | PBB Helper |
+| Development Tools | PBB Chatviewer | Syndicatum |
 
 ## Most Important Findings
 
