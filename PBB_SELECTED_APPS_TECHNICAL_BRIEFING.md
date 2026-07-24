@@ -12,7 +12,7 @@ Current-state alignment note, 2026-06-22: local code and DB-backed Chatviewer up
 
 Current-state alignment note, 2026-06-29 / corrected 2026-07-07: local code and recent DB-backed Chatviewer entries confirm PBB Chat, PBB Games, and PBB Account as local projects. PBB Chat at `C:\wamp64\www\pbb\chat` is a Laravel 12 local barangay chat app with rooms, direct messages, message requests, badges, reports/blocks/moderation, Realtime admission/publishing, and a Hotline escalation handoff stub. PBB Games at `C:\wamp64\www\pbb\games` is a plain PHP optional local engagement/learning app with no database and no operational API integration in version 1. PBB Account at `C:\wamp64\www\pbb\account` is now confirmed as a Laravel 12 local node identity and SSO service with canonical `accounts`, trusted OAuth-style clients, hashed one-time authorization codes, admin surfaces, app-admin provisioning hooks, session identity APIs, optional Realtime admission, and a PHP SDK. Kit Setup local `package.json` is now `0.1.164`; the bundled package manifest still lists Landing, MapServer, Maestro, Realtime, Relay, Hotline, Support, and the Cebu MapServer boundary pack. Helper `package.json` remains `0.21.83`, but active loader cache revisions in `js\ui\ui.loader.js` are `0.21.117` and recent Helper changes add Chat envelope/block/mute icons, sender presence indicators, `ui.file.input`, login-form media branding options, paste attachments in `ui.chat.composer`, and improved `ui.game.state.chrome.showMilestone(...)`.
 
-Current-state alignment note, 2026-07-07: local code and DB-backed Chatviewer updates confirm two additional projects. PBB Natalium at `C:\wamp64\www\pbb\natalium` is a custom PHP/Composer local health-center app for patient registry, practitioner/capability management, PBB Account SSO, document intake/review, patient access grants, and audit events. PBB Utility at `C:\wamp64\www\pbb\utility` is the Laravel 12 Vena utility-operator app with local roles (`admin`, `operator`, `command`, `responder`), assets/teams/settings, MapLibre map config, inbound-only Relay incident intake for `hotline.incident.upserted` targeted to `utility.vena`, quarantine/stale handling, normalized Vena incidents, and operator/responder missions. Chatviewer context confirms Natalium's planning around barangay continuity-of-care health workflows and Utility/Vena's Hotline incident Relay alignment.
+Current-state alignment note, 2026-07-07 and superseding 2026-07-24 update: local code and DB-backed Chatviewer updates confirmed PBB Natalium and PBB Utility as additional projects. Natalium is now reviewed as a Laravel 12 local health app with patient registry, health programs, care workflow, maternal/child health, birth-defect surveillance, referrals, prescriptions, citizen/staff surfaces, reporting/export, operations, Account SSO/app-admin sync, and local document/backup paths. PBB Utility at `C:\wamp64\www\pbb\utility` is the Laravel 12 Vena utility-operator app with local roles (`admin`, `operator`, `command`, `responder`), assets/teams/settings, MapLibre map config, inbound-only Relay incident intake for `hotline.incident.upserted` targeted to `utility.vena`, quarantine/stale handling, normalized Vena incidents, and operator/responder missions. Chatviewer context confirms Natalium's planning around barangay continuity-of-care health workflows and Utility/Vena's Hotline incident Relay alignment.
 
 Current-state Account integration note, 2026-07-07: a targeted rescan of older apps confirms Account integration in more apps than the prior briefing stated. Hotline, Relay, Chat, Support, Realtime, and Maestro now have Account SSO redirect/callback/logout code and/or Account app-admin APIs using `users.pbb_user_id` links. Landing has Account launcher/session UI behavior and a registry entry for `pbb-account`. Kit Setup app-installer docs now define Account SSO/app-admin environment naming, `X-PBB-Account-Client: pbb-account`, app-admin token requirements, and `users.pbb_user_id` migration expectations. Hub/HQ and MapServer did not show PBB Account SSO/app-admin integration in the targeted scan beyond generic account UI/helper references.
 
@@ -20,7 +20,7 @@ Current-state Salus implementation note, 2026-07-12: PBB Salus at `C:\wamp64\www
 
 ---
 
-Current-state Library/Learning note, 2026-07-17: `C:\wamp64\www\pbb\library` and `C:\wamp64\www\pbb\learning` are proposal/specification folders only in the local scan. No executable app code, package files, routes, migrations, or runtime config were found. Library docs define PBB Library Cloud and PBB Library Node as separate proposed deployables for centrally governed general-reference content, signed releases, offline node search, and Learning integration. Learning docs define PBB Learning/Lumaria as an LMS-agnostic local education gateway and control plane with Moodle as the first adapter, PBB Account as preferred identity, PBB Landing registration, emergency-safe behavior, and a dedicated reference-provider adapter to PBB Library.
+Current-state Library/Learning/Natalium note, 2026-07-24: `C:\wamp64\www\pbb\library`, `C:\wamp64\www\pbb\learning`, and `C:\wamp64\www\pbb\natalium` now contain Laravel implementations. Library is split into `library\cloud` and `library\node`, both Laravel 12/PHP 8.2 apps with Vite frontends, MySQL migrations, routes, tests, and shared packages under `library\shared`. Library Cloud implements content governance, ingestion, normalized content, signing/release construction, authenticated node distribution, and patron/admin surfaces; Library Node implements offline public catalog/search/resource serving, SDK/embed access, Account SSO/app-admin hooks, local release/storage/trust state, content delivery, and admin health/settings. Learning/Lumaria is a Laravel 12 LMS-agnostic local learning gateway with Account SSO/app-admin integration, provider/catalog/instance/admin APIs, emergency state, diagnostics, OpenAPI docs, Vite assets, and `pbb_learning` migrations. Natalium has moved from the earlier legacy PHP foundation into a Laravel 12 health app with patient registry, program engine, care workflow, maternal/child health, birth-defect surveillance, referrals, prescriptions, citizen surface, reporting/export, operations, Account SSO/app-admin sync, and many automated tests.
 
 ## App: PBB Hotline
 
@@ -2794,11 +2794,11 @@ Evidence:
 
 ---
 
-## App: PBB Library (Proposal / No Implementation Found)
+## App: PBB Library
 
 ### 1. Executive Technical Summary
 
-PBB Library is a proposal-stage general-knowledge and reference infrastructure project. The local folder contains only Markdown proposal/specification files. No executable app code, routes, migrations, package manifests, or runtime configuration were found. The proposal defines two future deployables: PBB Library Cloud for content ingestion/governance/release construction, and PBB Library Node for offline local catalog/search/resource serving and release activation at `https://library.pbb.ph`. It is intended to support citizens, students, teachers, responders, health workers, and PBB Learning as a reference provider. It is not intended to own formal courses, assignments, grades, learner progress, or institutional LMS records.
+PBB Library is now implemented as two Laravel 12 apps plus shared packages. `library\cloud` is the Library Cloud control plane for content ingestion, normalization, governance, licensing/review, release construction/signing, authenticated node distribution, fleet reports, and Cloud patron/admin surfaces. `library\node` is the local/offline Library Node for `https://library.pbb.ph`, public catalog/search/collection/resource serving, content delivery, SDK/embed use by approved origins, Account SSO/app-admin integration, local release/storage/trust state, and node admin health/settings. Shared PHP and JS packages provide deterministic search/citation/storage-path logic and reusable patron UI. Routine large Library content distribution remains a Library Cloud/Node release/object-download concern rather than a PBB Relay message path.
 
 ### 2. Repository Overview
 
@@ -2806,42 +2806,43 @@ PBB Library is a proposal-stage general-knowledge and reference infrastructure p
 |---|---|
 | App Name | PBB Library |
 | Local Path | `C:\wamp64\www\pbb\library` |
-| Main Language | Unknown / Not confirmed from code |
-| Main Framework | Unknown / Not confirmed from code |
-| Frontend Framework | Unknown / Not confirmed from code |
-| Backend Framework | Unknown / Not confirmed from code |
-| Database | Proposed only; no migrations/schema found |
-| Realtime Technology | Deferred/optional; no implementation found |
-| Queue / Worker System | Proposed Cloud/Node jobs; no implementation found |
-| Package Manager | None found |
-| Runtime Requirements | Proposal mentions web/API app, relational DB, search engine, deployment worker, scheduler, dedicated Library HDD, Kit Setup/WinSW services |
-| Main Entry Points | No executable entry points found |
-| Important Config Files | Proposal docs only |
-| Important Environment Variables | Proposed `PBB_LIBRARY_BASE_URL`, `PBB_LIBRARY_API_TOKEN` in Learning addendum; no implementation config found |
-| Deployment Target | Proposed Library Cloud and local Library Node |
+| Main Language | PHP 8.2, JavaScript |
+| Main Framework | Laravel 12 |
+| Frontend Framework | Vite, Tailwind, `@pbb/library-ui`, Helper UI |
+| Backend Framework | Laravel 12 |
+| Database | MySQL `pbb_library_cloud` for Cloud; MySQL `pbb_library` for Node |
+| Realtime Technology | No mandatory realtime dependency confirmed |
+| Queue / Worker System | Laravel database queue tables/config in Cloud and Node; Cloud `QUEUE_CONNECTION=database`; Node default `QUEUE_CONNECTION=sync` |
+| Package Manager | Composer, npm |
+| Runtime Requirements | PHP `^8.2`, Laravel 12, MySQL, Node/Vite; Node also requires `ext-curl` and `ext-json` |
+| Main Entry Points | `library\cloud\artisan`, `library\cloud\routes\web.php`, `library\node\artisan`, `library\node\routes\web.php`, `library\node\routes\api.php` |
+| Important Config Files | `library\cloud\composer.json`, `library\cloud\.env.example`, `library\node\composer.json`, `library\node\.env.example`, `library\node\package.json`, `library\cloud\package.json` |
+| Important Environment Variables | `APP_URL`, `DB_*`, `SESSION_*`, `AUTH_MODE`, `PBB_ACCOUNT_*`, `PBB_LIBRARY_QUARANTINE_ROOT`, `PBB_LIBRARY_OBJECT_ROOT`, `PBB_LIBRARY_BUILD_ROOT`, `PBB_LIBRARY_SDK_ALLOWED_ORIGINS` |
+| Deployment Target | Library Cloud at `https://library-cloud.pbb.ph`; local Library Node at `https://library.pbb.ph` |
 
 ### 3. App Purpose and PBB Role
 
-PBB Library is proposed to provide centrally governed general-reference content, offline node search, content package verification, release activation, rollback, and local resource serving. Library Cloud would govern sources, provenance, licensing, signed releases, node profiles, and fleet deployment reports. Library Node would serve approved immutable releases locally and expose read-only APIs for Learning and approved clients. If unavailable, PBB Learning should continue operating but research-library features should degrade gracefully.
+PBB Library provides centrally governed general-reference content and local offline access. Cloud owns ingestion/governance/normalization/release/signing/node distribution. Node owns local serving, search, resource payload delivery, SDK/embed access, local admin, release/storage/trust state, and Library metadata/heartbeat. Learning can consume Node as a reference provider. If Library Node is unavailable, Learning research/library features degrade; core emergency apps are not directly blocked from the reviewed code.
 
 ### 4. User Roles and Permissions
 
 | Role | Purpose | Capabilities | Code Evidence |
 |---|---|---|---|
-| anonymous public user | Proposed local Library reader | Search/browse/view public Library content | `library\node\docs\PBB_LIBRARY_NODE_DEVELOPMENT_PROPOSAL.md` |
-| Library Node administrator | Proposed local admin | View release/storage/search/integration health; no canonical content editing in V1 | `library\node\docs\PBB_LIBRARY_NODE_DEVELOPMENT_PROPOSAL.md` |
-| Library Cloud administrator | Proposed cloud admin | Source ingestion, review, releases, signing, node assignment, audit | `library\cloud\docs\PBB_LIBRARY_CLOUD_DEVELOPMENT_PROPOSAL.md` |
-| PBB Learning client | Proposed local API client | Search resources, retrieve metadata/citations, link to resources | `learning\docs\PBB_LEARNING_PBB_LIBRARY_INTEGRATION_ADDENDUM.md` |
-| machine client | Proposed Cloud/Node release client | Authenticated offer/download/reporting APIs | `library\cloud\docs\PBB_LIBRARY_CLOUD_DEVELOPMENT_PROPOSAL.md`; `library\node\docs\PBB_LIBRARY_NODE_DEVELOPMENT_PROPOSAL.md` |
+| anonymous public user | Local Library reader | Search/browse/view public Library content | `library\node\routes\web.php`; `library\node\routes\api.php` |
+| authenticated user | Optional local/Account-linked user | Search history, saved searches, account/profile actions | `library\node\routes\api.php`; `library\cloud\routes\web.php` |
+| Library Node administrator | Local node admin | Admin shell, OpenAPI docs, health, settings, authentication/integration settings, users/privileges | `library\node\routes\web.php`; `library\node\routes\api.php` |
+| Library Cloud administrator | Cloud admin/control-plane user | Source systems, credentials, import jobs, governance cases, releases/signing, nodes, fleet, runtime/integration settings | `library\cloud\routes\web.php` |
+| Library Cloud node machine client | Authenticated node distribution client | Profile/offers/manifest/object/trust/withdrawal/rollback endpoints and inventory/deployment reports | `library\cloud\routes\web.php` |
+| PBB Learning client / SDK consumer | Local API/embed consumer | Search resources, retrieve content/citations/related resources, embed Library resources from registered origins | `library\node\routes\api.php`; `library\node\routes\web.php`; `learning\docs\PBB_LEARNING_PBB_LIBRARY_INTEGRATION_ADDENDUM.md` |
 
 ### 5. Main Features and Modules
 
 ### Library Cloud
 
-Purpose: Proposed content governance, ingestion, normalization, licensing, review, object storage, release building, manifest signing, node assignment, and fleet reporting.
-Main Code: No implementation found.
-Database Tables: Proposed only.
-APIs / Routes: Proposed node offer/object download/report APIs.
+Purpose: Content governance, ingestion, normalization, licensing, review, object storage, release building, manifest signing, node assignment, and fleet reporting.
+Main Code: `library\cloud\app`; `library\cloud\routes\web.php`.
+Database Tables: `library_source_systems`, `library_import_jobs`, `library_resources`, `library_resource_versions`, `library_content_objects`, `library_releases`, `library_release_signatures`, `library_nodes`, `library_node_credentials`, `library_node_fleet_states`, `library_runtime_settings`, normalized-content tables.
+APIs / Routes: `/api/v1/node/*`, `/api/v1/search`, `/api/v1/resources/*`, `/api/admin/v1/*`, `/admin/*`.
 Offline Behavior: Cloud is not the public offline portal; offline behavior belongs to Node.
 Sync Behavior: Node-pull release distribution; large content transfer should not use Relay.
 Related PBB Apps: Library Node, Kit Setup, Landing, Learning.
@@ -2849,10 +2850,10 @@ Evidence: `library\cloud\docs\PBB_LIBRARY_CLOUD_DEVELOPMENT_PROPOSAL.md`.
 
 ### Library Node
 
-Purpose: Proposed local offline portal, catalog/search, resource viewing, release verification, staging, activation, rollback, storage health, and Learning integration API.
-Main Code: No implementation found.
-Database Tables: Proposed only.
-APIs / Routes: Proposed public routes `/`, `/search`, `/collections`, `/resources/{id}`, `/health`; proposed versioned API `/api/v1/search`, `/api/v1/resources/{id}`, `/api/v1/collections`, `/api/v1/citations/{id}`.
+Purpose: Local offline portal, catalog/search, resource viewing, release verification, staging, activation, rollback, storage health, SDK/embed delivery, and Learning integration API.
+Main Code: `library\node\app`; `library\node\routes\web.php`; `library\node\routes\api.php`.
+Database Tables: `library_catalog_imports`, `library_resources`, `library_resource_versions`, `library_resource_files`, `library_resource_availability`, `library_citations`, `library_collections`, `library_release_state`, `library_content_volumes`, `library_trust_keys`, `library_release_deployments`, `library_cloud_sync_state`, `library_cloud_downloads`, `library_cloud_outbox`, `library_sdk_consumer_origins`.
+APIs / Routes: `/`, `/library.json`, `/heartbeat.json`, `/sdk/v1/*`, `/api/v1/search`, `/api/v1/collections`, `/api/v1/resources/{language}/{resource_id}`, `/api/v1/resources/{language}/{resource_id}/payload`, `/api/admin/v1/*`.
 Offline Behavior: Intended to work without internet, Cloud, Learning, Account, or Realtime after commissioning.
 Sync Behavior: Node initiates authenticated Cloud offer/download/report flow.
 Related PBB Apps: PBB Learning, Landing, Kit Setup, Account-ready admin, possible Maestro observation later.
@@ -2861,9 +2862,9 @@ Evidence: `library\node\docs\PBB_LIBRARY_NODE_DEVELOPMENT_PROPOSAL.md`.
 ### Learning Reference Provider Integration
 
 Purpose: Let PBB Learning use Library as a reference provider without copying Library content or treating Library as an LMS.
-Main Code: No implementation found.
-Database Tables: Proposed Learning-side reference provider tables.
-APIs / Routes: Proposed adapter methods `search`, `resource`, `collections`, `citation`, `related`.
+Main Code: Library Node public APIs and SDK routes are implemented; Learning-side direct integration code is not fully confirmed in this scan.
+Database Tables: Library Node catalog/resource/citation tables; Learning has `learning_settings` and domain tables but no dedicated Library reference table found in the focused migration read.
+APIs / Routes: Implemented Library Node `/api/v1/search`, `/api/v1/resources/{language}/{resource_id}`, `/citation`, `/related`, `/collections`; SDK asset route `/sdk/v1/{asset}`.
 Offline Behavior: Learning should degrade gracefully when Library is unavailable.
 Sync Behavior: Learning is not in Library release-update path.
 Related PBB Apps: PBB Learning.
@@ -2871,40 +2872,55 @@ Evidence: `learning\docs\PBB_LEARNING_PBB_LIBRARY_INTEGRATION_ADDENDUM.md`.
 
 ### 6. Database Schema Summary
 
-No implemented database usage found / Not confirmed from code.
+Database usage is implemented in both Cloud and Node through Laravel migrations.
 
-Proposal documents suggest Cloud database groups for sources, canonical resources, files/renditions, collections, node profiles, releases, signing/audit, deployment reports, and operations. Node proposal suggests local groups for releases, objects, catalog resources, search/index state, deployment sessions, settings, health, and integration state.
+| Table | Purpose | Important Columns | Relationships / Notes |
+|---|---|---|---|
+| `library_source_systems`, `library_source_credentials` | Cloud source/credential registry | source identity, type, credential metadata | Import jobs reference source systems |
+| `library_import_jobs`, `library_import_items`, `library_import_transformations` | Cloud safe ingestion pipeline | status, source, item payload, transformation data | Import audit events track changes |
+| `library_resources`, `library_resource_versions`, `library_resource_files`, `library_resource_renditions` | Cloud canonical content model | resource/version identity, runtime/type/language, file/object refs | Related to subjects/audiences/contributors/collections |
+| `library_normalized_*` tables | Cloud normalized content foundation/current state | originals, resources, revisions, pages, attachments, citations, search docs, inventories | Added in 2026-07-19/20 migrations |
+| `library_governance_cases`, `library_license_policy_decisions`, `library_content_review_notes` | Cloud governance/licensing review | case status, policy decision, review note | Supports content approval/withdrawal |
+| `library_releases`, `library_release_artifacts`, `library_release_signatures`, `library_signing_keys` | Cloud release construction/signing | release ID, artifacts, signatures, key events | Node distribution pulls manifests/objects |
+| `library_nodes`, `library_node_credentials`, `library_node_fleet_states` | Cloud authenticated node distribution/fleet | node identity, credentials, fleet/deployment state | Used by `/api/v1/node/*` |
+| `library_catalog_imports`, `library_resources`, `library_resource_versions`, `library_resource_files` | Node local catalog | imported release/resource/file metadata | Serves public search/resource APIs |
+| `library_release_state`, `library_trust_keys`, `library_release_verifications`, `library_release_deployments` | Node release/trust/deployment state | active release, trust keys, verification/deployment records | Supports signed activation/rollback |
+| `library_content_volumes`, `library_physical_imports`, `library_storage_references`, `library_storage_journal` | Node content storage | volume identity/path, physical imports, object refs, journal | Supports local offline object store |
+| `library_cloud_sync_state`, `library_cloud_downloads`, `library_cloud_outbox` | Node Cloud pull/reporting state | offer/download/outbox state | Separate from PBB Relay |
+| `library_sdk_consumer_origins` | Node SDK/embed origin allowlist | origin, status/metadata | Enforced by `library.sdk.origin` middleware |
 
 ```text
-Library Cloud proposal
-  ├── sources / imported records
-  ├── canonical resources / collections
-  ├── content-addressed objects
-  ├── signed releases / node profiles
-  └── deployment reports / audit
+Library Cloud
+  ├── source systems / import jobs
+  ├── canonical + normalized resources
+  ├── governance / licensing / review
+  ├── releases / signatures / node credentials
+  └── fleet reports / deployment events
 
-Library Node proposal
-  ├── active/staged releases
-  ├── immutable object inventory
-  ├── local catalog/search indexes
-  ├── deployment sessions
-  └── Learning integration health
+Library Node
+  ├── release state / trust keys / verifications
+  ├── content volumes / physical imports / object refs
+  ├── local catalog resources / collections / citations
+  ├── SDK consumer origins
+  └── Cloud sync/download/outbox state
 ```
 
 ### 7. API and Route Inventory
 
-No implemented routes found.
-
 | Method | Path / Endpoint | Purpose | Auth | Handler / File | Notes |
 |---|---|---|---|---|---|
-| GET | `/` | Proposed Library home | Public | No implementation found | Node proposal |
-| GET | `/search` | Proposed public search | Public | No implementation found | Node proposal |
-| GET | `/collections` | Proposed collection browse | Public | No implementation found | Node proposal |
-| GET | `/resources/{id}` | Proposed resource viewer | Public / collection policy | No implementation found | Node proposal |
-| GET | `/api/v1/search` | Proposed Learning/public search API | Public or app credential depending route | No implementation found | Addendum |
-| GET | `/api/v1/resources/{id}` | Proposed metadata/resource API | Public or app credential depending route | No implementation found | Addendum |
-| GET | `/api/v1/citations/{id}` | Proposed citation API | Public or app credential depending route | No implementation found | Addendum |
-| POST/GET | Cloud offer/object/report APIs | Proposed node-pull release distribution | Machine credential | No implementation found | Cloud/Node proposals |
+| GET | `/` | Node public Library app shell | Public | `library\node\routes\web.php`; `LibraryPortalController@app` | Local patron UI |
+| GET | `/library.json`, `/heartbeat.json` | Node metadata/heartbeat | Public/no session middleware for heartbeat | `PublicLibraryController@metadata`; `HeartbeatController` | Landing/health style metadata |
+| GET | `/sdk/v1/{asset}` | Node SDK asset | Origin middleware | `LibrarySdkAssetController@show` | `pbb-library.js` / IIFE |
+| GET | `/api/v1/search` | Node search API | `library.sdk.origin` | `CatalogApiController@search` | Public/reference API boundary |
+| GET | `/api/v1/collections*` | Node collection APIs | `library.sdk.origin` | `CatalogApiController` | Language-aware routes |
+| GET/HEAD | `/api/v1/resources/{language}/{resource_id}/payload` | Node payload delivery | `library.sdk.origin` | `ContentDeliveryController@show` | Also content/runtime/zim/citation/related |
+| GET/DELETE/POST | `/api/v1/search-history`, `/api/v1/saved-searches` | Node user search state | User session + origin | `LocalSearchStateController` | Authenticated user only |
+| GET/PUT | `/api/admin/v1/settings*` | Node admin settings | `library.admin`, ability middleware | `AdminRuntimeSettingsController` | Admin surface |
+| GET | Cloud `/api/v1/node/offers` | Node release offers | `library.node`, rate limit | `NodeDistributionController@offers` | Cloud-to-Node distribution |
+| GET/HEAD | Cloud `/api/v1/node/objects/sha256/{digest}` | Object download | `library.node`, rate limit | `NodeDistributionController@object` | Large content transfer path |
+| PUT/POST | Cloud `/api/v1/node/inventory`, `/deployments/{id}/*` | Node inventory/deployment report | `library.node`, rate limit | `NodeFleetReportController` | Fleet reporting |
+| POST/GET | Cloud `/api/admin/v1/*` | Source/import/governance/release/node/fleet admin | `library.auth`, admin/ability/reauth | Cloud admin controllers | Admin control plane |
 
 ### 8. Data Flow and Operational Flow
 
@@ -2937,7 +2953,7 @@ Library Node is explicitly proposed as offline-first after commissioning. Public
 
 ### 11. Deployment and Runtime Architecture
 
-No implementation found. Proposal recommends separate Cloud and Node deployables, local Library Node under `https://library.pbb.ph`, a dedicated Library HDD for content objects, SSD for app/database/search indexes, deployment worker/scheduler, Windows services installed by Kit Setup/WinSW, and physical initial release import during Kit Setup Data Prep.
+Implementation now exists as separate Cloud and Node Laravel apps. Cloud `.env.example` targets `https://library-cloud.pbb.ph`, MySQL `pbb_library_cloud`, database sessions/cache/queue, local-only auth mode by default, trusted diagnostic IPs, and configurable quarantine/object/build roots. Node `.env.example` targets `https://library.pbb.ph`, MySQL `pbb_library`, file sessions/cache, SDK allowed origins, local mail/logging, and public SDK/build assets. Composer scripts include setup/test/verify/analyse paths; Node npm scripts include build, SDK build/test, helper/offline verification, and contract validation.
 
 ### 12. Security and Privacy Notes
 
@@ -2961,51 +2977,61 @@ No mapping/geolocation functionality found / Not confirmed from code.
 
 | Task | Schedule / Trigger | Purpose | Code Evidence |
 |---|---|---|---|
-| Cloud import/review/release jobs | Proposed | Source ingestion, malware scan, normalization, release build/signing | Cloud proposal |
-| Node deployment worker | Proposed | Offer check, download, verify, import, index, activate, smoke test | Node proposal |
-| Node scheduler | Proposed | Emergency-safe update windows and health checks | Node proposal |
-| Garbage collection | Proposed | Remove unreferenced content objects safely | Node proposal |
+| Cloud queue jobs | Queue/database trigger | Ingestion/import/release/background work | `library\cloud\composer.json`; Cloud migrations `jobs`, `failed_jobs` |
+| Cloud verification/analyse | Manual command | Static analysis, config validation, tests, contract validation | `library\cloud\composer.json` |
+| Node Cloud pull/download/outbox state | App-triggered release workflow | Track Cloud offers/downloads/reports outside PBB Relay | `library\node\database\migrations\2026_07_18_000014_create_library_cloud_pull_state.php` |
+| Node storage/integrity/GC state | App/runtime trigger | Content volume, physical import, object, integrity, and garbage-collection tracking | `library\node\database\migrations\2026_07_17_000007_create_library_storage_tables.php`; `2026_07_19_000018_create_portable_storage_health_foundation.php` |
 
 ### 16. Configuration and Environment Variables
 
-No implemented config found.
-
 | Variable / Config | Purpose | Required | Default / Example | Related Module |
 |---|---|---|---|---|
-| `PBB_LIBRARY_BASE_URL` | Proposed Learning-to-Library base URL | If integrated | `https://library.pbb.ph` | Learning addendum |
-| `PBB_LIBRARY_API_TOKEN` | Proposed app-scoped integration token | If protected routes used | Masked | Learning addendum |
-| dedicated Library volume identity | Proposed content HDD binding | Yes for Node | Unknown / Not confirmed from code | Kit Setup/Data Prep |
-| Cloud machine credentials/trust keys | Proposed node-pull auth and manifest verification | Yes for release updates | Unknown / Not confirmed from code | Cloud/Node |
+| `APP_URL` | Cloud/Node public base URL | Yes | `https://library-cloud.pbb.ph`, `https://library.pbb.ph` | Routing/links |
+| `DB_DATABASE` | App database | Yes | `pbb_library_cloud`, `pbb_library` | MySQL |
+| `AUTH_MODE` | Cloud auth mode | Yes | `local-only` | Cloud auth |
+| `PBB_ACCOUNT_*` | Account SSO / client identity | If Account enabled | Masked/blank in Cloud; Node has Account SDK wiring | Auth |
+| `PBB_LIBRARY_QUARANTINE_ROOT`, `PBB_LIBRARY_OBJECT_ROOT`, `PBB_LIBRARY_BUILD_ROOT` | Cloud storage roots | Deployment-specific | blank in example | Ingestion/build storage |
+| `PBB_LIBRARY_SDK_ALLOWED_ORIGINS` | Node SDK/embed origin allowlist | If SDK used | blank | SDK origin middleware |
 
 ### 17. Known Technical Debt and Gaps
 
 | Area | Issue | Evidence | Recommended Next Step |
 |---|---|---|---|
-| Implementation | Only proposal docs found | Folder scan | Scaffold separate Cloud and Node apps or create contract package first |
-| Release contract | Manifest/API schemas are proposed, not implemented | Library proposals | Define versioned JSON Schema/OpenAPI and signature test vectors |
-| Storage sizing | 10 TB drive assumptions need prototype measurements | Library proposal | Run target-hardware benchmarks and capacity tests |
-| Emergency gating | Node-state source is an open question | Library proposal open questions | Define approved local node-state API |
-| Learning adapter | Integration is proposed, not implemented | Learning addendum | Implement direct link/health check before integrated search |
+| Implementation docs stale | Earlier selected docs described Library as not yet implemented | Current `artisan`, routes, migrations, tests now exist | Treat Cloud/Node as implemented apps in future briefings |
+| Kit Setup packaging | Cloud/Node installer/Data Prep integration not confirmed in focused scan | No Kit package evidence reviewed here | Add release metadata/installer evidence before field deployment |
+| Large release operations | Cloud/Node paths exist; operational runbook still needed | Node Cloud sync/download/outbox tables and Cloud node endpoints | Document offer/download/report/rollback operations |
+| Learning adapter | Library Node APIs exist; Learning-side full Library adapter not confirmed | Learning code scan found gateway/domain APIs, not dedicated Library adapter table | Implement/verify direct Learning-to-Library calls |
 
 ### 18. Testing Status
 
-No test framework or executable tests found. Proposal documents require tests for ingestion, release signing, object verification, offline operation, Learning integration, emergency mode, storage failure, rollback, and security.
+Tests are present. Cloud has PHPUnit feature/unit tests, contract validation (`composer test:contracts`), static analysis, config validation, and `composer verify`. Node has PHPUnit unit tests, JS SDK/route/direct-content tests, helper/offline verification, contract validation, and Vite/SDK builds through npm scripts. The focused scan did not run these tests.
 
 ### 19. Evidence Summary
 
 Evidence:
 - `C:\wamp64\www\pbb\library\docs\PBB_LIBRARY_DEVELOPMENT_PROPOSAL.md`
+- `C:\wamp64\www\pbb\library\cloud\composer.json`
+- `C:\wamp64\www\pbb\library\cloud\.env.example`
+- `C:\wamp64\www\pbb\library\cloud\routes\web.php`
+- `C:\wamp64\www\pbb\library\cloud\database\migrations`
+- `C:\wamp64\www\pbb\library\node\composer.json`
+- `C:\wamp64\www\pbb\library\node\.env.example`
+- `C:\wamp64\www\pbb\library\node\routes\web.php`
+- `C:\wamp64\www\pbb\library\node\routes\api.php`
+- `C:\wamp64\www\pbb\library\node\database\migrations`
+- `C:\wamp64\www\pbb\library\shared\php\library-core\composer.json`
+- `C:\wamp64\www\pbb\library\shared\js\library-ui\package.json`
 - `C:\wamp64\www\pbb\library\node\docs\PBB_LIBRARY_NODE_DEVELOPMENT_PROPOSAL.md`
 - `C:\wamp64\www\pbb\library\cloud\docs\PBB_LIBRARY_CLOUD_DEVELOPMENT_PROPOSAL.md`
 - `C:\wamp64\www\pbb\learning\docs\PBB_LEARNING_PBB_LIBRARY_INTEGRATION_ADDENDUM.md`
 
 ---
 
-## App: PBB Learning / Lumaria (Proposal / No Implementation Found)
+## App: PBB Learning / Lumaria
 
 ### 1. Executive Technical Summary
 
-PBB Learning, product name Lumaria, is a proposal-stage LMS-agnostic local learning gateway and control plane. The local folder contains only Markdown proposal/addendum files. No executable app code, routes, migrations, package manifests, or runtime configuration were found. The proposal positions Moodle as the first supported LMS adapter, not the whole product. Learning should provide `https://learning.pbb.ph`, an admin surface, provider/platform/instance/server/catalog/package registries, local/offline availability labels, emergency-mode rules, health checks, diagnostics, PBB Account as preferred identity, PBB Landing integration, and PBB Library as a separate reference provider.
+PBB Learning, product name Lumaria, is now implemented as a Laravel 12 LMS-agnostic local learning gateway. It runs on a node at `https://learning.pbb.ph` and provides Account SSO/app-admin hooks, local authorization, provider/catalog/instance APIs, admin diagnostics/settings, emergency-state APIs, OpenAPI/docs routes, Vite assets, and a local `pbb_learning` schema. Code and implementation-status docs still show this as a V1 implementation in progress, not final release approval. Moodle/provider adapters, deeper sync behavior, Kit/Data Prep installation, and some admin editing workflows remain incomplete or not confirmed from code.
 
 ### 2. Repository Overview
 
@@ -3013,143 +3039,167 @@ PBB Learning, product name Lumaria, is a proposal-stage LMS-agnostic local learn
 |---|---|
 | App Name | PBB Learning / Lumaria |
 | Local Path | `C:\wamp64\www\pbb\learning` |
-| Main Language | Unknown / Not confirmed from code |
-| Main Framework | Unknown / Not confirmed from code |
-| Frontend Framework | Unknown / Not confirmed from code |
-| Backend Framework | Unknown / Not confirmed from code |
-| Database | Proposed only; no migrations/schema found |
-| Realtime Technology | Unknown / Not confirmed from code |
-| Queue / Worker System | Proposed job tracking/provisioning; no implementation found |
-| Package Manager | None found |
-| Runtime Requirements | Proposal suggests web/API app, admin UI, health checks, Moodle/external LMS adapters, optional dedicated learning server/machine |
-| Main Entry Points | No executable entry points found |
-| Important Config Files | Proposal docs only |
-| Important Environment Variables | Proposed Library integration vars in addendum; no implementation config found |
-| Deployment Target | Local PBB node or dedicated learning server; public surface `https://learning.pbb.ph` |
+| Main Language | PHP, JavaScript |
+| Main Framework | Laravel 12 |
+| Frontend Framework | Vite/Tailwind/axios |
+| Backend Framework | Laravel |
+| Database | MySQL `pbb_learning` through Laravel migrations |
+| Realtime Technology | Realtime admission URL configured; no direct WebSocket event flow confirmed in focused scan |
+| Queue / Worker System | Laravel database queue configured in `.env.example`; app-specific workers not fully confirmed |
+| Package Manager | Composer, npm |
+| Runtime Requirements | PHP `^8.2`, Node/npm for assets, MySQL, Laravel 12 |
+| Main Entry Points | `artisan`, `routes\web.php`, `routes\api.php`, Vite assets |
+| Important Config Files | `composer.json`, `package.json`, `.env.example`, `routes\web.php`, `routes\api.php`, `database\migrations` |
+| Important Environment Variables | `PBB_LEARNING_VERSION`, `PBB_LEARNING_BUILD_ID`, `PBB_ACCOUNT_BASE_URL`, `PBB_ACCOUNT_SSO_ENABLED`, `PBB_ACCOUNT_CLIENT_ID`, `PBB_ACCOUNT_CLIENT_SECRET`, `PBB_ACCOUNT_SDK_URL`, `PBB_REALTIME_ADMISSION_URL`, `PBB_HOTLINE_BASE_URL` |
+| Deployment Target | Local PBB node learning gateway; possible dedicated learning server remains a deployment decision |
 
 ### 3. App Purpose and PBB Role
 
-PBB Learning is proposed to organize learning access without replacing institutional LMS systems. It should manage providers, platforms, instances, servers, catalog items, packages, health checks, diagnostics, emergency visibility, and links/local availability. It should not merge institutional LMS databases or own general-reference Library content. If unavailable, Library and core emergency apps should remain unaffected; LMS links/content may be unavailable through the unified Learning portal.
+PBB Learning organizes local and external learning access without replacing institutional LMS systems. Current code confirms provider/platform/instance/catalog registries, health/readiness APIs, admin diagnostics, Account SSO/app-admin integration, emergency-state APIs, and local authorization. It depends on PBB Account for preferred SSO and uses configured Hotline/Realtime URLs. The Library integration is documented and Library Node now exposes APIs, but a complete Learning-side Library adapter was not confirmed in the focused code scan. If Learning is unavailable, emergency Hotline/Relay flows and Library Node serving are not directly blocked; learning catalog/provider access through Lumaria is unavailable.
 
 ### 4. User Roles and Permissions
 
 | Role | Purpose | Capabilities | Code Evidence |
 |---|---|---|---|
-| public learner/user | Proposed local learning user | Browse catalog, offline content, emergency learning, provider pages | Learning proposal |
-| learning administrator | Proposed admin | Manage providers, platforms, instances, servers, catalog, packages, health/diagnostics | Learning proposal |
-| provider/institution admin | Proposed partner-facing operator | Manage institution-linked learning records according to policy | Learning proposal |
-| PBB Account user/admin | Preferred identity model | Portal/admin authentication; future `pbb_user_id` support | Learning proposal |
-| Library reference provider client | Learning server-side integration | Search/reference/citation through Library Node | Learning addendum |
+| authenticated user | Account/local learning user | Access authenticated bootstrap, provider, catalog, instance, emergency-state, session, and profile APIs | `learning\routes\web.php`; `.env.example` |
+| learning administrator | Learning admin surface | Diagnostics, settings, platform toggles, instance probes, provider/catalog/instance CRUD through admin APIs | `learning\routes\web.php`; implementation status doc |
+| Account admin API client | Machine provisioning client | Account-admin user show/upsert/role/status/delete endpoints | `learning\routes\api.php`; `.env.example` |
+| provider/institution operator | Provider-side role from domain model | Provider/catalog/instance ownership is represented in registry tables; exact UI permissions not fully confirmed | `learning\database\migrations`; `learning\routes\web.php` |
+| public visitor | Public app/bootstrap visitor | Access live/ready checks, learning app shell, `learning.json`, and SPA pages | `learning\routes\web.php` |
 
 ### 5. Main Features and Modules
 
 ### Learning Gateway And Catalog
 
-Purpose: Unified local public portal for learning providers, courses/packages, local/offline availability, external links, and emergency-prioritized content.
-Main Code: No implementation found.
-Database Tables: Proposed providers/platforms/instances/servers/catalog/package/job tables.
-APIs / Routes: Proposed public routes `/`, `/providers`, `/catalog`, `/offline`, `/emergency`, `/research`.
-Offline Behavior: Proposed local catalog and local links/content should work without cloud.
-Sync Behavior: No implemented sync; proposal rejects full LMS database sync in V1.
+Purpose: Unified local gateway for learning providers, catalog items, instances, availability, and emergency learning state.
+Main Code: `routes\web.php`; controllers/services under `learning\app`; Vite assets under `resources`.
+Database Tables: `learning_providers`, `learning_platform_types`, `learning_servers`, `learning_instances`, `learning_catalog_items`, `learning_collections`, `learning_collection_items`, `learning_packages`, `learning_settings`.
+APIs / Routes: `/api/bootstrap`, `/api/providers`, `/api/provider`, `/api/catalog`, `/api/catalog/{catalogItem}`, `/api/instances`, `/api/emergency-state`, SPA routes `/`, `/providers/*`, `/catalog/*`, `/offline/*`, `/emergency/*`, `/admin/*`.
+Offline Behavior: Local registry and app shell are node-local; actual course availability depends on the configured provider/instance/package.
+Sync Behavior: Full LMS database sync is not confirmed; implementation status keeps Moodle/provider sync decisions open.
 Related PBB Apps: Landing, Account, Library, core emergency apps through emergency-safe policy.
-Evidence: `learning\docs\PBB_LEARNING_DEVELOPMENT_PROPOSAL_UPDATED.md`.
+Evidence: `learning\routes\web.php`; `learning\database\migrations`; `learning\docs\PBB_LEARNING_V1_IMPLEMENTATION_STATUS.md`.
 
 ### LMS Adapter Layer
 
-Purpose: Support Moodle first while keeping the architecture LMS-agnostic for Canvas, Open edX, external links, static packages, and future adapters.
-Main Code: No implementation found.
-Database Tables: Proposed platform/instance/server/package/job tables.
-APIs / Routes: Proposed admin/API route structures.
+Purpose: Keep provider/runtime handling platform-neutral while allowing Moodle and other providers to be added behind adapters.
+Main Code: `app\Learning\Adapters\PlatformAdapterRegistry.php`, `PlatformAdapter.php`, `MetadataAdapter.php`; admin/provider routes.
+Database Tables: `learning_platform_types`, `learning_servers`, `learning_instances`, `learning_instance_jobs`, `learning_instance_health_checks`.
+APIs / Routes: Provider/catalog/instance APIs and admin `platform toggle`, `instance probe`, diagnostics, and CRUD endpoints in `routes\web.php`.
 Offline Behavior: Depends on local LMS/content instance availability.
-Sync Behavior: No deep Moodle DB sync in V1.
+Sync Behavior: Deep Moodle DB sync is not confirmed; implementation status lists provider/catalog details and Moodle sync decisions as remaining work.
 Related PBB Apps: Kit Setup, Landing, Account.
-Evidence: Learning proposal.
+Evidence: `learning\routes\web.php`; `learning\app\Learning\Adapters`; `learning\docs\PBB_LEARNING_V1_IMPLEMENTATION_STATUS.md`.
 
 ### PBB Library Reference Provider
 
 Purpose: Integrate Library as a research/reference provider, not as an LMS.
-Main Code: No implementation found.
-Database Tables: Proposed Learning-side provider/reference/link tables.
-APIs / Routes: Proposed direct launch, integrated search, contextual research, and citation/resource calls.
+Main Code: Library integration is documented; focused Learning scan did not confirm a complete dedicated Library adapter implementation.
+Database Tables: Unknown / Not confirmed from code.
+APIs / Routes: Unknown / Not confirmed from Learning code; Library Node exposes search/resource/collection/citation APIs.
 Offline Behavior: Learning should continue if Library is unavailable and show a graceful unavailable state.
 Sync Behavior: Learning does not participate in Library release updates.
 Related PBB Apps: PBB Library Node/Cloud, Kit Setup, Landing.
-Evidence: `learning\docs\PBB_LEARNING_PBB_LIBRARY_INTEGRATION_ADDENDUM.md`.
+Evidence: `learning\docs\PBB_LEARNING_PBB_LIBRARY_INTEGRATION_ADDENDUM.md`; `library\node\routes\api.php`.
 
 ### 6. Database Schema Summary
 
-No implemented database usage found / Not confirmed from code.
+Learning uses a Laravel/MySQL schema. The focused scan confirmed these migration-backed areas:
 
-Proposal documents suggest tables for providers, platforms, instances, servers, catalog items, packages, jobs, health checks, emergency policies, Library reference providers, Library resource links, integration health, and audit logs.
+| Table | Purpose | Important Columns | Relationships / Notes |
+|---|---|---|---|
+| `users` | Local Learning users linked to Account/local auth | account identity, role/status fields | Account app-admin and active-user middleware depend on local user rows |
+| `learning_providers` | Learning content/provider registry | provider identity, status/config fields | Parent for platform/instance/catalog records |
+| `learning_platform_types` | LMS/platform type catalog | adapter/platform metadata | Used by provider/instance management |
+| `learning_servers` | Learning/LMS server registry | server URL/status/config | Parent/host for instances |
+| `learning_instances` | Local/external learning instance registry | provider/server/platform references, availability/status | Health checks and catalog items attach here |
+| `learning_catalog_items` | Learning catalog entries | title/metadata/provider/instance references | Public/admin catalog APIs |
+| `learning_collections` | Catalog collection grouping | collection metadata | Linked to items through collection-item table |
+| `learning_collection_items` | Collection membership | collection and catalog item references | Ordered/grouped catalog entries |
+| `learning_packages` | Local/static package metadata | package/version/storage/status fields | Offline package support foundation |
+| `learning_instance_jobs` | Instance job tracking | instance/job/status fields | Background/provisioning-style work tracking |
+| `learning_instance_health_checks` | Instance availability telemetry | instance/status/latency/timestamps | Admin diagnostics/probe behavior |
+| `learning_audit_events` | Audit records | actor/action/context | Sensitive admin/provider changes |
+| `learning_settings` | Runtime settings | key/value/config fields | Admin settings/emergency behavior |
+| `sessions`, `jobs`, `cache` | Laravel infrastructure | framework fields | Database session/cache/queue support |
 
 ```text
 learning_providers
   └── learning_instances
         ├── learning_catalog_items
         ├── learning_packages
-        └── learning_jobs
+        ├── learning_instance_jobs
+        └── learning_instance_health_checks
 
-learning_reference_providers
-  └── course_to_library_reference_links
+learning_collections
+  └── learning_collection_items
+        └── learning_catalog_items
+
+users
+  └── learning_audit_events
 ```
 
 ### 7. API and Route Inventory
 
-No implemented routes found.
-
 | Method | Path / Endpoint | Purpose | Auth | Handler / File | Notes |
 |---|---|---|---|---|---|
-| GET | `/` | Proposed learning home | Public | No implementation found | Proposal |
-| GET | `/providers` | Proposed providers page | Public | No implementation found | Proposal |
-| GET | `/catalog` | Proposed learning catalog | Public | No implementation found | Proposal |
-| GET | `/offline` | Proposed offline-available learning | Public | No implementation found | Proposal |
-| GET | `/emergency` | Proposed emergency/prioritized learning | Public | No implementation found | Proposal |
-| GET | `/research` | Proposed Library research entry | Public | No implementation found | Addendum |
-| Admin/API routes | `/admin/*`, `/api/*` | Proposed provider/platform/instance/package/health/job management | Account/admin | No implementation found | Proposal |
+| GET | `/health/live`, `/health/ready` | Liveness/readiness | Public | `routes\web.php` | Runtime health |
+| GET | `/auth/account`, `/auth/account/callback`, `/auth/logout` | Account SSO login/callback/logout | Browser/Account | `routes\web.php` | Account envs in `.env.example` |
+| POST | `/auth/logout-local` | Local logout | Session | `routes\web.php` | Local session cleanup |
+| GET | `/api/bootstrap` | App bootstrap | Auth/active-user group | `routes\web.php` | User/app state |
+| GET | `/api/health`, `/api/ready` | API health/readiness | Auth/active-user group | `routes\web.php` | Local health |
+| GET | `/api/providers`, `/api/provider`, `/api/catalog`, `/api/catalog/{catalogItem}`, `/api/instances` | Learning registry/catalog APIs | Auth/active-user group | `routes\web.php` | Provider/catalog/instance surface |
+| GET | `/api/emergency-state` | Emergency learning state | Auth/active-user group | `routes\web.php` | Emergency-safe behavior foundation |
+| GET | `/api/user`, `/api/csrf`, `/api/session/ping` | Session/user support | Auth/active-user group | `routes\web.php` | Account/local session |
+| GET/POST/PATCH/DELETE | `/api/admin/*` | Diagnostics, settings, platform toggle, instance probe, resource CRUD | Admin middleware | `routes\web.php` | Admin surface |
+| GET | `/learning.json` | App metadata | Public | `routes\web.php` | Landing/registry style metadata |
+| GET | `/api/v1` | API docs/OpenAPI entry | Public/auth not fully confirmed | `routes\web.php` | Docs route |
+| GET | `/`, `/providers/{path?}`, `/catalog/{path?}`, `/offline/{path?}`, `/emergency/{path?}`, `/admin/{path?}` | SPA pages | Public shell/session behavior | `routes\web.php` | Frontend app routes |
+| GET/POST/PATCH/DELETE | `/api/account-admin/*` | Account app-admin user sync and role/status operations | `account.admin` middleware | `routes\api.php` | Machine provisioning bridge |
 
 ### 8. Data Flow and Operational Flow
 
 ```text
 User
 -> learning.pbb.ph
--> Learning catalog/provider/instance registry
+-> Account SSO or local session
+-> Learning provider/catalog/instance registry
 -> local LMS/content instance or external LMS link
 -> optional Research Library action
--> PBB Library Node search/resource/citation API
--> return to LMS/course workflow
+-> PBB Library Node search/resource/citation API when adapter is implemented/enabled
 ```
 
 ### 9. Offline-First Behavior
 
-Learning is proposed as local-node-first. Local catalog browsing, provider pages, local/offline availability labels, links to local LMS/content instances, diagnostics, and emergency filtering should work locally. External partner LMS links require internet or reachable partner infrastructure. Learning workloads must be throttled/disabled if they risk core emergency apps.
+Learning is local-node-first for the app shell, local registry data, admin diagnostics, local/offline availability labels, and links to node-local LMS/content instances. External partner LMS links require internet or reachable partner infrastructure. Heavy learning workloads still need emergency-safe controls so they do not degrade core emergency apps. No complete Library release participation or conflict-resolution logic was confirmed.
 
 ### 10. Integration with Other PBB Apps
 
 | Integration | Direction | Protocol / Method | Purpose | Code Evidence |
 |---|---|---|---|---|
-| Learning -> PBB Library Node | Proposed local API/reference adapter | Search/resources/citations/collections | Research Library | Learning addendum |
-| Learning -> PBB Account | Proposed SSO/preferred identity | Portal/admin authentication, future `pbb_user_id` support | Identity | Learning proposal |
-| Learning -> PBB Landing | Proposed registration metadata | Launcher/catalog visibility | App discovery | Learning proposal/addendum |
-| Kit Setup -> Learning/Library | Proposed install/config/smoke tests | Configure Learning-Library trust and Library URL/token | Commissioning | Learning addendum |
-| Learning -> Moodle/external LMS | Proposed adapter/link/health check | Course access and local/external LMS management | Learning runtime | Learning proposal |
+| Learning -> PBB Account | Browser SSO and app-admin API | Login/logout and user provisioning/status/role sync | Identity | `learning\routes\web.php`; `learning\routes\api.php`; `.env.example` |
+| Learning -> PBB Realtime | Configured admission URL | Realtime admission integration point | Shared realtime service | `.env.example` |
+| Learning -> Hotline | Configured base URL | Emergency-context integration point | Emergency-safe learning behavior | `.env.example`; `routes\web.php` emergency-state route |
+| Learning -> PBB Library Node | Documented local reference-provider API; full adapter not confirmed in Learning code | Search/resources/citations/collections | Research Library | `learning\docs\PBB_LEARNING_PBB_LIBRARY_INTEGRATION_ADDENDUM.md`; Library Node routes |
+| Learning -> Moodle/external LMS | Adapter/health-check architecture | Course access and local/external LMS management | Learning runtime | `learning\app\Learning\Adapters`; `learning\database\migrations`; implementation status doc |
 
 ### 11. Deployment and Runtime Architecture
 
-No implementation found. Proposal suggests `https://learning.pbb.ph`, admin surface `/admin`, possible shared node deployment for low-risk content, dedicated LMS instances, and dedicated LMS machines for heavier workloads. V2/V3 propose Moodle provisioning, DNS/Apache/Technitium/Kit Setup integration, backups, diagnostics, and remote learning agents.
+Learning is a Laravel 12 app intended for local PBB node deployment at `https://learning.pbb.ph`. `.env.example` configures database sessions/cache/queues, encrypted sessions, `.pbb.ph` session domain, Account SSO, Account SDK URL, Realtime admission URL, Hotline base URL, and Helper theme. `composer.json` and `package.json` provide setup/dev/test/build scripts. Implementation-status docs confirm local HTTPS and production asset build were verified during earlier work. Kit/Data Prep installer wiring remains open/not confirmed from code.
 
 ### 12. Security and Privacy Notes
 
 | Risk | Severity | Evidence | Suggested Fix |
 |---|---|---|---|
-| Learning workload could degrade emergency apps | High | Learning emergency-safe design sections | Enforce emergency mode, resource limits, and dedicated learning machines for heavy LMS |
-| Institutional LMS records are sensitive | High | Proposal rejects full LMS DB sync | Keep grade/submission/enrollment records under institution/LMS authority |
-| Account/identity integration not implemented | Medium | Proposal only | Define Account SSO/admin roles before implementation |
+| Learning workload could degrade emergency apps | High | Learning emergency-safe design sections; emergency-state route | Enforce emergency mode, resource limits, and dedicated learning machines for heavy LMS |
+| Institutional LMS records are sensitive | High | Proposal rejects full LMS DB sync; provider/instance registry now exists | Keep grade/submission/enrollment records under institution/LMS authority |
+| Account client secret controls SSO | High | `PBB_ACCOUNT_CLIENT_SECRET` in `.env.example`; Account routes | Generate per-node/app secrets and do not commit real values |
 | Library credentials must be separated from Learning | High | Addendum security boundaries | Do not give Learning Library Cloud deployment credentials |
 | LMS admin credentials must not leak to Library | High | Addendum security boundaries | Keep LMS admin credentials inside Learning/adapter layer |
 
 ### 13. Realtime Communication
 
-No realtime functionality found / Not confirmed from code.
+Realtime admission URL is configured in `.env.example`, but no direct WebSocket room/event broadcasting flow was confirmed in the focused Learning code scan.
 
 ### 14. Mapping and Geolocation
 
@@ -3159,42 +3209,55 @@ No mapping/geolocation functionality found / Not confirmed from code.
 
 | Task | Schedule / Trigger | Purpose | Code Evidence |
 |---|---|---|---|
-| Health checks | Proposed | Check LMS/external/local availability | Learning proposal |
-| Provisioning jobs | Proposed V2/V3 | Moodle instance/server/package operations | Learning proposal |
-| Backup/diagnostic jobs | Proposed | LMS backups and diagnostics | Learning proposal |
-| Library integration smoke tests | Proposed | Verify Library health/search/citation | Learning addendum |
+| Health/readiness checks | HTTP/API trigger | Verify app and instance availability | `routes\web.php`; `learning_instance_health_checks` migration |
+| Instance probes | Admin trigger | Probe configured learning instance | `routes\web.php`; implementation status doc |
+| Queue jobs | Laravel database queue when configured | Framework/job tracking foundation | `.env.example`; `jobs` migration; `learning_instance_jobs` migration |
+| Diagnostics | Admin trigger | Inspect runtime/provider settings and health | `routes\web.php`; implementation status doc |
 
 ### 16. Configuration and Environment Variables
 
-No implemented config found.
-
 | Variable / Config | Purpose | Required | Default / Example | Related Module |
 |---|---|---|---|---|
-| `PBB_LIBRARY_BASE_URL` | Proposed local Library URL | If Library integration enabled | `https://library.pbb.ph` | Library adapter |
-| `PBB_LIBRARY_API_TOKEN` | Proposed app-scoped Library API token | If protected routes used | Masked | Library adapter |
-| Account SSO config | Proposed preferred identity | If Account enabled | Unknown / Not confirmed from code | Auth |
-| Moodle/external LMS settings | Proposed adapter config | Per provider/instance | Unknown / Not confirmed from code | LMS adapters |
+| `APP_URL` | Local app URL | Yes | `https://learning.pbb.ph` | Deployment |
+| `DB_DATABASE` | Learning database | Yes | `pbb_learning` | Persistence |
+| `SESSION_DRIVER` / `SESSION_ENCRYPT` / `SESSION_DOMAIN` | Session storage/encryption/domain | Yes | `database`, `true`, `.pbb.ph` | Auth/session |
+| `QUEUE_CONNECTION` | Queue backend | Yes if queue used | `database` | Jobs |
+| `PBB_LEARNING_VERSION` / `PBB_LEARNING_BUILD_ID` | Runtime version metadata | No | `1.0.0-dev`, `local-20260717` | Bootstrap/status |
+| `PBB_ACCOUNT_BASE_URL` | Account service URL | Yes if SSO enabled | `https://account.pbb.ph` | Auth |
+| `PBB_ACCOUNT_SSO_ENABLED` | Enable Account SSO | Yes | `true` | Auth |
+| `PBB_ACCOUNT_CLIENT_ID` | Account trusted client ID | Yes | `pbb-learning` | Auth |
+| `PBB_ACCOUNT_CLIENT_SECRET` | Account client secret | Yes for SSO | Masked | Auth |
+| `PBB_ACCOUNT_SDK_URL` | Account SDK URL | No | Example URL in `.env.example` | Frontend/session |
+| `PBB_REALTIME_ADMISSION_URL` | Realtime admission endpoint | If realtime used | Example URL in `.env.example` | Realtime |
+| `PBB_HOTLINE_BASE_URL` | Hotline base URL | If emergency integration used | Example URL in `.env.example` | Emergency context |
+| `PBB_HELPER_THEME` | Helper/UI theme | No | `dark-slate` | Frontend |
 
 ### 17. Known Technical Debt and Gaps
 
 | Area | Issue | Evidence | Recommended Next Step |
 |---|---|---|---|
-| Implementation | Only proposal docs found | Folder scan | Scaffold app or create contract docs first |
-| LMS adapter boundary | Moodle-first but LMS-agnostic design is not implemented | Learning proposal | Define platform-neutral schema/routes before Moodle-specific work |
-| Account integration | Preferred identity only proposed | Learning proposal | Reuse Account SDK/conventions from Chat/Hotline/Support/etc. |
-| Library adapter | Addendum proposes adapter/API but no code | Learning addendum | Implement direct link and health check before integrated search |
-| Emergency mode | Policy proposed but not wired to node state | Learning proposal | Define shared emergency/node-state signal |
+| V1 incomplete | Implementation status lists many open items and says it is not final release approval | `docs\PBB_LEARNING_V1_IMPLEMENTATION_STATUS.md` | Finish/admin-review remaining checklist before deployment |
+| LMS adapter depth | Moodle/provider sync decision remains open | Implementation status doc | Decide V1 adapter behavior and persistence boundaries |
+| Library adapter | Addendum exists and Library Node APIs exist, but full Learning-side adapter not confirmed | Learning addendum; focused route scan | Implement/verify direct Library calls and unavailable-state tests |
+| Kit/Data Prep | Installer/provisioning not confirmed | Implementation status doc | Add Kit Setup package metadata, Data Prep, and smoke checks |
+| Admin editing workflows | Remaining work in implementation status | Implementation status doc | Complete provider/catalog/admin editing flows |
 
 ### 18. Testing Status
 
-No test framework or executable tests found. Proposal documents call for Learning catalog, provider/instance, health, emergency mode, LMS adapter, Library integration, and unavailable-state tests.
+Learning has PHPUnit tests and npm/Vite tooling. The implementation-status doc reports a prior verification of Laravel 12.64.0 on PHP 8.2.29, `migrate:fresh --seed`, PHPUnit with 18 tests / 117 assertions passing, Vite build, and Playwright fallback checks. These tests were not rerun during this documentation update.
 
 ### 19. Evidence Summary
 
 Evidence:
 - `C:\wamp64\www\pbb\learning\docs\PBB_LEARNING_DEVELOPMENT_PROPOSAL_UPDATED.md`
 - `C:\wamp64\www\pbb\learning\docs\PBB_LEARNING_PBB_LIBRARY_INTEGRATION_ADDENDUM.md`
-- `C:\wamp64\www\pbb\library\docs\PBB_LIBRARY_DEVELOPMENT_PROPOSAL.md`
+- `C:\wamp64\www\pbb\learning\composer.json`
+- `C:\wamp64\www\pbb\learning\package.json`
+- `C:\wamp64\www\pbb\learning\.env.example`
+- `C:\wamp64\www\pbb\learning\routes\web.php`
+- `C:\wamp64\www\pbb\learning\routes\api.php`
+- `C:\wamp64\www\pbb\learning\database\migrations`
+- `C:\wamp64\www\pbb\learning\docs\PBB_LEARNING_V1_IMPLEMENTATION_STATUS.md`
 
 ---
 
@@ -3202,7 +3265,7 @@ Evidence:
 
 ### 1. Executive Technical Summary
 
-PBB Natalium is a local health-center foundation app for patient identity/registry workflows, practitioner and capability management, patient profile applications, document intake/review, patient access grants, and audit events. It runs as a custom PHP/Composer app on a local PBB node with its own MySQL schema. Code confirms PBB Account SSO integration hooks, Account-admin user sync, local user/capability enforcement, local document storage, and use of Relay `public/hub.json` as node context. Chatviewer messages from PBB Natalium describe the broader product direction as barangay-level continuity-of-care health workflows; those broader programs are planning/design context unless implemented in code.
+PBB Natalium is now implemented as a Laravel 12 local health app for barangay/health-center continuity-of-care workflows. Code confirms Account SSO/logout, Account-admin sync, authenticated app surfaces, patient registry/profile applications, health program enrollments, care workflows, maternal care, child health, birth-defect surveillance, referrals, prescriptions, citizen/staff/management surfaces, reporting/export, operations backup/restore/export, security review/live-test APIs, and runtime settings. It is local-node oriented with MySQL `pbb_natalium`, local document/backup paths, and Relay `hub.json` URL configuration for node context.
 
 ### 2. Repository Overview
 
@@ -3210,190 +3273,178 @@ PBB Natalium is a local health-center foundation app for patient identity/regist
 |---|---|
 | App Name | PBB Natalium |
 | Local Path | `C:\wamp64\www\pbb\natalium` |
-| Main Language | PHP |
-| Main Framework | Custom PHP app using Composer PSR-4 autoloading |
-| Frontend Framework | Unknown / Not confirmed from code |
-| Backend Framework | Custom PHP router/container/controllers; not Laravel |
-| Database | MySQL `pbb_natalium` via `database\schema.sql` |
+| Main Language | PHP, JavaScript |
+| Main Framework | Laravel 12 |
+| Frontend Framework | Vite/Tailwind/Helper UI style assets |
+| Backend Framework | Laravel |
+| Database | MySQL `pbb_natalium` through Laravel migrations |
 | Realtime Technology | No realtime functionality found / Not confirmed from code |
-| Queue / Worker System | No queue/worker system found / Not confirmed from code |
-| Package Manager | Composer |
-| Runtime Requirements | PHP; config references `C:\wamp64\bin\php\php8.2.29\php.exe`; MySQL |
-| Main Entry Points | `public\index.php`, `routes\api.php`, `bin\migrate.php`, `bin\test.php` |
-| Important Config Files | `composer.json`, `config\app.php`, `database\schema.sql` |
-| Important Environment Variables | `NATALIUM_ACCOUNT_CLIENT_SECRET`, `NATALIUM_ACCOUNT_REDIRECT_URI`, `NATALIUM_ACCOUNT_POST_LOGOUT_REDIRECT_URI`, `NATALIUM_ACCOUNT_ADMIN_API_ENABLED`, `NATALIUM_ACCOUNT_ADMIN_API_TOKEN`, `NATALIUM_ACCOUNT_ADMIN_API_CLIENT` |
+| Queue / Worker System | Laravel `sync` queue by default in `.env.example`; background queue workers not confirmed |
+| Package Manager | Composer, npm |
+| Runtime Requirements | PHP `^8.2`, Node/npm for assets, MySQL |
+| Main Entry Points | `artisan`, `routes\web.php`, `routes\api.php`, `public\index.php`, Vite assets |
+| Important Config Files | `composer.json`, `package.json`, `.env.example`, `config\natalium.php`, `routes\web.php`, `routes\api.php`, `database\migrations` |
+| Important Environment Variables | `PBB_ACCOUNT_BASE_URL`, `PBB_ACCOUNT_CLIENT_ID`, `PBB_ACCOUNT_CLIENT_SECRET`, `PBB_ACCOUNT_REDIRECT_URI`, `PBB_ACCOUNT_POST_LOGOUT_REDIRECT_URI`, `PBB_CA_BUNDLE`, `NATALIUM_RELAY_HUB_JSON_URL`, `NATALIUM_DOCUMENTS_PATH`, `NATALIUM_MAX_UPLOAD_BYTES`, `NATALIUM_BACKUP_PATH`, `NATALIUM_RESTORE_ENABLED` |
 | Deployment Target | Local PBB node health-center/barangay service |
 
 ### 3. App Purpose and PBB Role
 
-Natalium solves local health-center identity and patient registry workflow needs. Code confirms local practitioners, users, patient applications, patient records, contacts, addresses, relationships, access grants, documents, audit events, and search logs. It depends on PBB Account for SSO/admin sync and reads local Relay `public\hub.json` for node context. Other PBB apps do not currently depend on Natalium from reviewed code. If Natalium is unavailable, emergency Hotline/Relay/SITREP flows are not directly blocked, but local health registry, profile application, document review, and practitioner access workflows are unavailable.
+Natalium solves local health-center record and workflow needs on a PBB node. Current code confirms patient identity/profile applications, duplicate gate behavior, program enrollments, appointments, queue/tasks/encounters, maternal episode and visit workflows, child-health visits/screening, birth-defect cases/evidence/risk factors, referrals, prescriptions and medicine catalog, citizen/staff document/access-request surfaces, reporting snapshots/exports, and operations backup/restore/export APIs. It depends on PBB Account for SSO/app-admin provisioning. Other selected emergency apps do not currently depend on Natalium from reviewed code. If Natalium is unavailable, emergency Hotline/Relay/SITREP flows are not directly blocked, but local health registry and care workflows are unavailable.
 
 ### 4. User Roles and Permissions
 
 | Role | Purpose | Capabilities | Code Evidence |
 |---|---|---|---|
-| local user | App-local user row linked to Account SSO identity | Login/session identity, status, role, capability grants | `routes\api.php`; `database\schema.sql`; `bin\test.php` |
-| admin / user manager | Manage local users and capabilities | View/update users; grant/revoke capabilities | `routes\api.php`; `bin\test.php` |
-| practitioner | Health worker profile | Practitioner profile and capability grants | `routes\api.php`; `database\schema.sql` |
-| patient / applicant | Patient profile subject or applicant | Submit profile applications, requirements, access grant requests | `routes\api.php`; `database\schema.sql` |
-| Account admin API client | Server-to-server sync client | Sync Account users into Natalium when enabled and token-authenticated | `routes\api.php`; `config\app.php`; `bin\test.php` |
+| authenticated local user | App-local user linked to Account identity | Access authenticated app/API surfaces according to local roles/capabilities | `natalium\routes\web.php`; `natalium\routes\api.php`; Account SSO tests |
+| practitioner | Health worker surface | Practitioner dashboard/workflows, appointments, queue/tasks, encounters, maternal/child health workflows | `natalium\routes\web.php`; `natalium\routes\api.php`; feature tests |
+| citizen | Citizen/patient-facing surface | Citizen profile/document/access/referral/prescription flows exposed through citizen APIs | `natalium\routes\web.php`; `natalium\routes\api.php`; CitizenSurface tests |
+| management/admin | Administrative and management surface | Users, audit, operations, reports, runtime settings, disposition reasons, security review/live-test APIs | `natalium\routes\web.php`; `natalium\routes\api.php`; implementation checklist |
+| Account admin API client | Server-to-server sync client | Account-admin user sync/meta endpoints guarded by app-admin middleware | `natalium\routes\api.php`; `.env.example`; AccountSsoAndAdminSync tests |
 
 ### 5. Main Features and Modules
 
 ### Account SSO And Local Session
 
-Purpose: Redirect users to PBB Account, process callback, create/update app-local identity, and logout through Account.
-Main Code: `routes\api.php`; Account SSO classes under `app`.
-Database Tables: `users`, `user_capabilities`, `audit_events`.
-APIs / Routes: `GET /auth/login`, `GET /auth/callback`, `GET|POST /auth/logout`, `GET /api/session/me`.
+Purpose: Redirect users to PBB Account, process callback, create/update app-local identity, logout through Account, and support Account app-admin synchronization.
+Main Code: `routes\web.php`; `routes\api.php`; Account SDK under `vendor-local\pbb-account-sdk`.
+Database Tables: `users`, sessions/audit-related tables.
+APIs / Routes: `/auth/account`, `/auth/account/callback`, `/auth/logout`, `/auth/logout-local`, `/api/account-admin/*`, `/api/session`, `/api/user`, `/api/capabilities`.
 Offline Behavior: Requires the configured Account base URL for new SSO login. Existing app-local session behavior beyond code paths was not fully confirmed.
 Sync Behavior: Account-admin user sync endpoint exists.
 Related PBB Apps: PBB Account.
-Evidence: `config\app.php`; `routes\api.php`; `bin\test.php`.
+Evidence: `natalium\routes\web.php`; `natalium\routes\api.php`; `.env.example`; `tests\Feature\AccountSsoAndAdminSyncTest.php`.
 
 ### User, Capability, And Practitioner Management
 
-Purpose: Manage local users, user capabilities, practitioner profiles, and practitioner capabilities.
-Main Code: `routes\api.php`; controllers/services under `app`.
-Database Tables: `users`, `user_capabilities`, `practitioner_profiles`, `practitioner_capabilities`.
-APIs / Routes: `GET /api/users`, `GET /api/users/{id}`, `PATCH /api/users/{id}`, `POST /api/users/{id}/capabilities`, `DELETE /api/users/{id}/capabilities/{code}`, `GET|POST /api/practitioners`, `PATCH /api/practitioners/{id}`, practitioner capability grant/revoke routes.
+Purpose: Manage local users, access requests, user roles/capabilities, staff document requests, and operational access gates.
+Main Code: `routes\web.php`; `routes\api.php`; controllers/services under `app`.
+Database Tables: `users` and access/capability/audit-related migrations.
+APIs / Routes: `/api/users`, `/api/staff/access-requests`, `/api/staff/document-requests`, `/api/permission-matrix`, `/api/security-review`.
 Offline Behavior: Local database-backed once app is installed.
 Sync Behavior: Account user sync exists; no broader upstream sync found.
 Related PBB Apps: PBB Account.
-Evidence: `routes\api.php`; `database\schema.sql`; `bin\test.php`.
+Evidence: `natalium\routes\api.php`; `natalium\database\migrations`; feature tests.
 
 ### Patient Profile Applications And Registry
 
-Purpose: Accept/review patient profile applications and create patient registry records with contacts, addresses, and relationships.
-Main Code: `routes\api.php`; application/review services under `app`.
-Database Tables: `patient_profile_applications`, `patient_profile_application_requirements`, `patients`, `patient_contacts`, `patient_addresses`, `patient_relationships`.
-APIs / Routes: `GET /api/patients/search`; patient profile application create/submit/review requirement/approve routes.
+Purpose: Accept/review patient profile applications, enforce duplicate gates/identity requirements, and maintain patient registry data.
+Main Code: `routes\api.php`; patient registry controllers/services/models under `app`.
+Database Tables: Patient registry/profile-application migrations, enrollment number backfill, duplicate gate and identity requirement migrations.
+APIs / Routes: `/api/patients`, `/api/patients/{patient}`, `/api/profile-applications`, `/api/profile-applications/duplicate-check`, `/api/profile-applications/{application}/section-review`, `/api/disposition-reasons`.
 Offline Behavior: Local database-backed.
 Sync Behavior: No Relay/upstream sync found.
 Related PBB Apps: Unknown / Not confirmed from code.
-Evidence: `routes\api.php`; `database\schema.sql`; `bin\test.php`.
+Evidence: `natalium\routes\api.php`; `natalium\database\migrations`; PatientRegistryFoundation and related tests.
 
-### Documents, Access Grants, Audit, And Search Logs
+### Health Programs, Care Workflow, And Clinical Modules
 
-Purpose: Store document metadata/review events, patient access grants, audit events, and patient search logs.
-Main Code: `routes\api.php`; document/access/audit services under `app`.
-Database Tables: `documents`, `document_review_events`, `patient_access_grants`, `audit_events`, `patient_search_logs`.
-APIs / Routes: patient access grant request/approve routes; document review behavior covered by tests.
-Offline Behavior: Local database and local `storage\documents`.
+Purpose: Support health programs, appointments, queue/tasks, encounters, maternal care, child health, birth-defect surveillance, referrals, prescriptions, reports, exports, and citizen/staff surfaces.
+Main Code: `routes\api.php`; controllers/services/models under `app`; Vite UI surfaces.
+Database Tables: Health program, enrollment, care workflow, maternal, child health, birth-defect, referral, prescription, reporting/export, and document migrations.
+APIs / Routes: `/api/health-programs`, `/api/program-enrollments`, `/api/appointments`, `/api/queue`, `/api/tasks`, `/api/encounters`, maternal/child/birth-defect/referral/prescription/report/citizen/staff routes in `routes\api.php`.
+Offline Behavior: Local database/document paths support LAN/local node operation after login/session setup.
 Sync Behavior: No Relay/upstream sync found.
 Related PBB Apps: Unknown / Not confirmed from code.
-Evidence: `database\schema.sql`; `config\app.php`; `bin\test.php`.
+Evidence: `natalium\routes\api.php`; `natalium\database\migrations`; `docs\PBB_NATALIUM_IMPLEMENTATION_CHECKLIST.md`; feature tests.
 
 ### 6. Database Schema Summary
 
 | Table | Purpose | Important Columns | Relationships / Notes |
 |---|---|---|---|
-| `settings` | Local app settings | key/value style fields | Exact fields from `schema.sql` |
-| `users` | Local users linked to Account identity | Account/user identity, role/status fields | Capability source for guards/tests |
-| `user_capabilities` | Capability grants | user reference, capability code | Used by management guards |
-| `practitioner_profiles` | Practitioner records | user reference, profile fields | Linked to local users |
-| `practitioner_capabilities` | Practitioner capability grants | practitioner reference, capability code | Health-worker specific capabilities |
-| `patient_profile_applications` | Patient profile application workflow | applicant/patient fields, status | Duplicate and requirement gates covered by tests |
-| `patient_profile_application_requirements` | Application requirement tracking | application reference, requirement/status | Gates approval |
-| `patients` | Patient registry | identity/demographic fields | Root patient record |
-| `patient_contacts` | Patient contact details | patient reference, contact fields | Patient child table |
-| `patient_addresses` | Patient addresses | patient reference, address/location fields | Latitude/longitude presence not fully confirmed from docs excerpt; see schema |
-| `patient_relationships` | Patient relationships | patient references/relationship fields | Patient child/cross-reference table |
-| `patient_access_grants` | Access permission workflow | patient/user/status fields | Request/approve flow |
-| `documents` | Document metadata/storage references | document owner, storage reference, review status | Tests confirm storage path hiding behavior |
-| `audit_events` | Audit trail | actor/action/metadata fields | Used by sensitive workflows |
-| `patient_search_logs` | Search audit | user/search fields | Records patient search activity |
-| `document_review_events` | Document review audit | document reference/reviewer/status | Supports review history |
+| `users`, `sessions`, `jobs`, `cache` | Laravel/local identity infrastructure | framework and local identity fields | Account SSO/app-admin support |
+| Patient registry/profile application tables | Patient intake, duplicate gates, identity requirements, applications, patient records | patient identity/application/status fields | Migrations and tests cover profile application and duplicate handling |
+| Health program/enrollment tables | Program definitions and patient enrollment | program, patient, status/enrollment fields | Health Program Engine milestone |
+| Care workflow tables | Appointments, queue, tasks, encounters | patient/staff/status/schedule fields | Care Workflow milestone |
+| Maternal care tables | Maternal episode, visit, delivery, postpartum records | episode/visit/outcome fields | Maternal Care milestone |
+| Child health tables | Child visits and screening | child/patient visit and screening fields | Child Health milestone |
+| Birth-defect surveillance tables | Cases, findings, evidence, risk factors | case/finding/evidence/risk fields | Birth Defects milestone |
+| Referral/prescription/medicine tables | Referrals, prescription packets, medicine catalog | patient/provider/medicine/status fields | Referrals/Prescriptions milestone |
+| Citizen/staff document and access tables | Citizen surface, staff access requests, document requests | requester/status/document metadata | Citizen surface and hardening milestones |
+| Reporting/export/audit/settings tables | Dashboards, snapshots, export runs, audit, runtime settings | run/status/snapshot/audit/config fields | Reporting/export and operations APIs |
 
 ```text
 users
-  ├── user_capabilities
-  └── practitioner_profiles
-        └── practitioner_capabilities
-
-patient_profile_applications
-  └── patient_profile_application_requirements
+  ├── sessions
+  └── audit/access records
 
 patients
-  ├── patient_contacts
-  ├── patient_addresses
-  ├── patient_relationships
-  ├── patient_access_grants
-  └── documents
-        └── document_review_events
+  ├── profile applications / identity requirements
+  ├── program enrollments
+  ├── appointments / queue / tasks / encounters
+  ├── maternal episodes / visits / delivery / postpartum
+  ├── child health visits / screening
+  ├── birth-defect cases / findings / evidence / risk factors
+  ├── referrals / prescriptions
+  └── citizen/staff document and access requests
 
-audit_events
-patient_search_logs
+reports / snapshots / exports
+runtime settings / audit events
 ```
 
 ### 7. API and Route Inventory
 
 | Method | Path / Endpoint | Purpose | Auth | Handler / File | Notes |
 |---|---|---|---|---|---|
-| GET | `/auth/login` | Start Account SSO | Public start | `routes\api.php` | Redirects to Account authorize URL |
-| GET | `/auth/callback` | Complete SSO callback | Account callback state | `routes\api.php` | Creates local session/user link |
-| GET/POST | `/auth/logout` | Logout via Account | Session | `routes\api.php` | Redirects to Account logout |
-| GET | `/api/node-context` | Return local node context | Session/guard not fully confirmed | `routes\api.php` | Uses configured Relay `hub.json` path |
-| GET | `/api/session/me` | Current user/session | Session | `routes\api.php` | Local app identity |
-| POST | `/api/account-admin/users/sync` | Sync Account users | Account admin token/client guard | `routes\api.php` | Disabled by default in config/tests |
-| GET | `/api/users` | List users | Capability guard | `routes\api.php` | Capability behavior covered by tests |
-| GET | `/api/users/{id}` | User details | Capability guard | `routes\api.php` |  |
-| PATCH | `/api/users/{id}` | Update user | Capability guard | `routes\api.php` | Role/status update requires `users.manage` per tests |
-| POST | `/api/users/{id}/capabilities` | Grant user capability | Capability guard | `routes\api.php` |  |
-| DELETE | `/api/users/{id}/capabilities/{code}` | Revoke user capability | Capability guard | `routes\api.php` |  |
-| GET/POST | `/api/practitioners` | List/create practitioners | Capability guard | `routes\api.php` |  |
-| PATCH | `/api/practitioners/{id}` | Update practitioner | Capability guard | `routes\api.php` |  |
-| POST/DELETE | Practitioner capability routes | Grant/revoke practitioner capabilities | Capability guard | `routes\api.php` | Exact path variants in route file |
-| GET | `/api/patients/search` | Search patients | Capability/session guard | `routes\api.php` | Search log table exists |
-| POST/PATCH | Patient application routes | Create/submit/review/approve applications | Capability/session guard | `routes\api.php` | Duplicate/requirements gates tested |
-| POST/PATCH | Patient access grant routes | Request/approve access | Capability/session guard | `routes\api.php` |  |
+| GET | `/auth/account`, `/auth/account/callback`, `/auth/logout`, `/auth/account/redirect` | Account SSO/login/logout aliases | Browser/Account | `routes\web.php` | Account integration |
+| POST | `/auth/logout-local` | Local logout | Session | `routes\web.php` | Local session cleanup |
+| GET | `/dashboard`, `/patients`, `/appointments`, `/programs`, `/queue`, `/referrals`, `/prescriptions`, `/reports`, `/users`, `/audit`, `/operations` | Authenticated app surfaces | Auth and active access | `routes\web.php` | Main operator UI |
+| GET | `/practitioner`, `/citizen`, `/management` | Role-specific app surfaces | Auth and active access | `routes\web.php` | Surface-level routing |
+| GET | `/api/bootstrap`, `/api/session`, `/api/user`, `/api/capabilities`, `/api/runtime-settings` | App/session/runtime bootstrap | Auth and active user | `routes\api.php` | Local app state |
+| GET | `/api/node-context` | Node/hub context | Public/API | `routes\api.php` | Uses `NATALIUM_RELAY_HUB_JSON_URL` |
+| GET/POST/PATCH/DELETE | `/api/account-admin/*` | Account admin sync/meta | `account-admin` middleware | `routes\api.php` | Machine provisioning bridge |
+| GET/POST/PATCH | `/api/profile-applications/*`, `/api/patients/*` | Patient registry/application workflow | Auth and active user | `routes\api.php` | Duplicate and disposition routes present |
+| GET/POST/PATCH | `/api/health-programs/*`, `/api/program-enrollments/*` | Program engine/enrollment | Auth and active user | `routes\api.php` | Health Program Engine |
+| GET/POST/PATCH | `/api/appointments/*`, `/api/queue/*`, `/api/tasks/*`, `/api/encounters/*` | Care workflow | Auth and active user | `routes\api.php` | Appointment/queue/task/encounter flow |
+| GET/POST/PATCH | Maternal, child-health, and birth-defect route groups | Clinical program workflows | Auth and active user | `routes\api.php` | Episode/visit/screening/case/evidence/risk routes |
+| GET/POST/PATCH | Referral, prescription, and medicine-catalog route groups | Referral/prescription packets | Auth and active user plus selected public packet routes | `routes\api.php` | Public packet endpoints also exist |
+| GET/POST | `/api/reports/*`, `/api/operations/*`, `/api/security-review`, `/api/live-test/*`, `/api/permission-matrix` | Reporting/export/operations/hardening | Auth and active user | `routes\api.php` | Backup/restore/export and readiness APIs |
 
 ### 8. Data Flow and Operational Flow
 
 ```text
 Browser
-  -> Natalium `/auth/login`
+  -> Natalium `/auth/account`
   -> PBB Account authorize/callback
   -> Natalium local `users`
   -> local session
-  -> user/capability/practitioner/patient/document APIs
+  -> patient/program/care/referral/reporting APIs
   -> MySQL `pbb_natalium`
-  -> `storage/documents` for document files/metadata
+  -> local document and backup storage when configured
 ```
 
 ```text
 Account admin client
-  -> `POST /api/account-admin/users/sync`
-  -> AccountAdminGuard token/client validation
+  -> Natalium `/api/account-admin/*`
+  -> account-admin middleware validation
   -> Natalium local `users`
-  -> audit/capability-protected local operations
+  -> local role/capability-protected health workflows
 ```
 
 ### 9. Offline-First Behavior
 
-Natalium is local database-backed and stores documents locally, so its registered workflows can operate on the node LAN after installation. New Account SSO login depends on the configured Account base URL and client settings. No Relay outbox, retry queue, conflict handling, service worker, or upstream health-data sync was found in code. Node context reads the local Relay `public\hub.json` file path.
+Natalium is local database-backed and uses local document/backup paths, so authenticated workflows can operate on the node LAN after installation. New Account SSO login depends on the configured Account base URL and client settings. No Relay outbox, retry queue, conflict handling, service worker, or upstream health-data sync for health records was confirmed in code. Node context is configured through `NATALIUM_RELAY_HUB_JSON_URL`.
 
 ### 10. Integration with Other PBB Apps
 
 | Integration | Direction | Protocol / Method | Purpose | Code Evidence |
 |---|---|---|---|---|
-| Natalium to PBB Account | Outbound browser/server SSO | Redirect/callback and token/client config | Central login and account claims | `config\app.php`; `routes\api.php`; `bin\test.php` |
-| PBB Account admin client to Natalium | Inbound HTTP | `POST /api/account-admin/users/sync` | Server-to-server local user sync | `routes\api.php`; `config\app.php`; `bin\test.php` |
-| Natalium to Relay hub JSON | Local file read | `../../relay/public/hub.json` | Node context | `config\app.php`; `routes\api.php` |
+| Natalium to PBB Account | Browser/server SSO | Redirect/callback/logout and client config | Central login and account claims | `natalium\routes\web.php`; `.env.example`; AccountSsoAndAdminSync tests |
+| PBB Account admin client to Natalium | Inbound HTTP | `/api/account-admin/*` | Server-to-server local user sync/provisioning | `natalium\routes\api.php`; `.env.example`; AccountSsoAndAdminSync tests |
+| Natalium to Relay hub JSON | HTTP URL config | `NATALIUM_RELAY_HUB_JSON_URL` | Node context | `.env.example`; `routes\api.php` |
 
 ### 11. Deployment and Runtime Architecture
 
-Natalium is a Composer PHP app intended for WAMP-style local deployment. `config\app.php` includes MySQL connection defaults, an app path to `database\schema.sql`, local `storage\documents`, and a hardcoded PHP binary path under WAMP PHP 8.2.29. `composer.json` provides `composer test` and `composer migrate` scripts through `bin\test.php` and `bin\migrate.php`. No Docker, PM2, Supervisor, systemd, Laravel scheduler, or queue worker files were confirmed.
+Natalium is a Laravel 12 app intended for WAMP/local node deployment at `https://natalium.pbb.ph`. `composer.json` requires PHP `^8.2`; `package.json` provides Vite build/dev assets. `.env.example` configures `pbb_natalium`, Laravel sync queue, Account SSO, Relay hub JSON URL, document storage, upload limits, backup path, and restore enablement. No Docker, PM2, Supervisor, or systemd files were confirmed in the focused scan.
 
 ### 12. Security and Privacy Notes
 
 | Risk | Severity | Evidence | Suggested Fix |
 |---|---|---|---|
-| Health/patient registry and document data are sensitive local records | High | `database\schema.sql`; `storage\documents` config | Define retention, backup, encryption-at-rest, and access/audit policy before live health deployment |
-| Account admin sync token controls user provisioning | High | `NATALIUM_ACCOUNT_ADMIN_API_TOKEN`; `AccountAdminGuard`; `bin\test.php` | Keep disabled by default, generate per-node secrets, rotate on compromise |
-| Account client secret is required for SSO | High | `NATALIUM_ACCOUNT_CLIENT_SECRET`; `config\app.php` | Store only in local env, never commit real values |
-| Local DB config uses root/empty password defaults | Medium | `config\app.php` | Use installer-generated DB credentials for shared deployments |
-| Document storage path must not leak to clients | Medium | Tests mention document review hides storage path | Keep tests and add download authorization/audit before broad use |
+| Health/patient registry, maternal/child, referral, prescription, and document data are sensitive local records | High | `natalium\database\migrations`; `natalium\routes\api.php`; implementation checklist | Define retention, backup, encryption-at-rest, document access, and audit policy before live health deployment |
+| Account client secret controls SSO | High | `PBB_ACCOUNT_CLIENT_SECRET` in `.env.example` | Generate per-node/app secret and never commit real values |
+| Restore operation can alter local health records | High | `NATALIUM_RESTORE_ENABLED=false` in `.env.example`; operations routes | Keep restore disabled by default and require explicit operator procedure |
+| Public referral/prescription packet routes expose selected health workflow data | High | `natalium\routes\api.php` public packet routes | Keep packet tokens opaque and audit access/expiry rules |
+| Local documents/backups require storage controls | High | `NATALIUM_DOCUMENTS_PATH`; `NATALIUM_BACKUP_PATH` | Store outside public web root and encrypt backups where feasible |
 
 ### 13. Realtime Communication
 
@@ -3401,52 +3452,62 @@ No realtime functionality found / Not confirmed from code.
 
 ### 14. Mapping and Geolocation
 
-Patient address storage exists. No map UI, MapServer integration, geocoding, routing, or offline map behavior was confirmed from the scanned Natalium files.
+Patient/location-specific mapping, MapServer integration, geocoding, routing, or offline map behavior was not confirmed from the focused Natalium scan.
 
 ### 15. Background Jobs, Schedulers, and Maintenance Tasks
 
 | Task | Schedule / Trigger | Purpose | Code Evidence |
 |---|---|---|---|
-| Database migration | Manual CLI | Apply `database\schema.sql` | `bin\migrate.php`; `composer.json` |
-| Test runner | Manual CLI | Run custom PHP tests | `bin\test.php`; `composer.json` |
+| Laravel migrations | Manual/deploy trigger | Create/update `pbb_natalium` schema | `database\migrations`; `composer.json` |
+| Tests | Manual trigger | PHPUnit feature tests and JS tests | `composer.json`; `package.json`; `tests` |
+| Backup/export | Operator/API trigger | Local operational backup/export | `routes\api.php`; `NATALIUM_BACKUP_PATH` |
+| Restore | Operator/API trigger when enabled | Restore local data | `routes\api.php`; `NATALIUM_RESTORE_ENABLED=false` |
 
 ### 16. Configuration and Environment Variables
 
 | Variable / Config | Purpose | Required | Default / Example | Related Module |
 |---|---|---|---|---|
-| `schema_path` | SQL schema path | Yes | `../database/schema.sql` | Migration |
-| `documents_path` | Local document storage path | Yes | `../storage/documents` | Documents |
-| `relay_hub_json_path` | Local node context source | Yes | `../../relay/public/hub.json` | Node context |
-| `account_base_url` | PBB Account base URL | Yes for SSO | `https://account.pbb.ph` | SSO |
-| `account_client_id` | SSO client ID | Yes for SSO | `pbb-natalium` | SSO |
-| `NATALIUM_ACCOUNT_CLIENT_SECRET` | SSO client secret | Yes for SSO | Masked | SSO |
-| `NATALIUM_ACCOUNT_ADMIN_API_ENABLED` | Enables admin sync API | No; default false | `false` | Account admin sync |
-| `NATALIUM_ACCOUNT_ADMIN_API_TOKEN` | Admin sync bearer token | Required if enabled | Masked | Account admin sync |
-| `DB_DATABASE` equivalent config | MySQL database | Yes | `pbb_natalium` | Persistence |
+| `APP_URL` | Local app URL | Yes | `https://natalium.pbb.ph` | Deployment |
+| `DB_DATABASE` | Natalium database | Yes | `pbb_natalium` | Persistence |
+| `SESSION_COOKIE` | App session cookie | Yes | `pbb_natalium_session` | Auth/session |
+| `QUEUE_CONNECTION` | Queue backend | Yes | `sync` | Jobs |
+| `PBB_ACCOUNT_BASE_URL` | PBB Account URL | Yes for SSO | `https://account.pbb.ph` | SSO |
+| `PBB_ACCOUNT_CLIENT_ID` | SSO client ID | Yes for SSO | `pbb-natalium` | SSO |
+| `PBB_ACCOUNT_CLIENT_SECRET` | SSO client secret | Yes for SSO | Masked | SSO |
+| `PBB_ACCOUNT_REDIRECT_URI` | Account callback URL | Yes | Example in `.env.example` | SSO |
+| `PBB_ACCOUNT_POST_LOGOUT_REDIRECT_URI` | Post-logout URL | Yes | Example in `.env.example` | SSO |
+| `PBB_CA_BUNDLE` | Local CA bundle path | If HTTPS trust needed | Example in `.env.example` | HTTP clients |
+| `NATALIUM_RELAY_HUB_JSON_URL` | Relay hub/node context source | Yes | `https://relay.pbb.ph/hub.json` | Node context |
+| `NATALIUM_DOCUMENTS_PATH` | Local documents path | Yes | Example in `.env.example` | Documents |
+| `NATALIUM_MAX_UPLOAD_BYTES` | Upload size cap | Yes | Example in `.env.example` | Documents |
+| `NATALIUM_BACKUP_PATH` | Backup storage path | Yes if backups used | Example in `.env.example` | Operations |
+| `NATALIUM_RESTORE_ENABLED` | Restore enablement | No | `false` | Operations |
 
 ### 17. Known Technical Debt and Gaps
 
 | Area | Issue | Evidence | Recommended Next Step |
 |---|---|---|---|
-| Clinical program engine | Broader health programs are documented/planned, but current reviewed routes focus on identity/registry | `docs\README.md`; `routes\api.php` | Keep program/maternal/child/referral docs marked planned until routes/schema exist |
+| Live deployment policy | Implementation checklist marks milestones complete but live health deployment still needs privacy/operator signoff | `docs\PBB_NATALIUM_IMPLEMENTATION_CHECKLIST.md`; migrations/routes | Publish deployment, retention, backup, and access-control guide |
 | Sync/offline conflict handling | No Relay outbox/upstream sync or conflict strategy found | file inventory; `routes\api.php` | Define whether health data remains node-local or syncs through Relay later |
-| Account dependency | New SSO login depends on Account service availability | `config\app.php`; `routes\api.php` | Define local/offline login fallback or operator procedure |
-| DB credentials | Root/empty local defaults in config | `config\app.php` | Move deployment values to env/installer-generated config |
+| Account dependency | New SSO login depends on Account service availability | `.env.example`; `routes\web.php` | Define local/offline login fallback or operator procedure |
+| Restore safety | Restore disabled by default, indicating risk-managed operation | `.env.example`; operations routes | Keep restore gated and document recovery procedure |
 
 ### 18. Testing Status
 
-Natalium has a custom PHP test runner via `composer test` / `php bin\test.php`. Tests cover SSO/local user linking, Account sync guard behavior, capability enforcement, user/practitioner management, patient application gates, and document review path hiding. Tests were inspected but not run during this documentation update.
+Natalium has PHPUnit feature tests and JavaScript tests. The tests cover Account SSO/admin sync, patient registry foundation, health program engine, care workflow, maternal care, child health and birth defects, referral/prescription workflows, runtime settings, operations hardening, citizen surface, reporting/export, and related behavior. Tests were inspected but not run during this documentation update.
 
 ### 19. Evidence Summary
 
 Evidence:
 - `C:\wamp64\www\pbb\natalium\composer.json`
-- `C:\wamp64\www\pbb\natalium\config\app.php`
+- `C:\wamp64\www\pbb\natalium\package.json`
+- `C:\wamp64\www\pbb\natalium\.env.example`
+- `C:\wamp64\www\pbb\natalium\config\natalium.php`
+- `C:\wamp64\www\pbb\natalium\routes\web.php`
 - `C:\wamp64\www\pbb\natalium\routes\api.php`
-- `C:\wamp64\www\pbb\natalium\database\schema.sql`
-- `C:\wamp64\www\pbb\natalium\docs\README.md`
-- `C:\wamp64\www\pbb\natalium\bin\test.php`
-- Chatviewer DB messages from PBB Natalium on 2026-07-06
+- `C:\wamp64\www\pbb\natalium\database\migrations`
+- `C:\wamp64\www\pbb\natalium\docs\PBB_NATALIUM_IMPLEMENTATION_CHECKLIST.md`
+- `C:\wamp64\www\pbb\natalium\tests\Feature`
 
 ---
 
